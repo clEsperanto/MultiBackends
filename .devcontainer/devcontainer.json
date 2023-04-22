@@ -1,0 +1,12 @@
+{ 
+  "extensions": ["ms-vscode.cpptools"],
+  "runArgs": ["--gpus", "all"],
+  "dockerFile": "Dockerfile",
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "postCreateCommand": "apt-get update && apt-get install -y --no-install-recommends cuda-toolkit-11-0 ocl-icd-opencl-dev clhpp-headers",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
+  ]
+}
