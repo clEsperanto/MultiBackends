@@ -1,14 +1,15 @@
 {
-  "name": "My Dev Container",
+  "name": "CUDA/OpenCL Development",
   "dockerFile": "Dockerfile",
-  "extensions": ["ms-vscode.cpptools"],
-  "runArgs": ["--gpus", "all"],
-  "postCreateCommand": "apt-get update && apt-get install -y --no-install-recommends cuda-toolkit-11-0 ocl-icd-opencl-dev clhpp-headers",
-  "mounts": [
-    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
+  "extensions": [
+    "ms-vscode.cpptools"
   ],
   "settings": {
     "terminal.integrated.shell.linux": "/bin/bash"
-  }
+  },
+  "postCreateCommand": "apt-get update && apt-get install -y --no-install-recommends cuda-toolkit-11-0 ocl-icd-opencl-dev clhpp-headers cmake g++",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
+  ]
 }
 
