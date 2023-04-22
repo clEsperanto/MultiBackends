@@ -1,14 +1,29 @@
-FROM codespaces/codespaces-standard:ubuntu-18.04
+FROM ubuntu:18.04
 
-# Install NVIDIA drivers and set up CUDA environment variables
-RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt-get update && \
-    apt-get -y install --no-install-recommends gnupg2 curl ca-certificates && \
-    curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub | apt-key add - && \
-    echo "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" > /etc/apt/sources.list.d/cuda.list && \
-    apt-get update && \
-    apt-get -y install --no-install-recommends cuda-toolkit-11-0 && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+    apt-transport-https \
+    build-essential \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release \
+    wget
 
-# Set up OpenCL environment variables
-ENV LD_LIBRARY_PATH=/usr/local/cuda-11.0/lib64:${LD_LIBRARY_PATH}
+# Install NVIDIA CUDA Toolkit
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin && \
+    mv cuda-ubuntu1804.pin /etc/apt/preferences.d/cuda-repository-pin-600 && \
+    wget https://developer.download.nvidia.com/compute/cuda/11.4.2/local_installers/cuda-repo-ubuntu1804-11-4-local_11.4.2-470.57.02-1_amd64.deb && \
+    dpkg -i cuda-repo-ubuntu1804-11-4-local_11.4.2-470.57.02-1_amd64.deb && \
+    apt-key add /var/cuda-repo-ubuntu1804-11-4-local/7fa2af80.pub && \
+    apt-get update && apt-get -y install cuda
+
+# Install OpenCL
+RUN apt-get install -y ocl-icd-opencl-dev
+
+# Install OpenCL-CLHPP
+RUN apt-get install -y clhpp-headers
+
+# Set environment variables
+ENV PATH=/usr/local/cuda/bin:${PATH}
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
+
