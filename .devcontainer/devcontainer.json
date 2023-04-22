@@ -1,13 +1,7 @@
 {
   "name": "CUDA/OpenCL Development",
   "dockerFile": "Dockerfile",
-  "extensions": [
-    "ms-vscode.cpptools"
-  ],
-  "settings": {
-    "terminal.integrated.shell.linux": "/bin/bash"
-  },
-  "postCreateCommand": "apt-get update && apt-get install -y --no-install-recommends cuda-toolkit-11-0 ocl-icd-opencl-dev clhpp-headers cmake g++",
+  "postCreateCommand": "apt-get update && apt-get install -y --no-install-recommends build-essential cuda-toolkit-11-5 ocl-icd-opencl-dev clhpp-headers cmake",
   "mounts": [
     "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
   ]
