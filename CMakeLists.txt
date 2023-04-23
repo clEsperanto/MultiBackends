@@ -17,8 +17,12 @@ find_package(CUDA REQUIRED)
 add_library(${PROJECT_NAME} STATIC ${SOURCES} ${HEADERS})
 
 # add OpenCL and CUDA include directories
-target_include_directories(${PROJECT_NAME} PUBLIC ${OpenCL_INCLUDE_DIRS})
-target_include_directories(${PROJECT_NAME} PUBLIC ${CUDA_INCLUDE_DIRS})
+if (OpenCL_FOUND)
+    target_include_directories(${PROJECT_NAME} PUBLIC ${OpenCL_INCLUDE_DIRS})
+endif()
+if (CUDA_FOUND)
+    target_include_directories(${PROJECT_NAME} PUBLIC ${CUDA_INCLUDE_DIRS})
+endif()
 
 # add include directories
 target_include_directories(${PROJECT_NAME} PUBLIC include)
