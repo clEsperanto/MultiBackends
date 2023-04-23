@@ -1,19 +1,12 @@
 {
     "name": "Ubuntu CUDA CMake",
-
     "dockerFile": "Dockerfile",
-
-    "extensions": [],
-
-    "forwardPorts": [],
-
-    "postCreateCommand": "",
-
-    "settings": {},
-
-    "appPort": [],
-
-    "runArgs": [],
+    "settings": {
+        "terminal.integrated.shellArgs.linux": [
+            "--env=DEBIAN_FRONTEND=noninteractive"
+        ]
+    },
 
     "workspaceMount": "source=/path/to/your/local/folder,target=/workspace,type=bind,consistency=cached"
+    
 }
