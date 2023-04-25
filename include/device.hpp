@@ -2,8 +2,13 @@
 #define __INCLUDE_DEVICE_HPP
 
 #include <iostream>
+#include <sstream>
 
+#ifndef CL_HPP_TARGET_OPENCL_VERSION
+#define CL_HPP_TARGET_OPENCL_VERSION 300
+#endif
 #include <CL/opencl.hpp>
+
 #include <cuda_runtime.h>
 
 namespace cle
@@ -11,7 +16,7 @@ namespace cle
     class Device
     {
     public:
-        enum class Type 
+        enum class Type
         {
             CUDA,
             OPENCL
@@ -27,15 +32,13 @@ namespace cle
         virtual bool isInitialized() const = 0;
         virtual std::string getName() const = 0;
         virtual std::string getInfo() const = 0;
-        virtual DeviceType getType() const = 0;
+        virtual Device::Type getType() const = 0;
     };
 
     class OpenCLDevice : public Device
     {
     public:
-        OpenCLDevice(const cl::Platform &platform,
-                     const cl::Device &device) : clPlatform(platform),
-                                                 clDevice(device) {}
+        OpenCLDevice(const cl::Device &device) : clDevice(device) {}
 
         ~OpenCLDevice() override
         {
@@ -45,7 +48,7 @@ namespace cle
             }
         }
 
-        DeviceType getType() const override
+        Device::Type getType() const override
         {
             return Device::Type::OPENCL;
         }
@@ -62,16 +65,14 @@ namespace cle
             clContext = cl::Context({clDevice}, NULL, NULL, NULL, &err);
             if (err != CL_SUCCESS)
             {
-                std::cerr << "Failed to create OpenCL context: "
-                          << cl::getOpenCLErrorCodeStr(err) << std::endl;
+                std::cerr << "Failed to create OpenCL context" << std::endl;
                 return;
             }
 
             clCommandQueue = cl::CommandQueue(clContext, clDevice, 0, &err);
             if (err != CL_SUCCESS)
             {
-                std::cerr << "Failed to create OpenCL command queue: "
-                          << cl::getOpenCLErrorCodeStr(err) << std::endl;
+                std::cerr << "Failed to create OpenCL command queue" << std::endl;
                 return;
             }
 
@@ -106,22 +107,22 @@ namespace cle
             return initialized;
         }
 
-        cl::Platform &getCLPlatform()
+        const cl::Platform &getCLPlatform() const
         {
             return clPlatform;
         }
 
-        cl::Device &getCLDevice()
+        const cl::Device &getCLDevice() const
         {
             return clDevice;
         }
 
-        cl::Context &getCLContext()
+        const cl::Context &getCLContext() const
         {
             return clContext;
         }
 
-        cl::CommandQueue &getCLCommandQueue()
+        const cl::CommandQueue &getCLCommandQueue() const
         {
             return clCommandQueue;
         }
@@ -131,18 +132,17 @@ namespace cle
             return clDevice.getInfo<CL_DEVICE_NAME>();
         }
 
-
         std::string getInfo() const override
         {
             std::ostringstream result;
-            std::string        version;
-            cl_device_type     type;
-            cl_uint            compute_units;
-            size_t             global_mem_size;
-            size_t             max_mem_size;
+            std::string version;
+            cl_device_type type;
+            cl_uint compute_units;
+            size_t global_mem_size;
+            size_t max_mem_size;
 
             // Get device information
-            const auto & name = getName(device_pointer);
+            const auto &name = getName();
             clDevice.getInfo(CL_DEVICE_VERSION, &version);
             clDevice.getInfo(CL_DEVICE_TYPE, &type);
             clDevice.getInfo(CL_DEVICE_MAX_COMPUTE_UNITS, &compute_units);
@@ -153,13 +153,13 @@ namespace cle
             result << name << " (" << version << ")\n";
             switch (type)
             {
-                case CL_DEVICE_TYPE_CPU:
+            case CL_DEVICE_TYPE_CPU:
                 result << "\tType: CPU\n";
                 break;
-                case CL_DEVICE_TYPE_GPU:
+            case CL_DEVICE_TYPE_GPU:
                 result << "\tType: GPU\n";
                 break;
-                default:
+            default:
                 result << "\tType: Unknown\n";
                 break;
             }
@@ -191,7 +191,7 @@ namespace cle
             }
         }
 
-        DeviceType getType() const override
+        Device::Type getType() const override
         {
             return Device::Type::CUDA;
         }
@@ -207,16 +207,14 @@ namespace cle
             cudaError_t err = cudaSetDevice(cudaDeviceIndex);
             if (err != cudaSuccess)
             {
-                std::cerr << "Failed to set CUDA device: "
-                          << cudaGetErrorString(err) << std::endl;
+                std::cerr << "Failed to set CUDA device" << std::endl;
                 return;
             }
 
             err = cudaStreamCreate(&cudaStream);
             if (err != cudaSuccess)
             {
-                std::cerr << "Failed to create CUDA stream: "
-                          << cudaGetErrorString(err) << std::endl;
+                std::cerr << "Failed to create CUDA stream" << std::endl;
                 return;
             }
 
@@ -230,7 +228,6 @@ namespace cle
                 std::cerr << "CUDA device not initialized" << std::endl;
                 return;
             }
-
             cudaStreamSynchronize(cudaStream);
             cudaStreamDestroy(cudaStream);
             initialized = false;
@@ -252,12 +249,12 @@ namespace cle
             return initialized;
         }
 
-        int getCUDADeviceIndex()
+        const int getCUDADeviceIndex() const
         {
             return cudaDeviceIndex;
         }
 
-        cudaStream_t getCUDAStream()
+        const cudaStream_t getCUDAStream() const
         {
             return cudaStream;
         }
@@ -272,14 +269,14 @@ namespace cle
         std::string getInfo() const override
         {
             std::ostringstream result;
-            cudaDeviceProp     prop;
+            cudaDeviceProp prop;
             cudaGetDeviceProperties(&prop, cudaDeviceIndex);
 
             result << prop.name << " (" << prop.major << "." << prop.minor << ")\n";
             result << "\tType: " << (prop.integrated ? "Integrated" : "Discrete") << '\n';
             result << "\tCompute Units: " << prop.multiProcessorCount << '\n';
             result << "\tGlobal Memory Size: " << (prop.totalGlobalMem / 1000000) << " MB\n";
-            result << "\tMaximum Object Size: " << (prop.maxMemoryAllocationSize / 1000000) << " MB\n";
+            // result << "\tMaximum Object Size: " << (prop.maxMemoryAllocationSize / 1000000) << " MB\n";
 
             return result.str();
         }

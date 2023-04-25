@@ -3,7 +3,11 @@
 
 #include <optional>
 
+#ifndef CL_HPP_TARGET_OPENCL_VERSION
+#define CL_HPP_TARGET_OPENCL_VERSION 300
+#endif
 #include <CL/opencl.hpp>
+
 #include <cuda_runtime.h>
 
 #include "device.hpp"
@@ -13,7 +17,6 @@ namespace cle
     class Backend
     {
     public:
-        // enum for backend types
         enum class Type
         {
             CUDA,
@@ -23,239 +26,300 @@ namespace cle
         Backend() = default;
         virtual ~Backend() = default;
 
-        virtual Backend::Type getType() = 0;
-        virtual std::vector<std::string> getDeviceList(const std::optional<std::string> &type) = 0;
-        virtual std::vector<cle::Device> getDevices(const std::optional<std::string> &type) = 0;
+        virtual Backend::Type getType() const = 0;
+        virtual std::vector<std::string> getDevicesList(const std::string &type = "all") const = 0;
+        virtual std::vector<std::shared_ptr<Device>> getDevices(const std::string &type = "all") const = 0;
+        virtual std::shared_ptr<Device> getDevice(const std::string &name, const std::string &type = "all") const = 0;
 
-        virtual void allocateMemory(const Device& device, const size_t& size, void* data_ptr) = 0;
-        virtual void freeMemory(const Device& device, void* data_ptr) = 0;
-        virtual void writeMemory(const Device& device, void* data_ptr, const size_t& size, const void* host_ptr) = 0;
-        virtual void readMemory(const Device& device, const void* data_ptr, const size_t& size, void* host_ptr) = 0;
+        virtual void allocateMemory(const std::shared_ptr<Device> &device, const size_t &size, void **data_ptr) const = 0;
+        // virtual void allocateMemory(const std::shared_ptr<Device> &device, const size_t &size, cl::Memory *data_ptr) const = 0;
+
+        // virtual void freeMemory(const std::shared_ptr<Device> &device, void *data_ptr) const = 0;
+        // virtual void freeMemory(const std::shared_ptr<Device> &device, cl::Memory *data_ptr) const = 0;
+
+        virtual void writeMemory(const std::shared_ptr<Device> &device, void **data_ptr, const size_t &size, const void *host_ptr) const = 0;
+        // virtual void writeMemory(const std::shared_ptr<Device> &device, const cl::Memory *data_ptr, const size_t &size, const void *host_ptr) const = 0;
+
+        virtual void readMemory(const std::shared_ptr<Device> &device, const void **data_ptr, const size_t &size, void *host_ptr) const = 0;
     };
 
     class CUDABackend : public Backend
     {
     public:
         CUDABackend() = default;
-        virtual ~CUDABackend() = default;
+        virtual ~CUDABackend() override = default;
 
-        virtual std::vector<cle::CUDADevice> getDevices(const std::optional<std::string> &type = std::nullopt) override
+        virtual std::vector<std::shared_ptr<Device>> getDevices(const std::string &type = "all") const
         {
             int deviceCount;
             cudaError_t error = cudaGetDeviceCount(&deviceCount);
-
-            std::vector<cle::Device> devices;
+            std::vector<std::shared_ptr<Device>> devices;
             for (int i = 0; i < deviceCount; i++)
             {
-                devices.push_back(cle::CUDADevice(i));
+                devices.push_back(std::make_shared<CUDADevice>(i));
             }
-
             return devices;
         }
 
-        virtual std::vector<std::string> getDeviceList(const std::optional<std::string> &type = std::nullopt) override
+        virtual std::shared_ptr<Device> getDevice(const std::string &name, const std::string &type = "all") const
         {
             auto devices = getDevices(type);
+            auto ite = std::find_if(devices.begin(), devices.end(),
+                                    [&name](const std::shared_ptr<Device> &dev)
+                                    {
+                                        return dev->getName().find(name) != std::string::npos;
+                                    });
+            if (ite != devices.end())
+            {
+                return std::move(*ite);
+            }
+            if (!devices.empty())
+            {
+                return std::move(devices.back());
+            }
+            return nullptr;
+        }
 
+        virtual std::vector<std::string> getDevicesList(const std::string &type = "all") const
+        {
+            auto devices = getDevices(type);
             std::vector<std::string> deviceList;
             for (int i = 0; i < devices.size(); i++)
             {
-                deviceList.push_back(devices[i].getName());
+                deviceList.push_back(devices[i]->getName());
             }
+            return deviceList;
         }
 
-        Backend::Type getType() override
+        virtual Backend::Type getType() const
         {
             return Backend::Type::CUDA;
         }
 
-        void allocateMemory(const Device& device, const size_t& size, void* data_ptr) override
+        virtual void allocateMemory(const std::shared_ptr<Device> &device, const size_t &size, void **data_ptr) const
         {
-            cudaError_t err = cudaSetDevice(device.getCUDeviceID());
-            if (err != cudaSuccess) {
-                throw std::runtime_error("Error: Failed to set CUDA device");
+            auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
+            cudaError_t err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
+            if (err != cudaSuccess)
+            {
+                throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
             }
-
-            cudaError_t err = cudaMalloc(data_ptr, size);
-            if (err != cudaSuccess) {
-                throw std::runtime_error("Error: Failed to allocate CUDA memory");
+            err = cudaMalloc(data_ptr, size);
+            if (err != cudaSuccess)
+            {
+                throw std::runtime_error("Error: Failed to allocate CUDA memory.");
             }
         }
 
-        void freeMemory(const Device& device, void* data_ptr) override
-        {
-            cudaError_t err = cudaSetDevice(device.getCUDeviceID());
-            if (err != cudaSuccess) {
-                throw std::runtime_error("Error: Failed to set CUDA device");
-            }
+        // virtual void freeMemory(const std::shared_ptr<Device> &device, void *data_ptr) const
+        // {
+        //     auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
+        //     cudaError_t err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
+        //     if (err != cudaSuccess)
+        //     {
+        //         throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
+        //     }
+        //     err = cudaFree(data_ptr);
+        //     if (err != cudaSuccess)
+        //     {
+        //         throw std::runtime_error("Error: Failed to free CUDA memory.");
+        //     }
+        // }
 
-            cudaError_t err = cudaFree(data_ptr);
-            if (err != cudaSuccess) {
-                throw std::runtime_error("Error: Failed to free CUDA memory");
+        virtual void writeMemory(const std::shared_ptr<Device> &device, void **data_ptr, const size_t &size, const void *host_ptr) const
+        {
+            auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
+            cudaError_t err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
+            if (err != cudaSuccess)
+            {
+                throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
+            }
+            err = cudaMemcpy(*data_ptr, host_ptr, size, cudaMemcpyHostToDevice);
+            if (err != cudaSuccess)
+            {
+                throw std::runtime_error("Error: Failed to write CUDA memory.");
             }
         }
 
-        void writeMemory(const Device& device, void* data_ptr, const size_t& size, const void* host_ptr) override
+        virtual void readMemory(const std::shared_ptr<Device> &device, const void **data_ptr, const size_t &size, void *host_ptr) const
         {
-            cudaError_t err = cudaSetDevice(device.getCUDeviceID());
-            if (err != cudaSuccess) {
-                throw std::runtime_error("Error: Failed to set CUDA device");
+            auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
+            cudaError_t err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
+            if (err != cudaSuccess)
+            {
+                throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
             }
-
-            cudaError_t err = cudaMemcpy(data_ptr, host_ptr, size, cudaMemcpyHostToDevice);
-            if (err != cudaSuccess) {
-                throw std::runtime_error("Error: Failed to write CUDA memory");
+            err = cudaMemcpy(host_ptr, *data_ptr, size, cudaMemcpyDeviceToHost);
+            if (err != cudaSuccess)
+            {
+                throw std::runtime_error("Error: Failed to read CUDA memory.");
             }
         }
-
-        void readMemory(const Device& device, const void* data_ptr, const size_t& size, void* host_ptr) override
-        {
-            cudaError_t err = cudaSetDevice(device.getCUDeviceID());
-            if (err != cudaSuccess) {
-                throw std::runtime_error("Error: Failed to set CUDA device");
-            }
-            
-            cudaError_t err = cudaMemcpy(host_ptr, data_ptr, size, cudaMemcpyDeviceToHost);
-            if (err != cudaSuccess) {
-                throw std::runtime_error("Error: Failed to read CUDA memory");
-            }
-        }
-
     };
 
     class OpenCLBackend : public Backend
     {
     public:
         OpenCLBackend() = default;
-        virtual ~OpenCLBackend() = default;
+        virtual ~OpenCLBackend() override = default;
 
-        virtual std::vector<cle::OpenCLDevice> getDevices(const std::optional<std::string> &type = std::make_optional<std::string>("all")) override
+        virtual std::vector<std::shared_ptr<Device>> getDevices(const std::string &type = "all") const
         {
-            // Get the OpenCL platforms and devices
             std::vector<cl::Platform> platforms;
             cl::Platform::get(&platforms);
 
-            std::vector<cle::Device> devices;
-
+            std::vector<std::shared_ptr<Device>> devices;
             cl_device_type deviceType;
-            if (type.value() == "cpu")
+            if (type == "cpu")
             {
                 deviceType = CL_DEVICE_TYPE_CPU;
             }
-            else if (type.value() == "gpu")
+            else if (type == "gpu")
             {
                 deviceType = CL_DEVICE_TYPE_GPU;
             }
-            else if (type.value() == "all")
+            else if (type == "all")
             {
                 deviceType = CL_DEVICE_TYPE_ALL;
             }
             else
             {
-                std::cerr << "Warning: Unknown device type '" << type.value() << "' provided." << std::endl;
+                std::cerr << "Warning: Unknown device type '" << type << "' provided." << std::endl;
                 std::cerr << "\tdefault: fetching all devices." << std::endl;
             }
-
             for (int i = 0; i < platforms.size(); i++)
             {
                 std::vector<cl::Device> clDevices;
                 platforms[i].getDevices(deviceType, &clDevices);
-
                 for (int j = 0; j < clDevices.size(); j++)
                 {
-                    devices.push_back(cle::OpenCLDevice(clDevices[j]));
+                    devices.push_back(std::make_shared<OpenCLDevice>(clDevices[j]));
                 }
             }
-
             return devices;
         }
 
-        virtual std::vector<std::string> getDeviceList(const std::optional<std::string> &type = std::make_optional<std::string>("all")) override override
+        virtual std::shared_ptr<Device> getDevice(const std::string &name, const std::string &type = "all") const
         {
             auto devices = getDevices(type);
+            auto ite = std::find_if(devices.begin(), devices.end(),
+                                    [&name](const std::shared_ptr<Device> &dev)
+                                    {
+                                        return dev->getName().find(name) != std::string::npos;
+                                    });
+            if (ite != devices.end())
+            {
+                return std::move(*ite);
+            }
+            if (!devices.empty())
+            {
+                return std::move(devices.back());
+            }
+            return nullptr;
+        }
 
+        virtual std::vector<std::string> getDevicesList(const std::string &type = "all") const
+        {
+            auto devices = getDevices(type);
             std::vector<std::string> deviceList;
             for (int i = 0; i < devices.size(); i++)
             {
-                deviceList.push_back(devices[i].getName());
+                deviceList.push_back(devices[i]->getName());
             }
-
             return deviceList;
         }
 
-        virtual Backend::Type getType() override
+        virtual Backend::Type getType() const
         {
             return Backend::Type::OPENCL;
         }
 
-        void allocateMemory(const Device& device, const size_t& size, void* data_ptr) override
+        virtual void allocateMemory(const std::shared_ptr<Device> &device, const size_t &size, void **data_ptr) const
         {
             cl_int err;
-            cl::Memory* mem_ptr = reinterpret_cast<cl::Memory*>(data_ptr);
-            *mem_ptr = cl::Buffer(device.getCLContext(), CL_MEM_READ_WRITE, size, nullptr, &err);
-            if (err != CL_SUCCESS) {
-                throw std::runtime_error("Error: Failed to allocate OpenCL memory");
+            auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+            cl::Context context = opencl_device->getCLContext();
+            cl::Buffer buffer = cl::Buffer(context, CL_MEM_READ_WRITE, size, nullptr, &err);
+            if (err != CL_SUCCESS)
+            {
+                throw std::runtime_error("Error: Failed to allocate OpenCL memory.");
+            }
+            *data_ptr = static_cast<void *>(new cl::Memory(buffer));
+        }
+
+        // virtual void freeMemory(const std::shared_ptr<Device> &device, void *data_ptr) const
+        // {
+        //     cl::Memory *cl_mem_ptr = static_cast<cl::Memory *>(data_ptr);
+        //     cl_int err = clReleaseMemObject(cl_mem_ptr->get());
+        //     if (err != CL_SUCCESS)
+        //     {
+        //         throw std::runtime_error("Error: Failed to free OpenCL memory.");
+        //     }
+        //     delete cl_mem_ptr;
+        // }
+
+        virtual void writeMemory(const std::shared_ptr<Device> &device, void **data_ptr, const size_t &size, const void *host_ptr) const
+        {
+            auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+            cl::Context context = opencl_device->getCLContext();
+            cl::CommandQueue queue = opencl_device->getCLCommandQueue();
+            cl_int err = queue.enqueueWriteBuffer(*static_cast<cl::Buffer *>(*data_ptr), CL_TRUE, 0, size, host_ptr);
+            if (err != CL_SUCCESS)
+            {
+                throw std::runtime_error("Error: Failed to write OpenCL memory.");
             }
         }
 
-        void freeMemory(const Device& device, void* data_ptr) override
+        virtual void readMemory(const std::shared_ptr<Device> &device, const void **data_ptr, const size_t &size, void *host_ptr) const
         {
-            cl::Memory* mem_ptr = reinterpret_cast<cl::Memory*>(data_ptr);
-            cl_int err = clReleaseMemObject(*mem_ptr);
-            if (err != CL_SUCCESS) {
-                throw std::runtime_error("Error: Failed to free OpenCL memory");
+            auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+            cl::Context context = opencl_device->getCLContext();
+            cl::CommandQueue queue = opencl_device->getCLCommandQueue();
+            cl_int err = queue.enqueueReadBuffer(*static_cast<const cl::Buffer *>(*data_ptr), CL_TRUE, 0, size, host_ptr);
+            if (err != CL_SUCCESS)
+            {
+                throw std::runtime_error("Error: Failed to read OpenCL memory.");
             }
         }
-
-        void writeMemory(const Device& device, void* data_ptr, const size_t& size, const void* host_ptr) override
-        {
-            cl_int err = device.getCLCommandQueue().enqueueWriteBuffer(*reinterpret_cast<cl::Buffer*>(data_ptr), CL_TRUE, 0, size, host_ptr);
-            if (err != CL_SUCCESS) {
-                throw std::runtime_error("Error: Failed to write OpenCL memory");
-            }
-        }
-
-        void readMemory(const Device& device, const void* data_ptr, const size_t& size, void* host_ptr) override
-        {
-            cl_int err = device.getCLCommandQueue().enqueueReadBuffer(*reinterpret_cast<cl::Buffer*>(data_ptr), CL_TRUE, 0, size, host_ptr);
-            if (err != CL_SUCCESS) {
-                throw std::runtime_error("Error: Failed to read OpenCL memory");
-            }
-        }
-    
     };
 
-    class BackendManager 
+    class BackendManager
     {
     public:
-        static BackendManager& getInstance() {
+        static BackendManager &getInstance()
+        {
             static BackendManager instance;
             return instance;
         }
 
-        void selectBackend(bool useCUDA) {
-            if (useCUDA) {
+        void selectBackend(bool useCUDA)
+        {
+            if (useCUDA)
+            {
                 backend = std::make_unique<CUDABackend>();
-            } else {
+            }
+            else
+            {
                 backend = std::make_unique<OpenCLBackend>();
             }
         }
 
-        Backend& getBackend() {
-            if (!backend) {
+        Backend &getBackend() const
+        {
+            if (!backend)
+            {
                 throw std::runtime_error("Backend not selected.");
             }
             return *backend;
         }
 
+        BackendManager &operator=(const BackendManager &) = delete;
+        BackendManager(const BackendManager &) = delete;
+
     private:
-        std::unique_ptr<Backend> backend;
-
+        std::shared_ptr<Backend> backend;
         BackendManager() {}
-        BackendManager(const BackendManager&) = delete;
-        BackendManager& operator=(const BackendManager&) = delete;
     };
-
 
 } // namespace cle
 
