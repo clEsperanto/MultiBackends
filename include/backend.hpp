@@ -32,14 +32,8 @@ namespace cle
         virtual std::shared_ptr<Device> getDevice(const std::string &name, const std::string &type = "all") const = 0;
 
         virtual void allocateMemory(const std::shared_ptr<Device> &device, const size_t &size, void **data_ptr) const = 0;
-        // virtual void allocateMemory(const std::shared_ptr<Device> &device, const size_t &size, cl::Memory *data_ptr) const = 0;
-
-        // virtual void freeMemory(const std::shared_ptr<Device> &device, void *data_ptr) const = 0;
-        // virtual void freeMemory(const std::shared_ptr<Device> &device, cl::Memory *data_ptr) const = 0;
-
+        virtual void freeMemory(const std::shared_ptr<Device> &device, void **data_ptr) const = 0;
         virtual void writeMemory(const std::shared_ptr<Device> &device, void **data_ptr, const size_t &size, const void *host_ptr) const = 0;
-        // virtual void writeMemory(const std::shared_ptr<Device> &device, const cl::Memory *data_ptr, const size_t &size, const void *host_ptr) const = 0;
-
         virtual void readMemory(const std::shared_ptr<Device> &device, const void **data_ptr, const size_t &size, void *host_ptr) const = 0;
     };
 
@@ -111,20 +105,20 @@ namespace cle
             }
         }
 
-        // virtual void freeMemory(const std::shared_ptr<Device> &device, void *data_ptr) const
-        // {
-        //     auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
-        //     cudaError_t err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
-        //     if (err != cudaSuccess)
-        //     {
-        //         throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
-        //     }
-        //     err = cudaFree(data_ptr);
-        //     if (err != cudaSuccess)
-        //     {
-        //         throw std::runtime_error("Error: Failed to free CUDA memory.");
-        //     }
-        // }
+        virtual void freeMemory(const std::shared_ptr<Device> &device, void **data_ptr) const
+        {
+            auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
+            cudaError_t err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
+            if (err != cudaSuccess)
+            {
+                throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
+            }
+            err = cudaFree(*data_ptr);
+            if (err != cudaSuccess)
+            {
+                throw std::runtime_error("Error: Failed to free CUDA memory.");
+            }
+        }
 
         virtual void writeMemory(const std::shared_ptr<Device> &device, void **data_ptr, const size_t &size, const void *host_ptr) const
         {
@@ -247,16 +241,16 @@ namespace cle
             *data_ptr = static_cast<void *>(new cl::Memory(buffer));
         }
 
-        // virtual void freeMemory(const std::shared_ptr<Device> &device, void *data_ptr) const
-        // {
-        //     cl::Memory *cl_mem_ptr = static_cast<cl::Memory *>(data_ptr);
-        //     cl_int err = clReleaseMemObject(cl_mem_ptr->get());
-        //     if (err != CL_SUCCESS)
-        //     {
-        //         throw std::runtime_error("Error: Failed to free OpenCL memory.");
-        //     }
-        //     delete cl_mem_ptr;
-        // }
+        virtual void freeMemory(const std::shared_ptr<Device> &device, void **data_ptr) const
+        {
+            cl::Memory *cl_mem_ptr = static_cast<cl::Memory *>(*data_ptr);
+            cl_int err = clReleaseMemObject(cl_mem_ptr->get());
+            if (err != CL_SUCCESS)
+            {
+                throw std::runtime_error("Error: Failed to free OpenCL memory.");
+            }
+            delete cl_mem_ptr;
+        }
 
         virtual void writeMemory(const std::shared_ptr<Device> &device, void **data_ptr, const size_t &size, const void *host_ptr) const
         {

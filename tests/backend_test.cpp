@@ -41,11 +41,16 @@ void ocl_list_devices()
         data_out[i] = -i;
         std::cout << data_out[i] << " ";
     }
+    std::cout << std::endl;
     backendManager.getBackend().readMemory(device, (const void **)&data_ptr, size, data_out);
     for (int i = 0; i < 128; i++)
     {
         std::cout << data_out[i] << " ";
     }
+    std::cout << std::endl;
+
+    // std::cout << "Free memory" << std::endl;
+    // backendManager.getBackend().freeMemory(device, (void **)&data_ptr);
 }
 
 void cuda_list_devices()
@@ -86,11 +91,16 @@ void cuda_list_devices()
         data_out[i] = -i;
         std::cout << data_out[i] << " ";
     }
+    std::cout << std::endl;
     backendManager.getBackend().readMemory(device, (const void **)&data_ptr, size, data_out);
     for (int i = 0; i < 128; i++)
     {
         std::cout << data_out[i] << " ";
     }
+    std::cout << std::endl;
+
+    std::cout << "Free memory" << std::endl;
+    backendManager.getBackend().freeMemory(device, (void **)&data_ptr);
 }
 
 int main(int argc, char **argv)
