@@ -4,12 +4,18 @@
 #include <iostream>
 #include <sstream>
 
+#if CLE_OPENCL
 #ifndef CL_HPP_TARGET_OPENCL_VERSION
 #define CL_HPP_TARGET_OPENCL_VERSION 300
 #endif
 #include <CL/opencl.hpp>
+#endif
 
+#if CLE_CUDA
+#include <cuda.h>
 #include <cuda_runtime.h>
+#include <cuda_runtime_api.h>
+#endif
 
 namespace cle
 {
@@ -25,16 +31,31 @@ namespace cle
         Device() = default;
         virtual ~Device() = default;
 
-        virtual void initialize() = 0;
-        virtual void finalize() = 0;
-        virtual void finish() = 0;
+        virtual auto initialize() -> void = 0;
+        virtual auto finalize() -> void = 0;
+        virtual auto finish() -> void = 0;
 
-        virtual bool isInitialized() const = 0;
-        virtual std::string getName() const = 0;
-        virtual std::string getInfo() const = 0;
-        virtual Device::Type getType() const = 0;
+        [[nodiscard]] virtual auto isInitialized() const -> bool = 0;
+        [[nodiscard]] virtual auto getName() const -> std::string = 0;
+        [[nodiscard]] virtual auto getInfo() const -> std::string = 0;
+        [[nodiscard]] virtual auto getType() const -> Device::Type = 0;
+
+        friend auto operator<<(std::ostream &out, const Device::Type &device_type) -> std::ostream &
+        {
+            switch (device_type)
+            {
+            case Device::Type::CUDA:
+                out << "CUDA";
+                break;
+            case Device::Type::OPENCL:
+                out << "OpenCL";
+                break;
+            }
+            return out;
+        }
     };
 
+#if CLE_OPENCL
     class OpenCLDevice : public Device
     {
     public:
@@ -48,19 +69,18 @@ namespace cle
             }
         }
 
-        Device::Type getType() const override
+        [[nodiscard]] auto getType() const -> Device::Type override
         {
             return Device::Type::OPENCL;
         }
 
-        void initialize() override
+        auto initialize() -> void override
         {
             if (isInitialized())
             {
                 std::cerr << "OpenCL device already initialized" << std::endl;
                 return;
             }
-
             cl_int err = CL_SUCCESS;
             clContext = cl::Context({clDevice}, NULL, NULL, NULL, &err);
             if (err != CL_SUCCESS)
@@ -68,71 +88,67 @@ namespace cle
                 std::cerr << "Failed to create OpenCL context" << std::endl;
                 return;
             }
-
             clCommandQueue = cl::CommandQueue(clContext, clDevice, 0, &err);
             if (err != CL_SUCCESS)
             {
                 std::cerr << "Failed to create OpenCL command queue" << std::endl;
                 return;
             }
-
             initialized = true;
         }
 
-        void finalize() override
+        auto finalize() -> void override
         {
             if (!isInitialized())
             {
                 std::cerr << "OpenCL device not initialized" << std::endl;
                 return;
             }
-
             clCommandQueue.finish();
             initialized = false;
         }
 
-        void finish() override
+        auto finish() -> void override
         {
             if (!isInitialized())
             {
                 std::cerr << "OpenCL device not initialized" << std::endl;
                 return;
             }
-
             clCommandQueue.finish();
         }
 
-        bool isInitialized() const override
+        [[nodiscard]] auto isInitialized() const -> bool override
         {
             return initialized;
         }
 
-        const cl::Platform &getCLPlatform() const
+        [[nodiscard]] auto getCLPlatform() const -> const cl::Platform &
         {
             return clPlatform;
         }
 
-        const cl::Device &getCLDevice() const
+        [[nodiscard]] auto getCLDevice() const -> const cl::Device &
         {
             return clDevice;
         }
 
-        const cl::Context &getCLContext() const
+        [[nodiscard]] auto getCLContext() const -> const cl::Context &
         {
             return clContext;
         }
 
-        const cl::CommandQueue &getCLCommandQueue() const
+        [[nodiscard]] auto getCLCommandQueue() const -> const cl::CommandQueue &
         {
             return clCommandQueue;
         }
 
-        std::string getName() const override
+        [[nodiscard]] auto getName() const -> std::string override
         {
             return clDevice.getInfo<CL_DEVICE_NAME>();
         }
 
-        std::string getInfo() const override
+        [[nodiscard]] auto getInfo() const -> std::string override
         {
             std::ostringstream result;
             std::string version;
@@ -166,7 +182,6 @@ namespace cle
             result << "\tCompute Units: " << compute_units << '\n';
             result << "\tGlobal Memory Size: " << (global_mem_size / 1000000) << " MB\n";
             result << "\tMaximum Object Size: " << (max_mem_size / 1000000) << " MB\n";
-
             return result.str();
         }
 
@@ -177,7 +192,9 @@ namespace cle
         cl::CommandQueue clCommandQueue;
         bool initialized = false;
     };
+#endif // CLE_OPENCL
 
+#if CLE_CUDA
     class CUDADevice : public Device
     {
     public:
@@ -191,37 +208,34 @@ namespace cle
             }
         }
 
-        Device::Type getType() const override
+        [[nodiscard]] auto getType() const -> Device::Type override
         {
             return Device::Type::CUDA;
         }
 
-        void initialize() override
+        auto initialize() -> void override
         {
             if (isInitialized())
             {
                 std::cerr << "CUDA device already initialized" << std::endl;
                 return;
             }
-
-            cudaError_t err = cudaSetDevice(cudaDeviceIndex);
+            auto err = cudaSetDevice(cudaDeviceIndex);
             if (err != cudaSuccess)
             {
                 std::cerr << "Failed to set CUDA device" << std::endl;
                 return;
             }
-
             err = cudaStreamCreate(&cudaStream);
             if (err != cudaSuccess)
             {
                 std::cerr << "Failed to create CUDA stream" << std::endl;
                 return;
             }
-
             initialized = true;
         }
 
-        void finalize() override
+        auto finalize() -> void override
         {
             if (!isInitialized())
             {
@@ -233,7 +247,7 @@ namespace cle
             initialized = false;
         }
 
-        void finish() override
+        auto finish() -> void override
         {
             if (!isInitialized())
             {
@@ -244,32 +258,32 @@ namespace cle
             cudaStreamSynchronize(cudaStream);
         }
 
-        bool isInitialized() const override
+        [[nodiscard]] auto isInitialized() const -> bool override
         {
             return initialized;
         }
 
-        const int getCUDADeviceIndex() const
+        [[nodiscard]] auto getCUDADeviceIndex() const -> int
         {
             return cudaDeviceIndex;
         }
 
-        const cudaStream_t getCUDAStream() const
+        [[nodiscard]] auto getCUDAStream() const -> cudaStream_t
         {
             return cudaStream;
         }
 
-        std::string getName() const override
+        [[nodiscard]] auto getName() const -> std::string override
         {
-            cudaDeviceProp prop;
+            cudaDeviceProp prop{};
             cudaGetDeviceProperties(&prop, cudaDeviceIndex);
             return prop.name;
         }
 
-        std::string getInfo() const override
+        [[nodiscard]] auto getInfo() const -> std::string override
         {
             std::ostringstream result;
-            cudaDeviceProp prop;
+            cudaDeviceProp prop{};
             cudaGetDeviceProperties(&prop, cudaDeviceIndex);
 
             result << prop.name << " (" << prop.major << "." << prop.minor << ")\n";
@@ -286,6 +300,7 @@ namespace cle
         cudaStream_t cudaStream;
         bool initialized = false;
     };
+#endif // CLE_CUDA
 
 } // namespace cle
 

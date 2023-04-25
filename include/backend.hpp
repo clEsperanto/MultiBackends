@@ -1,14 +1,21 @@
 #ifndef __INCLUDE_BACKEND_HPP
 #define __INCLUDE_BACKEND_HPP
 
-#include <optional>
+#define CLE_CUDA 1
+#define CLE_OPENCL 1
 
+#if CLE_OPENCL
 #ifndef CL_HPP_TARGET_OPENCL_VERSION
 #define CL_HPP_TARGET_OPENCL_VERSION 300
 #endif
 #include <CL/opencl.hpp>
+#endif
 
+#if CLE_CUDA
+#include <cuda.h>
 #include <cuda_runtime.h>
+#include <cuda_runtime_api.h>
+#endif
 
 #include "device.hpp"
 
@@ -19,47 +26,74 @@ namespace cle
     public:
         enum class Type
         {
-            CUDA,
-            OPENCL
+            CUDA = 1,
+            OPENCL = 0
         };
+
+        using DevicePtr = std::shared_ptr<cle::Device>;
 
         Backend() = default;
         virtual ~Backend() = default;
 
-        virtual Backend::Type getType() const = 0;
-        virtual std::vector<std::string> getDevicesList(const std::string &type = "all") const = 0;
-        virtual std::vector<std::shared_ptr<Device>> getDevices(const std::string &type = "all") const = 0;
-        virtual std::shared_ptr<Device> getDevice(const std::string &name, const std::string &type = "all") const = 0;
+        [[nodiscard]] virtual auto getType() const -> Backend::Type = 0;
+        [[nodiscard]] virtual auto getDevicesList(const std::string &type) const -> std::vector<std::string> = 0;
+        [[nodiscard]] virtual auto getDevices(const std::string &type) const -> std::vector<DevicePtr> = 0;
+        [[nodiscard]] virtual auto getDevice(const std::string &name, const std::string &type) const -> DevicePtr = 0;
 
-        virtual void allocateMemory(const std::shared_ptr<Device> &device, const size_t &size, void **data_ptr) const = 0;
-        virtual void freeMemory(const std::shared_ptr<Device> &device, void **data_ptr) const = 0;
-        virtual void writeMemory(const std::shared_ptr<Device> &device, void **data_ptr, const size_t &size, const void *host_ptr) const = 0;
-        virtual void readMemory(const std::shared_ptr<Device> &device, const void **data_ptr, const size_t &size, void *host_ptr) const = 0;
+        virtual auto allocateMemory(const DevicePtr &device, const size_t &size, void **data_ptr) const -> void = 0;
+        virtual auto freeMemory(const DevicePtr &device, void **data_ptr) const -> void = 0;
+        virtual auto writeMemory(const DevicePtr &device, void **data_ptr, const size_t &size, const void *host_ptr) const -> void = 0;
+        virtual auto readMemory(const DevicePtr &device, const void **data_ptr, const size_t &size, void *host_ptr) const -> void = 0;
+
+        friend auto operator<<(std::ostream &out, const Backend::Type &backend_type) -> std::ostream &
+        {
+            switch (backend_type)
+            {
+            case Backend::Type::CUDA:
+                out << "CUDA";
+                break;
+            case Backend::Type::OPENCL:
+                out << "OpenCL";
+                break;
+            }
+            return out;
+        }
     };
 
     class CUDABackend : public Backend
     {
     public:
-        CUDABackend() = default;
-        virtual ~CUDABackend() override = default;
-
-        virtual std::vector<std::shared_ptr<Device>> getDevices(const std::string &type = "all") const
+        CUDABackend()
         {
+#if !CLE_CUDA
+            std::cerr << "Warning: Instanciating an CUDA Backend but CUDA is not enabled." << std::endl;
+#endif
+        }
+
+        ~CUDABackend() override = default;
+
+        [[nodiscard]] auto getDevices(const std::string &type) const -> std::vector<DevicePtr> override
+        {
+#if CLE_CUDA
             int deviceCount;
-            cudaError_t error = cudaGetDeviceCount(&deviceCount);
+            auto error = cudaGetDeviceCount(&deviceCount);
             std::vector<std::shared_ptr<Device>> devices;
             for (int i = 0; i < deviceCount; i++)
             {
                 devices.push_back(std::make_shared<CUDADevice>(i));
             }
             return devices;
+#else
+            throw std::runtime_error("CUDABackend::getDevices: CUDA is not enabled");
+#endif
         }
 
-        virtual std::shared_ptr<Device> getDevice(const std::string &name, const std::string &type = "all") const
+        [[nodiscard]] auto getDevice(const std::string &name, const std::string &type) const -> DevicePtr override
         {
+#if CLE_CUDA
             auto devices = getDevices(type);
             auto ite = std::find_if(devices.begin(), devices.end(),
-                                    [&name](const std::shared_ptr<Device> &dev)
+                                    [&name](const DevicePtr &dev)
                                     {
                                         return dev->getName().find(name) != std::string::npos;
                                     });
@@ -72,10 +106,14 @@ namespace cle
                 return std::move(devices.back());
             }
             return nullptr;
+#else
+            throw std::runtime_error("CUDABackend::getDevices: CUDA is not enabled");
+#endif
         }
 
-        virtual std::vector<std::string> getDevicesList(const std::string &type = "all") const
+        [[nodiscard]] auto getDevicesList(const std::string &type) const -> std::vector<std::string> override
         {
+#if CLE_CUDA
             auto devices = getDevices(type);
             std::vector<std::string> deviceList;
             for (int i = 0; i < devices.size(); i++)
@@ -83,17 +121,21 @@ namespace cle
                 deviceList.push_back(devices[i]->getName());
             }
             return deviceList;
+#else
+            throw std::runtime_error("CUDABackend::getDevices: CUDA is not enabled");
+#endif
         }
 
-        virtual Backend::Type getType() const
+        [[nodiscard]] auto getType() const -> Backend::Type override
         {
             return Backend::Type::CUDA;
         }
 
-        virtual void allocateMemory(const std::shared_ptr<Device> &device, const size_t &size, void **data_ptr) const
+        auto allocateMemory(const DevicePtr &device, const size_t &size, void **data_ptr) const -> void override
         {
+#if CLE_CUDA
             auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
-            cudaError_t err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
+            auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
             if (err != cudaSuccess)
             {
                 throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
@@ -103,12 +145,16 @@ namespace cle
             {
                 throw std::runtime_error("Error: Failed to allocate CUDA memory.");
             }
+#else
+            throw std::runtime_error("CUDABackend::getDevices: CUDA is not enabled");
+#endif
         }
 
-        virtual void freeMemory(const std::shared_ptr<Device> &device, void **data_ptr) const
+        auto freeMemory(const DevicePtr &device, void **data_ptr) const -> void override
         {
+#if CLE_CUDA
             auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
-            cudaError_t err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
+            auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
             if (err != cudaSuccess)
             {
                 throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
@@ -118,12 +164,16 @@ namespace cle
             {
                 throw std::runtime_error("Error: Failed to free CUDA memory.");
             }
+#else
+            throw std::runtime_error("CUDABackend::getDevices: CUDA is not enabled");
+#endif
         }
 
-        virtual void writeMemory(const std::shared_ptr<Device> &device, void **data_ptr, const size_t &size, const void *host_ptr) const
+        auto writeMemory(const DevicePtr &device, void **data_ptr, const size_t &size, const void *host_ptr) const -> void override
         {
+#if CLE_CUDA
             auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
-            cudaError_t err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
+            auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
             if (err != cudaSuccess)
             {
                 throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
@@ -133,12 +183,16 @@ namespace cle
             {
                 throw std::runtime_error("Error: Failed to write CUDA memory.");
             }
+#else
+            throw std::runtime_error("CUDABackend::getDevices: CUDA is not enabled");
+#endif
         }
 
-        virtual void readMemory(const std::shared_ptr<Device> &device, const void **data_ptr, const size_t &size, void *host_ptr) const
+        auto readMemory(const DevicePtr &device, const void **data_ptr, const size_t &size, void *host_ptr) const -> void override
         {
+#if CLE_CUDA
             auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
-            cudaError_t err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
+            auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
             if (err != cudaSuccess)
             {
                 throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
@@ -148,21 +202,31 @@ namespace cle
             {
                 throw std::runtime_error("Error: Failed to read CUDA memory.");
             }
+#else
+            throw std::runtime_error("CUDABackend::getDevices: CUDA is not enabled");
+#endif
         }
     };
 
     class OpenCLBackend : public Backend
     {
     public:
-        OpenCLBackend() = default;
-        virtual ~OpenCLBackend() override = default;
-
-        virtual std::vector<std::shared_ptr<Device>> getDevices(const std::string &type = "all") const
+        OpenCLBackend()
         {
+#if !CLE_OPENCL
+            std::cerr << "Warning: Instanciating an OpenCL Backend but OpenCL is not enabled." << std::endl;
+#endif
+        }
+
+        ~OpenCLBackend() override = default;
+
+        [[nodiscard]] auto getDevices(const std::string &type) const -> std::vector<DevicePtr> override
+        {
+#if CLE_OPENCL
             std::vector<cl::Platform> platforms;
             cl::Platform::get(&platforms);
 
-            std::vector<std::shared_ptr<Device>> devices;
+            std::vector<DevicePtr> devices;
             cl_device_type deviceType;
             if (type == "cpu")
             {
@@ -179,7 +243,8 @@ namespace cle
             else
             {
                 std::cerr << "Warning: Unknown device type '" << type << "' provided." << std::endl;
-                std::cerr << "\tdefault: fetching all devices." << std::endl;
+                std::cerr << "\tdefault: fetching 'all' devices type." << std::endl;
+                deviceType = CL_DEVICE_TYPE_ALL;
             }
             for (int i = 0; i < platforms.size(); i++)
             {
@@ -191,13 +256,17 @@ namespace cle
                 }
             }
             return devices;
+#else
+            throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+#endif
         }
 
-        virtual std::shared_ptr<Device> getDevice(const std::string &name, const std::string &type = "all") const
+        [[nodiscard]] auto getDevice(const std::string &name, const std::string &type) const -> DevicePtr override
         {
+#if CLE_OPENCL
             auto devices = getDevices(type);
             auto ite = std::find_if(devices.begin(), devices.end(),
-                                    [&name](const std::shared_ptr<Device> &dev)
+                                    [&name](const DevicePtr &dev)
                                     {
                                         return dev->getName().find(name) != std::string::npos;
                                     });
@@ -210,10 +279,14 @@ namespace cle
                 return std::move(devices.back());
             }
             return nullptr;
+#else
+            throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+#endif
         }
 
-        virtual std::vector<std::string> getDevicesList(const std::string &type = "all") const
+        [[nodiscard]] auto getDevicesList(const std::string &type) const -> std::vector<std::string> override
         {
+#if CLE_OPENCL
             auto devices = getDevices(type);
             std::vector<std::string> deviceList;
             for (int i = 0; i < devices.size(); i++)
@@ -221,98 +294,114 @@ namespace cle
                 deviceList.push_back(devices[i]->getName());
             }
             return deviceList;
+#else
+            throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+#endif
         }
 
-        virtual Backend::Type getType() const
+        [[nodiscard]] auto getType() const -> Backend::Type override
         {
             return Backend::Type::OPENCL;
         }
 
-        virtual void allocateMemory(const std::shared_ptr<Device> &device, const size_t &size, void **data_ptr) const
+        auto allocateMemory(const DevicePtr &device, const size_t &size, void **data_ptr) const -> void override
         {
+#if CLE_OPENCL
             cl_int err;
             auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-            cl::Context context = opencl_device->getCLContext();
-            cl::Buffer buffer = cl::Buffer(context, CL_MEM_READ_WRITE, size, nullptr, &err);
+            auto context = opencl_device->getCLContext();
+            auto mem = clCreateBuffer(context.get(), CL_MEM_READ_WRITE, size, nullptr, &err);
             if (err != CL_SUCCESS)
             {
                 throw std::runtime_error("Error: Failed to allocate OpenCL memory.");
             }
-            *data_ptr = static_cast<void *>(new cl::Memory(buffer));
+            *data_ptr = static_cast<void *>(new cl_mem(mem));
+#else
+            throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+#endif
         }
 
-        virtual void freeMemory(const std::shared_ptr<Device> &device, void **data_ptr) const
+        auto freeMemory(const DevicePtr &device, void **data_ptr) const -> void override
         {
-            cl::Memory *cl_mem_ptr = static_cast<cl::Memory *>(*data_ptr);
-            cl_int err = clReleaseMemObject(cl_mem_ptr->get());
+#if CLE_OPENCL
+            auto *cl_mem_ptr = static_cast<cl_mem *>(*data_ptr);
+            auto err = clReleaseMemObject(*cl_mem_ptr);
             if (err != CL_SUCCESS)
             {
                 throw std::runtime_error("Error: Failed to free OpenCL memory.");
             }
-            delete cl_mem_ptr;
+#else
+            throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+#endif
         }
 
-        virtual void writeMemory(const std::shared_ptr<Device> &device, void **data_ptr, const size_t &size, const void *host_ptr) const
+        auto writeMemory(const DevicePtr &device, void **data_ptr, const size_t &size, const void *host_ptr) const -> void override
         {
+#if CLE_OPENCL
             auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-            cl::Context context = opencl_device->getCLContext();
-            cl::CommandQueue queue = opencl_device->getCLCommandQueue();
-            cl_int err = queue.enqueueWriteBuffer(*static_cast<cl::Buffer *>(*data_ptr), CL_TRUE, 0, size, host_ptr);
+            auto queue = opencl_device->getCLCommandQueue();
+            auto err = clEnqueueWriteBuffer(queue.get(), *static_cast<cl_mem *>(*data_ptr), CL_TRUE, 0, size, host_ptr, 0, nullptr, nullptr);
             if (err != CL_SUCCESS)
             {
                 throw std::runtime_error("Error: Failed to write OpenCL memory.");
             }
+#else
+            throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+#endif
         }
 
-        virtual void readMemory(const std::shared_ptr<Device> &device, const void **data_ptr, const size_t &size, void *host_ptr) const
+        auto readMemory(const DevicePtr &device, const void **data_ptr, const size_t &size, void *host_ptr) const -> void override
         {
+#if CLE_OPENCL
             auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-            cl::Context context = opencl_device->getCLContext();
-            cl::CommandQueue queue = opencl_device->getCLCommandQueue();
-            cl_int err = queue.enqueueReadBuffer(*static_cast<const cl::Buffer *>(*data_ptr), CL_TRUE, 0, size, host_ptr);
+            auto queue = opencl_device->getCLCommandQueue();
+            auto err = clEnqueueReadBuffer(queue.get(), *static_cast<const cl_mem *>(*data_ptr), CL_TRUE, 0, size, host_ptr, 0, nullptr, nullptr);
             if (err != CL_SUCCESS)
             {
                 throw std::runtime_error("Error: Failed to read OpenCL memory.");
             }
+#else
+            throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+#endif
         }
     };
 
     class BackendManager
     {
     public:
-        static BackendManager &getInstance()
+        static auto getInstance() -> BackendManager &
         {
             static BackendManager instance;
             return instance;
         }
 
-        void selectBackend(bool useCUDA)
+        auto setBackend(bool useCUDA) -> void
         {
             if (useCUDA)
             {
-                backend = std::make_unique<CUDABackend>();
+                this->backend = std::make_unique<CUDABackend>();
             }
             else
             {
-                backend = std::make_unique<OpenCLBackend>();
+                this->backend = std::make_unique<OpenCLBackend>();
             }
         }
 
-        Backend &getBackend() const
+        [[nodiscard]] auto getBackend() const -> const Backend &
         {
-            if (!backend)
+            if (!this->backend)
             {
                 throw std::runtime_error("Backend not selected.");
             }
-            return *backend;
+            return *this->backend;
         }
 
-        BackendManager &operator=(const BackendManager &) = delete;
+        auto operator=(const BackendManager &) -> BackendManager & = delete;
         BackendManager(const BackendManager &) = delete;
 
     private:
         std::shared_ptr<Backend> backend;
-        BackendManager() {}
+        BackendManager() = default;
     };
 
 } // namespace cle
