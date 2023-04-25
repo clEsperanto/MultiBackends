@@ -1,5 +1,7 @@
 # folder
 .vscode
+build
+buidls
 
 # Prerequisites
 *.d
