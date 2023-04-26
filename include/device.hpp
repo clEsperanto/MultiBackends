@@ -53,6 +53,12 @@ namespace cle
             }
             return out;
         }
+
+        friend auto operator<<(std::ostream &out, const Device &device) -> std::ostream &
+        {
+            out << device.getName() << " (" << device.getType() << ")";
+            return out;
+        }
     };
 
 #if CLE_OPENCL

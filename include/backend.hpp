@@ -35,15 +35,17 @@ namespace cle
         Backend() = default;
         virtual ~Backend() = default;
 
-        [[nodiscard]] virtual auto getType() const -> Backend::Type = 0;
-        [[nodiscard]] virtual auto getDevicesList(const std::string &type) const -> std::vector<std::string> = 0;
-        [[nodiscard]] virtual auto getDevices(const std::string &type) const -> std::vector<DevicePtr> = 0;
-        [[nodiscard]] virtual auto getDevice(const std::string &name, const std::string &type) const -> DevicePtr = 0;
+        [[nodiscard]] virtual inline auto getType() const -> Backend::Type = 0;
+        [[nodiscard]] virtual inline auto getDevicesList(const std::string &type) const -> std::vector<std::string> = 0;
+        [[nodiscard]] virtual inline auto getDevices(const std::string &type) const -> std::vector<DevicePtr> = 0;
+        [[nodiscard]] virtual inline auto getDevice(const std::string &name, const std::string &type) const -> DevicePtr = 0;
 
-        virtual auto allocateMemory(const DevicePtr &device, const size_t &size, void **data_ptr) const -> void = 0;
-        virtual auto freeMemory(const DevicePtr &device, void **data_ptr) const -> void = 0;
-        virtual auto writeMemory(const DevicePtr &device, void **data_ptr, const size_t &size, const void *host_ptr) const -> void = 0;
-        virtual auto readMemory(const DevicePtr &device, const void **data_ptr, const size_t &size, void *host_ptr) const -> void = 0;
+        virtual inline auto allocateMemory(const DevicePtr &device, const size_t &size, void **data_ptr) const -> void = 0;
+        virtual inline auto freeMemory(const DevicePtr &device, void **data_ptr) const -> void = 0;
+        virtual inline auto writeMemory(const DevicePtr &device, void **data_ptr, const size_t &size, const void *host_ptr) const -> void = 0;
+        virtual inline auto readMemory(const DevicePtr &device, const void **data_ptr, const size_t &size, void *host_ptr) const -> void = 0;
+
+        auto execute(const DevicePtr &device, const std::string &kernel_name, const std::string &kernel_source, const std::array<size_t, 3> &global_size, const std::vector<void *> &args) const -> void {}
 
         friend auto operator<<(std::ostream &out, const Backend::Type &backend_type) -> std::ostream &
         {
@@ -56,6 +58,12 @@ namespace cle
                 out << "OpenCL";
                 break;
             }
+            return out;
+        }
+
+        friend auto operator<<(std::ostream &out, const Backend &backend) -> std::ostream &
+        {
+            out << backend.getType() << " backend";
             return out;
         }
     };
@@ -72,7 +80,7 @@ namespace cle
 
         ~CUDABackend() override = default;
 
-        [[nodiscard]] auto getDevices(const std::string &type) const -> std::vector<DevicePtr> override
+        [[nodiscard]] inline auto getDevices(const std::string &type) const -> std::vector<DevicePtr> override
         {
 #if CLE_CUDA
             int deviceCount;
@@ -88,7 +96,7 @@ namespace cle
 #endif
         }
 
-        [[nodiscard]] auto getDevice(const std::string &name, const std::string &type) const -> DevicePtr override
+        [[nodiscard]] inline auto getDevice(const std::string &name, const std::string &type) const -> DevicePtr override
         {
 #if CLE_CUDA
             auto devices = getDevices(type);
@@ -111,7 +119,7 @@ namespace cle
 #endif
         }
 
-        [[nodiscard]] auto getDevicesList(const std::string &type) const -> std::vector<std::string> override
+        [[nodiscard]] inline auto getDevicesList(const std::string &type) const -> std::vector<std::string> override
         {
 #if CLE_CUDA
             auto devices = getDevices(type);
@@ -126,12 +134,12 @@ namespace cle
 #endif
         }
 
-        [[nodiscard]] auto getType() const -> Backend::Type override
+        [[nodiscard]] inline auto getType() const -> Backend::Type override
         {
             return Backend::Type::CUDA;
         }
 
-        auto allocateMemory(const DevicePtr &device, const size_t &size, void **data_ptr) const -> void override
+        inline auto allocateMemory(const DevicePtr &device, const size_t &size, void **data_ptr) const -> void override
         {
 #if CLE_CUDA
             auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
@@ -150,7 +158,7 @@ namespace cle
 #endif
         }
 
-        auto freeMemory(const DevicePtr &device, void **data_ptr) const -> void override
+        inline auto freeMemory(const DevicePtr &device, void **data_ptr) const -> void override
         {
 #if CLE_CUDA
             auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
@@ -169,7 +177,7 @@ namespace cle
 #endif
         }
 
-        auto writeMemory(const DevicePtr &device, void **data_ptr, const size_t &size, const void *host_ptr) const -> void override
+        inline auto writeMemory(const DevicePtr &device, void **data_ptr, const size_t &size, const void *host_ptr) const -> void override
         {
 #if CLE_CUDA
             auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
@@ -188,7 +196,7 @@ namespace cle
 #endif
         }
 
-        auto readMemory(const DevicePtr &device, const void **data_ptr, const size_t &size, void *host_ptr) const -> void override
+        inline auto readMemory(const DevicePtr &device, const void **data_ptr, const size_t &size, void *host_ptr) const -> void override
         {
 #if CLE_CUDA
             auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
@@ -220,7 +228,7 @@ namespace cle
 
         ~OpenCLBackend() override = default;
 
-        [[nodiscard]] auto getDevices(const std::string &type) const -> std::vector<DevicePtr> override
+        [[nodiscard]] inline auto getDevices(const std::string &type) const -> std::vector<DevicePtr> override
         {
 #if CLE_OPENCL
             std::vector<cl::Platform> platforms;
@@ -261,7 +269,7 @@ namespace cle
 #endif
         }
 
-        [[nodiscard]] auto getDevice(const std::string &name, const std::string &type) const -> DevicePtr override
+        [[nodiscard]] inline auto getDevice(const std::string &name, const std::string &type) const -> DevicePtr override
         {
 #if CLE_OPENCL
             auto devices = getDevices(type);
@@ -284,7 +292,7 @@ namespace cle
 #endif
         }
 
-        [[nodiscard]] auto getDevicesList(const std::string &type) const -> std::vector<std::string> override
+        [[nodiscard]] inline auto getDevicesList(const std::string &type) const -> std::vector<std::string> override
         {
 #if CLE_OPENCL
             auto devices = getDevices(type);
@@ -299,12 +307,12 @@ namespace cle
 #endif
         }
 
-        [[nodiscard]] auto getType() const -> Backend::Type override
+        [[nodiscard]] inline auto getType() const -> Backend::Type override
         {
             return Backend::Type::OPENCL;
         }
 
-        auto allocateMemory(const DevicePtr &device, const size_t &size, void **data_ptr) const -> void override
+        inline auto allocateMemory(const DevicePtr &device, const size_t &size, void **data_ptr) const -> void override
         {
 #if CLE_OPENCL
             cl_int err;
@@ -321,7 +329,7 @@ namespace cle
 #endif
         }
 
-        auto freeMemory(const DevicePtr &device, void **data_ptr) const -> void override
+        inline auto freeMemory(const DevicePtr &device, void **data_ptr) const -> void override
         {
 #if CLE_OPENCL
             auto *cl_mem_ptr = static_cast<cl_mem *>(*data_ptr);
@@ -335,7 +343,7 @@ namespace cle
 #endif
         }
 
-        auto writeMemory(const DevicePtr &device, void **data_ptr, const size_t &size, const void *host_ptr) const -> void override
+        inline auto writeMemory(const DevicePtr &device, void **data_ptr, const size_t &size, const void *host_ptr) const -> void override
         {
 #if CLE_OPENCL
             auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
@@ -350,7 +358,7 @@ namespace cle
 #endif
         }
 
-        auto readMemory(const DevicePtr &device, const void **data_ptr, const size_t &size, void *host_ptr) const -> void override
+        inline auto readMemory(const DevicePtr &device, const void **data_ptr, const size_t &size, void *host_ptr) const -> void override
         {
 #if CLE_OPENCL
             auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
@@ -375,7 +383,7 @@ namespace cle
             return instance;
         }
 
-        auto setBackend(bool useCUDA) -> void
+        inline auto setBackend(bool useCUDA) -> void
         {
             if (useCUDA)
             {
@@ -387,13 +395,19 @@ namespace cle
             }
         }
 
-        [[nodiscard]] auto getBackend() const -> const Backend &
+        [[nodiscard]] inline auto getBackend() const -> const Backend &
         {
             if (!this->backend)
             {
                 throw std::runtime_error("Backend not selected.");
             }
             return *this->backend;
+        }
+
+        friend auto operator<<(std::ostream &out, const BackendManager &backend_manager) -> std::ostream &
+        {
+            out << backend_manager.getBackend().getType() << " backend";
+            return out;
         }
 
         auto operator=(const BackendManager &) -> BackendManager & = delete;

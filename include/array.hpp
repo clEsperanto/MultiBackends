@@ -77,6 +77,12 @@ namespace cle
         [[nodiscard]] auto bytesPerElements() const -> size_t { return bytes_per_element_; }
         [[nodiscard]] auto device() const -> DevicePtr { return device_; }
 
+        friend auto operator<<(std::ostream &out, const Array &array) -> std::ostream &
+        {
+            out << "Array ([" << array.width_ << "," << array.height_ << "," << array.depth_ << "], dtype=" << array.bytes_per_element_ << ")";
+            return out;
+        }
+
     protected:
         [[nodiscard]] auto get() const -> void ** { return data.get(); }
         [[nodiscard]] auto c_get() const -> const void ** { return (const void **)data.get(); }
