@@ -21,7 +21,12 @@ void run_test()
     float data_out[arr.nbElements()];
     std::fill(data_out, data_out + size, -1);
 
-    cle::memory::pull(arr, data_out);
+    auto arr_copy = arr;
+
+    std::cout << "arr: " << arr << std::endl;
+    std::cout << "arr_copy: " << arr_copy << std::endl;
+
+    cle::memory::pull(arr_copy, data_out);
 
     for (int i = 0; i < size; i++)
     {

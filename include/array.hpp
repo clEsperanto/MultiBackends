@@ -37,7 +37,7 @@ namespace cle
 
         ~Array()
         {
-            if (this->initialized)
+            if (this->initialized && data.unique())
             {
                 backend.freeMemory(device_, this->get());
             }
