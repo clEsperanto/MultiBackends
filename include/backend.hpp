@@ -44,6 +44,7 @@ namespace cle
         virtual inline auto freeMemory(const DevicePtr &device, void **data_ptr) const -> void = 0;
         virtual inline auto writeMemory(const DevicePtr &device, void **data_ptr, const size_t &size, const void *host_ptr) const -> void = 0;
         virtual inline auto readMemory(const DevicePtr &device, const void **data_ptr, const size_t &size, void *host_ptr) const -> void = 0;
+        virtual inline auto copyMemory(const DevicePtr &device, const void **src_data_ptr, const size_t &size, void **dst_data_ptr) const -> void = 0;
 
         auto execute(const DevicePtr &device, const std::string &kernel_name, const std::string &kernel_source, const std::array<size_t, 3> &global_size, const std::vector<void *> &args) const -> void {}
 
@@ -214,6 +215,25 @@ namespace cle
             throw std::runtime_error("CUDABackend::getDevices: CUDA is not enabled");
 #endif
         }
+
+        inline auto copyMemory(const DevicePtr &device, const void **src_data_ptr, const size_t &size, void **dst_data_ptr) const -> void override
+        {
+#if CLE_CUDA
+            auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
+            auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
+            if (err != cudaSuccess)
+            {
+                throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
+            }
+            err = cudaMemcpy(*dst_data_ptr, src_data_ptr, size, cudaMemcpyDeviceToDevice);
+            if (err != cudaSuccess)
+            {
+                throw std::runtime_error("Error: Failed to write CUDA memory.");
+            }
+#else
+            throw std::runtime_error("CUDABackend::getDevices: CUDA is not enabled");
+#endif
+        }
     };
 
     class OpenCLBackend : public Backend
@@ -367,6 +387,21 @@ namespace cle
             if (err != CL_SUCCESS)
             {
                 throw std::runtime_error("Error: Failed to read OpenCL memory.");
+            }
+#else
+            throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+#endif
+        }
+
+        inline auto copyMemory(const DevicePtr &device, const void **src_data_ptr, const size_t &size, void **dst_data_ptr) const -> void override
+        {
+#if CLE_OPENCL
+            auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+            auto queue = opencl_device->getCLCommandQueue();
+            auto err = clEnqueueCopyBuffer(queue.get(), *static_cast<const cl_mem *>(*src_data_ptr), *static_cast<cl_mem *>(*dst_data_ptr), 0, 0, size, 0, nullptr, nullptr);
+            if (err != CL_SUCCESS)
+            {
+                throw std::runtime_error("Error: Failed to write OpenCL memory.");
             }
 #else
             throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
