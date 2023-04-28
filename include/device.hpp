@@ -40,6 +40,8 @@ namespace cle
         [[nodiscard]] virtual auto getInfo() const -> std::string = 0;
         [[nodiscard]] virtual auto getType() const -> Device::Type = 0;
 
+        // [[nodiscard]] virtual auto getProgram(const std::string &hash) const -> void * = 0;
+
         friend auto operator<<(std::ostream &out, const Device::Type &device_type) -> std::ostream &
         {
             switch (device_type)
@@ -191,11 +193,17 @@ namespace cle
             return result.str();
         }
 
+        [[nodiscard]] auto getCache() -> std::unordered_map<std::string, cl_program> &
+        {
+            return this->cache;
+        }
+
     private:
         cl::Platform clPlatform;
         cl::Device clDevice;
         cl::Context clContext;
         cl::CommandQueue clCommandQueue;
+        std::unordered_map<std::string, cl_program> cache;
         bool initialized = false;
     };
 #endif // CLE_OPENCL
@@ -301,10 +309,16 @@ namespace cle
             return result.str();
         }
 
+        [[nodiscard]] auto getCache() -> std::unordered_map<std::string, CUmodule> &
+        {
+            return this->cache;
+        }
+
     private:
         int cudaDeviceIndex;
         cudaStream_t cudaStream;
         bool initialized = false;
+        std::unordered_map<std::string, CUmodule> cache;
     };
 #endif // CLE_CUDA
 
