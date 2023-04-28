@@ -18,6 +18,7 @@
 #endif
 
 #include "device.hpp"
+#include <map>
 
 namespace cle
 {
@@ -45,8 +46,13 @@ namespace cle
         virtual inline auto writeMemory(const DevicePtr &device, void **data_ptr, const size_t &size, const void *host_ptr) const -> void = 0;
         virtual inline auto readMemory(const DevicePtr &device, const void **data_ptr, const size_t &size, void *host_ptr) const -> void = 0;
         virtual inline auto copyMemory(const DevicePtr &device, const void **src_data_ptr, const size_t &size, void **dst_data_ptr) const -> void = 0;
+        virtual inline auto setMemory(const DevicePtr &device, void **data_ptr, const size_t &size, const void *value, const size_t &value_size) const -> void = 0;
 
-        auto execute(const DevicePtr &device, const std::string &kernel_name, const std::string &kernel_source, const std::array<size_t, 3> &global_size, const std::vector<void *> &args) const -> void {}
+        virtual inline auto buildKernel(const DevicePtr &device, const std::string &kernel_source, const std::string &kernel_name, void *kernel) const -> void = 0;
+        virtual inline auto loadProgramFromCache(const DevicePtr &device, const std::string &hash, void *program) const -> void = 0;
+        virtual inline auto saveProgramToCache(const DevicePtr &device, const std::string &hash, void *program) const -> void = 0;
+
+        // auto execute(const DevicePtr &device, const std::pair<std::string, std::string> &kernel_source, const std::array<size_t, 3> &global_size, const std::vector<void *> &args, const std::vector<void *> &sizes) const -> void {}
 
         friend auto operator<<(std::ostream &out, const Backend::Type &backend_type) -> std::ostream &
         {
@@ -93,7 +99,7 @@ namespace cle
             }
             return devices;
 #else
-            throw std::runtime_error("CUDABackend::getDevices: CUDA is not enabled");
+            throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif
         }
 
@@ -116,7 +122,7 @@ namespace cle
             }
             return nullptr;
 #else
-            throw std::runtime_error("CUDABackend::getDevices: CUDA is not enabled");
+            throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif
         }
 
@@ -131,7 +137,7 @@ namespace cle
             }
             return deviceList;
 #else
-            throw std::runtime_error("CUDABackend::getDevices: CUDA is not enabled");
+            throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif
         }
 
@@ -155,7 +161,7 @@ namespace cle
                 throw std::runtime_error("Error: Failed to allocate CUDA memory.");
             }
 #else
-            throw std::runtime_error("CUDABackend::getDevices: CUDA is not enabled");
+            throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif
         }
 
@@ -174,7 +180,7 @@ namespace cle
                 throw std::runtime_error("Error: Failed to free CUDA memory.");
             }
 #else
-            throw std::runtime_error("CUDABackend::getDevices: CUDA is not enabled");
+            throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif
         }
 
@@ -193,7 +199,7 @@ namespace cle
                 throw std::runtime_error("Error: Failed to write CUDA memory.");
             }
 #else
-            throw std::runtime_error("CUDABackend::getDevices: CUDA is not enabled");
+            throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif
         }
 
@@ -212,7 +218,7 @@ namespace cle
                 throw std::runtime_error("Error: Failed to read CUDA memory.");
             }
 #else
-            throw std::runtime_error("CUDABackend::getDevices: CUDA is not enabled");
+            throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif
         }
 
@@ -231,7 +237,85 @@ namespace cle
                 throw std::runtime_error("Error: Failed to write CUDA memory.");
             }
 #else
-            throw std::runtime_error("CUDABackend::getDevices: CUDA is not enabled");
+            throw std::runtime_error("Error: CUDA backend is not enabled");
+#endif
+        }
+
+        inline auto setMemory(const DevicePtr &device, void **data_ptr, const size_t &size, const void *value, const size_t &value_size) const -> void override
+        {
+#if CLE_CUDA
+            auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
+            auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
+            if (err != cudaSuccess)
+            {
+                throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
+            }
+            err = cudaMemset(*data_ptr, *(const int *)value, size);
+            if (err != cudaSuccess)
+            {
+                throw std::runtime_error("Error: Failed to set CUDA memory.");
+            }
+#else
+            throw std::runtime_error("Error: CUDA backend is not enabled");
+#endif
+        }
+
+        inline auto loadProgramFromCache(const DevicePtr &device, const std::string &hash, void *program) const -> void override
+        {
+#if CLE_CUDA
+            auto cuda_device = std::dynamic_pointer_cast<CUDADevice>(device);
+            CUmodule module = nullptr;
+            auto ite = cuda_device->getCache().find(hash);
+            if (ite != cuda_device->getCache().end())
+            {
+                module = ite->second;
+            }
+            program = module;
+#else
+            throw std::runtime_error("Error: CUDA backend is not enabled");
+#endif
+        }
+
+        inline auto saveProgramToCache(const DevicePtr &device, const std::string &hash, void *program) const -> void override
+        {
+#if CLE_CUDA
+            auto cuda_device = std::dynamic_pointer_cast<CUDADevice>(device);
+            cuda_device->getCache().emplace_hint(cuda_device->getCache().end(), hash, (CUmodule)program);
+#else
+            throw std::runtime_error("Error: CUDA backend is not enabled");
+#endif
+        }
+
+        inline auto buildKernel(const DevicePtr &device, const std::string &kernel_source, const std::string &kernel_name, void *kernel) const -> void override
+        {
+#if CLE_CUDA
+            auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
+            auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
+            if (err != cudaSuccess)
+            {
+                throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
+            }
+            CUmodule module;
+            CUfunction function;
+            std::string hash = std::to_string(std::hash<std::string>{}(kernel_source));
+            loadProgramFromCache(device, hash, module);
+            if (module == nullptr)
+            {
+                auto res = cuModuleLoadDataEx(&module, kernel_source.c_str(), 0, 0, 0);
+                if (res != CUDA_SUCCESS)
+                {
+                    throw std::runtime_error("Error: Failed to build CUDA program.");
+                }
+                saveProgramToCache(device, hash, module);
+            }
+            auto res = cuModuleGetFunction(&function, module, kernel_name.c_str());
+            if (res != CUDA_SUCCESS)
+            {
+                throw std::runtime_error("Error: Failed to get CUDA kernel.");
+            }
+            *((CUfunction *)kernel) = function;
+#else
+            throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif
         }
     };
@@ -403,6 +487,78 @@ namespace cle
             {
                 throw std::runtime_error("Error: Failed to write OpenCL memory.");
             }
+#else
+            throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+#endif
+        }
+
+        inline auto setMemory(const DevicePtr &device, void **data_ptr, const size_t &size, const void *value, const size_t &value_size) const -> void override
+        {
+#if CLE_OPENCL
+            auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+            auto queue = opencl_device->getCLCommandQueue();
+            auto err = clEnqueueFillBuffer(queue.get(), *static_cast<cl_mem *>(*data_ptr), value, value_size, 0, size, 0, nullptr, nullptr);
+            if (err != CL_SUCCESS)
+            {
+                throw std::runtime_error("Error: Failed to set OpenCL memory.");
+            }
+#else
+            throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+#endif
+        }
+
+        inline auto loadProgramFromCache(const DevicePtr &device, const std::string &hash, void *program) const -> void override
+        {
+#if CLE_OPENCL
+            auto opencl_device = std::dynamic_pointer_cast<OpenCLDevice>(device);
+
+            cl_program prog = nullptr;
+            auto ite = opencl_device->getCache().find(hash);
+            if (ite != opencl_device->getCache().end())
+            {
+                prog = ite->second;
+            }
+            *static_cast<cl_program *>(program) = prog;
+#else
+            throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+#endif
+        }
+
+        inline auto saveProgramToCache(const DevicePtr &device, const std::string &hash, void *program) const -> void override
+        {
+
+#if CLE_OPENCL
+            auto opencl_device = std::dynamic_pointer_cast<OpenCLDevice>(device);
+            opencl_device->getCache().emplace_hint(opencl_device->getCache().end(), hash, *static_cast<cl_program *>(program));
+#else
+            throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+#endif
+        }
+
+        inline auto buildKernel(const DevicePtr &device, const std::string &kernel_source, const std::string &kernel_name, void *kernel) const -> void override
+        {
+#if CLE_OPENCL
+            cl_int err;
+            auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+            auto context = opencl_device->getCLContext();
+            cl_program prog = nullptr;
+            std::string hash = std::to_string(std::hash<std::string>{}(kernel_source));
+            loadProgramFromCache(device, hash, prog);
+            if (prog == nullptr)
+            {
+                prog = clCreateProgramWithSource(context.get(), 1, (const char **)&kernel_source, nullptr, &err);
+                if (err != CL_SUCCESS)
+                {
+                    size_t len;
+                    char buffer[2048];
+                    clGetProgramBuildInfo(prog, opencl_device->getCLDevice().get(), CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &len);
+                    std::cerr << buffer << std::endl;
+                    throw std::runtime_error("Error: Failed to build OpenCL program.");
+                }
+                saveProgramToCache(device, hash, prog);
+            }
+            auto clkernel = clCreateKernel(prog, kernel_name.c_str(), nullptr);
+            *static_cast<cl_kernel *>(kernel) = clkernel;
 #else
             throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
 #endif
