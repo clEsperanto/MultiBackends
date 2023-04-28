@@ -17,6 +17,11 @@ file(GLOB_RECURSE HEADERS "include/*.hpp")
 # find OpenCL and CUDA
 find_package(OpenCL REQUIRED)
 find_package(CUDA REQUIRED)
+find_package(CUDAToolkit)
+
+
+message(STATUS "CUDA Libraries: ${CUDA_LIBRARIES}")
+
 
 # Add the variables to the compile definitions
 add_compile_definitions(
@@ -40,8 +45,11 @@ if (OpenCL_FOUND)
 endif()
 if (CUDA_FOUND)
     set(CLE_CUDA 1)
+    set_target_properties(${LIBRARY_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+    set_target_properties(${LIBRARY_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
     target_include_directories(${LIBRARY_NAME} PUBLIC ${CUDA_INCLUDE_DIRS})
-    target_link_libraries(${LIBRARY_NAME} PUBLIC ${CUDA_LIBRARIES})
+    # target_link_libraries(${LIBRARY_NAME} PUBLIC ${CUDA_LIBRARIES})
+    target_link_libraries(${LIBRARY_NAME} PUBLIC CUDA::cudart CUDA::cuda_driver CUDA::OpenCL)
 endif()
 
 # Add the variables to the compile definitions

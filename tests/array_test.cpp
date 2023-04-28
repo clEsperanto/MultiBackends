@@ -19,7 +19,7 @@ void run_test()
 
     std::cout << "Allocate memory" << std::endl;
     size_t size = 5 * 5 * 2;
-    cle::Array gpu_arr1(5, 5, 2, sizeof(float), device);
+    cle::Array gpu_arr1(5, 5, 2, cle::Array::Type::Float, device);
 
     std::cout << "Write memory" << std::endl;
     float data[size];
@@ -27,7 +27,7 @@ void run_test()
     {
         data[i] = i;
     }
-    cle::Array gpu_arr2(5, 5, 2, sizeof(float), data, device);
+    cle::Array gpu_arr2(5, 5, 2, cle::Array::Type::Float, data, device);
 
     std::cout << "Read memory" << std::endl;
     float data_out[size];
@@ -47,6 +47,15 @@ void run_test()
     std::cout << "Write existing memory" << std::endl;
     gpu_arr1.write(data);
     float data_out2[size];
+    gpu_arr1.read(data_out2);
+    for (int i = 0; i < size; i++)
+    {
+        std::cout << data_out2[i] << " ";
+    }
+    std::cout << std::endl;
+
+    std::cout << "Array type: " << gpu_arr1.dtype() << std::endl;
+    gpu_arr1.fill(12.0f);
     gpu_arr1.read(data_out2);
     for (int i = 0; i < size; i++)
     {
