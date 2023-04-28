@@ -55,7 +55,7 @@ void run_test()
     std::cout << std::endl;
 
     std::cout << "Array type: " << gpu_arr1.dtype() << std::endl;
-    gpu_arr1.fill(12.0f);
+    gpu_arr1.fill(1.0f);
     gpu_arr1.read(data_out2);
     for (int i = 0; i < size; i++)
     {

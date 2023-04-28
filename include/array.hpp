@@ -108,7 +108,7 @@ namespace cle
             {
                 std::cerr << "Error: Arrays are not initialized" << std::endl;
             }
-            backend.setMemory(device_, this->get(), this->nbElements() * bytes_per_element_, (const void *)&value, sizeof(T));
+            backend.setMemory(device_, this->get(), this->nbElements() * this->bytes_per_element_, (const void *)&value, sizeof(T));
         }
 
         [[nodiscard]] auto

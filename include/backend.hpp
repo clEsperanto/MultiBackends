@@ -52,9 +52,11 @@ namespace cle
         virtual inline auto loadProgramFromCache(const DevicePtr &device, const std::string &hash, void *program) const -> void = 0;
         virtual inline auto saveProgramToCache(const DevicePtr &device, const std::string &hash, void *program) const -> void = 0;
 
-        // auto execute(const DevicePtr &device, const std::pair<std::string, std::string> &kernel_source, const std::array<size_t, 3> &global_size, const std::vector<void *> &args, const std::vector<void *> &sizes) const -> void {}
+        // auto executeKernel(const DevicePtr &device, const std::string &kernel_source, const std::string &kernel_name, const std::array<size_t, 3> &global_size, const std::vector<void *> &args, const std::vector<void *> &sizes) const -> void {}
+        // virtual inline auto getPreamble() const -> const std::string &;
 
-        friend auto operator<<(std::ostream &out, const Backend::Type &backend_type) -> std::ostream &
+        friend auto
+        operator<<(std::ostream &out, const Backend::Type &backend_type) -> std::ostream &
         {
             switch (backend_type)
             {
@@ -250,7 +252,7 @@ namespace cle
             {
                 throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
             }
-            err = cudaMemset(*data_ptr, *(const int *)value, size);
+            err = cudaMemset(*data_ptr, *static_cast<const int *>(value), size);
             if (err != cudaSuccess)
             {
                 throw std::runtime_error("Error: Failed to set CUDA memory.");
