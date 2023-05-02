@@ -53,7 +53,7 @@ namespace cle
         virtual inline auto saveProgramToCache(const DevicePtr &device, const std::string &hash, void *program) const -> void = 0;
 
         // auto executeKernel(const DevicePtr &device, const std::string &kernel_source, const std::string &kernel_name, const std::array<size_t, 3> &global_size, const std::vector<void *> &args, const std::vector<void *> &sizes) const -> void {}
-        // virtual inline auto getPreamble() const -> const std::string &;
+        [[nodiscard]] virtual inline auto getPreamble() -> std::string = 0;
 
         friend auto
         operator<<(std::ostream &out, const Backend::Type &backend_type) -> std::ostream &
@@ -320,6 +320,11 @@ namespace cle
             throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif
         }
+
+        [[nodiscard]] inline auto getPreamble() -> std::string override
+        {
+            return ""; // return cudaKernel::preamble;
+        }
     };
 
     class OpenCLBackend : public Backend
@@ -564,6 +569,11 @@ namespace cle
 #else
             throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
 #endif
+        }
+
+        [[nodiscard]] inline auto getPreamble() -> std::string override
+        {
+            return ""; // return oclKernel::preamble; // TODO
         }
     };
 

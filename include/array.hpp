@@ -122,6 +122,8 @@ namespace cle
         [[nodiscard]] auto bytesPerElements() const -> size_t { return toBytes(dataType); }
         [[nodiscard]] auto dtype() const -> Array::Type { return dataType; }
         [[nodiscard]] auto device() const -> DevicePtr { return device_; }
+        [[nodiscard]] auto dim() const -> unsigned int { return (depth_ > 1) ? 3 : (height_ > 1) ? 2
+                                                                                                 : 1; }
 
         friend auto operator<<(std::ostream &out, const Array &array) -> std::ostream &
         {
@@ -233,6 +235,33 @@ namespace cle
             else
             {
                 throw std::invalid_argument("Error: Invalid type");
+            }
+        }
+
+        auto shortType() const -> const std::string
+        {
+            switch (dataType)
+            {
+            case Array::Type::Float:
+                return "f";
+            case Array::Type::Int:
+                return "i";
+            case Array::Type::UnsignedInt:
+                return "ui";
+            case Array::Type::Char:
+                return "c";
+            case Array::Type::UnsignedChar:
+                return "uc";
+            case Array::Type::Short:
+                return "s";
+            case Array::Type::UnsignedShort:
+                return "us";
+            case Array::Type::Long:
+                return "l";
+            case Array::Type::UnsignedLong:
+                return "ul";
+            default:
+                throw std::invalid_argument("Invalid Array::Type value");
             }
         }
 
