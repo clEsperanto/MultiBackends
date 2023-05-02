@@ -11,16 +11,16 @@ namespace cle
 {
     using DevicePtr = std::shared_ptr<cle::Device>;
     using ParameterMap = std::map<std::string, std::variant<Array, float, int>>;
-    using ConstantMap = std::map<std::string, std::variant<float, int>>;
+    using ConstantMap = std::map<std::string, int>;
     using KernelInfo = std::pair<std::string, std::string>;
     using RangeArray = std::array<size_t, 3>;
 
-    static auto cudaDefines(const ParameterMap &parameter_list, const ConstantMap &constant_list) -> std::string
-    {
-        // todo
-    }
+    // static auto cudaDefines(const ParameterMap &parameter_list, const ConstantMap &constant_list) -> const std::string
+    // {
+    //     // todo
+    // }
 
-    static auto oclDefines(const ParameterMap &parameter_list, const ConstantMap &constant_list) -> std::string
+    static auto oclDefines(const ParameterMap &parameter_list, const ConstantMap &constant_list) -> const std::string
     {
         std::ostringstream defines;
         defines << "\n#define GET_IMAGE_WIDTH(image_key) IMAGE_SIZE_ ## image_key ## _WIDTH";   // ! Not defined at runtime
@@ -124,7 +124,7 @@ namespace cle
         // add constant memory defines
         if (!constant_list.empty())
         {
-            for (const auto &[key, value] : parameter_list)
+            for (const auto &[key, value] : constant_list)
             {
                 defines << "#define " << key << " " << value << "\n";
             }
@@ -144,7 +144,8 @@ namespace cle
         args_size.reserve(parameters.size());
 
         std::string preamble = cle::BackendManager::getInstance().getBackend().getPreamble();
-        std::string defines = cle::oclDefines(parameters);
+        std::string defines = cle::oclDefines(parameters, constants);
+        // std::string defines = cle::cudaDefines(parameters, constants);
         std::string kernel = kernel_func.second;
         std::string func_name = kernel_func.first;
         std::string source = defines + preamble + kernel;
@@ -154,8 +155,8 @@ namespace cle
             if (std::holds_alternative<Array>(value))
             {
                 const auto &arr = std::get<Array>(value);
-                args_ptr.push_back(arr.get());
-                args_size.push_back(arr.nbElements() * arr.bytesPerElement());
+                args_ptr.push_back(*arr.get());
+                args_size.push_back(arr.nbElements() * arr.bytesPerElements());
             }
             else if (std::holds_alternative<float>(value))
             {

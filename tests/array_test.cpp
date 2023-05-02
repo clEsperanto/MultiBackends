@@ -2,6 +2,8 @@
 #include "backend.hpp"
 #include "device.hpp"
 
+#include "execution.hpp"
+
 void run_test()
 {
     cle::BackendManager &backendManager = cle::BackendManager::getInstance();

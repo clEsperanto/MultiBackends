@@ -53,7 +53,7 @@ namespace cle
         virtual inline auto saveProgramToCache(const DevicePtr &device, const std::string &hash, void *program) const -> void = 0;
 
         // auto executeKernel(const DevicePtr &device, const std::string &kernel_source, const std::string &kernel_name, const std::array<size_t, 3> &global_size, const std::vector<void *> &args, const std::vector<void *> &sizes) const -> void {}
-        [[nodiscard]] virtual inline auto getPreamble() -> std::string = 0;
+        [[nodiscard]] virtual inline auto getPreamble() const -> std::string = 0;
 
         friend auto
         operator<<(std::ostream &out, const Backend::Type &backend_type) -> std::ostream &
@@ -321,7 +321,7 @@ namespace cle
 #endif
         }
 
-        [[nodiscard]] inline auto getPreamble() -> std::string override
+        [[nodiscard]] inline auto getPreamble() const -> std::string override
         {
             return ""; // return cudaKernel::preamble;
         }
@@ -571,7 +571,7 @@ namespace cle
 #endif
         }
 
-        [[nodiscard]] inline auto getPreamble() -> std::string override
+        [[nodiscard]] inline auto getPreamble() const -> std::string override
         {
             return ""; // return oclKernel::preamble; // TODO
         }

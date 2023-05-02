@@ -265,10 +265,10 @@ namespace cle
             }
         }
 
-    protected:
         [[nodiscard]] auto get() const -> void ** { return data.get(); }
         [[nodiscard]] auto c_get() const -> const void ** { return (const void **)data.get(); }
 
+        // protected:
     private:
         bool initialized = false;
         size_t width_ = 1;
