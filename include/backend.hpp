@@ -323,7 +323,7 @@ namespace cle
 
         [[nodiscard]] inline auto getPreamble() const -> std::string override
         {
-            return ""; // return cudaKernel::preamble;
+            return ""; // @StRigaud TODO: add cuda preamble from header file
         }
     };
 
@@ -573,7 +573,7 @@ namespace cle
 
         [[nodiscard]] inline auto getPreamble() const -> std::string override
         {
-            return ""; // return oclKernel::preamble; // TODO
+            return ""; // @StRigaud TODO: add OpenCL preamble from header file
         }
     };
 

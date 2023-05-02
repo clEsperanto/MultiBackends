@@ -17,10 +17,10 @@ namespace cle
 
     // static auto cudaDefines(const ParameterMap &parameter_list, const ConstantMap &constant_list) -> const std::string
     // {
-    //     // todo
+    //     // @StRigaud TODO: write cuda Defines to transform ocl Kernel into compatible cuda kernel
     // }
 
-    static auto oclDefines(const ParameterMap &parameter_list, const ConstantMap &constant_list) -> const std::string
+    static auto oclDefines(const ParameterMap &parameter_list, const ConstantMap &constant_list) -> std::string
     {
         std::ostringstream defines;
         defines << "\n#define GET_IMAGE_WIDTH(image_key) IMAGE_SIZE_ ## image_key ## _WIDTH";   // ! Not defined at runtime
@@ -172,6 +172,7 @@ namespace cle
             }
         }
 
+        // @StRigaud TODO: save source into file for debugging
         // cle::BackendManager::getInstance().getBackend().executeKernel(device, source, func_name, global_rage, args_ptr, args_size);
     }
 
