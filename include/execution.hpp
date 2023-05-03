@@ -18,14 +18,15 @@ namespace cle
     // static auto cudaDefines(const ParameterMap &parameter_list, const ConstantMap &constant_list) -> const std::string
     // {
     //     // @StRigaud TODO: write cuda Defines to transform ocl Kernel into compatible cuda kernel
+    //     // See https://github.com/clEsperanto/pyclesperanto_prototype/blob/master/pyclesperanto_prototype/_tier0/_cuda_execute.py
     // }
 
     static auto oclDefines(const ParameterMap &parameter_list, const ConstantMap &constant_list) -> std::string
     {
         std::ostringstream defines;
-        defines << "\n#define GET_IMAGE_WIDTH(image_key) IMAGE_SIZE_ ## image_key ## _WIDTH";   // ! Not defined at runtime
-        defines << "\n#define GET_IMAGE_HEIGHT(image_key) IMAGE_SIZE_ ## image_key ## _HEIGHT"; // ! Not defined at runtime
-        defines << "\n#define GET_IMAGE_DEPTH(image_key) IMAGE_SIZE_ ## image_key ## _DEPTH";   // ! Not defined at runtime
+        defines << "\n#define GET_IMAGE_WIDTH(image_key) IMAGE_SIZE_ ## image_key ## _WIDTH";
+        defines << "\n#define GET_IMAGE_HEIGHT(image_key) IMAGE_SIZE_ ## image_key ## _HEIGHT";
+        defines << "\n#define GET_IMAGE_DEPTH(image_key) IMAGE_SIZE_ ## image_key ## _DEPTH";
         defines << "\n";
 
         for (const auto &[key, value] : parameter_list)
@@ -73,7 +74,7 @@ namespace cle
             defines << "\n";
 
             // define specific information
-            if (true) // TODO: (arr.mtype() == cle::Array::Memory::BUFFER)
+            if (true) // @StRigaud TODO: introduce cl_image / cudaArray
             {
                 defines << "\n#define IMAGE_" << key << "_TYPE __global " << arr.dtype() << "*";
                 defines << "\n#define READ_" << key << "_IMAGE(a,b,c) read_buffer" << ndim << "d"
@@ -145,7 +146,7 @@ namespace cle
 
         std::string preamble = cle::BackendManager::getInstance().getBackend().getPreamble();
         std::string defines = cle::oclDefines(parameters, constants);
-        // std::string defines = cle::cudaDefines(parameters, constants);
+        // std::string defines = cle::cudaDefines(parameters, constants);  @StRigaud TODO: call defines based on backend
         std::string kernel = kernel_func.second;
         std::string func_name = kernel_func.first;
         std::string source = defines + preamble + kernel;
@@ -173,6 +174,7 @@ namespace cle
         }
 
         // @StRigaud TODO: save source into file for debugging
+        // @StRigaud TODO: call execution based on backend
         // cle::BackendManager::getInstance().getBackend().executeKernel(device, source, func_name, global_rage, args_ptr, args_size);
     }
 
