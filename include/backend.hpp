@@ -45,6 +45,7 @@ namespace cle
         [[nodiscard]] virtual inline auto getDevicesList(const std::string &type) const -> std::vector<std::string> = 0;
         [[nodiscard]] virtual inline auto getDevices(const std::string &type) const -> std::vector<DevicePtr> = 0;
         [[nodiscard]] virtual inline auto getDevice(const std::string &name, const std::string &type) const -> DevicePtr = 0;
+        [[nodiscard]] virtual inline auto getPreamble() const -> std::string = 0;
 
         virtual inline auto allocateMemory(const DevicePtr &device, const size_t &size, void **data_ptr) const -> void = 0;
         virtual inline auto freeMemory(const DevicePtr &device, void **data_ptr) const -> void = 0;
@@ -56,9 +57,7 @@ namespace cle
         virtual inline auto buildKernel(const DevicePtr &device, const std::string &kernel_source, const std::string &kernel_name, void *kernel) const -> void = 0;
         virtual inline auto loadProgramFromCache(const DevicePtr &device, const std::string &hash, void *program) const -> void = 0;
         virtual inline auto saveProgramToCache(const DevicePtr &device, const std::string &hash, void *program) const -> void = 0;
-
-        // auto executeKernel(const DevicePtr &device, const std::string &kernel_source, const std::string &kernel_name, const std::array<size_t, 3> &global_size, const std::vector<void *> &args, const std::vector<void *> &sizes) const -> void {}
-        [[nodiscard]] virtual inline auto getPreamble() const -> std::string = 0;
+        virtual auto executeKernel(const DevicePtr &device, const std::string &kernel_source, const std::string &kernel_name, const std::array<size_t, 3> &global_size, const std::vector<void *> &args, const std::vector<void *> &sizes) const -> void = 0;
 
         friend auto
         operator<<(std::ostream &out, const Backend::Type &backend_type) -> std::ostream &
@@ -326,6 +325,11 @@ namespace cle
 #endif
         }
 
+        auto executeKernel(const DevicePtr &device, const std::string &kernel_source, const std::string &kernel_name, const std::array<size_t, 3> &global_size, const std::vector<void *> &args, const std::vector<void *> &sizes) const -> void override
+        {
+            // @StRigaud TODO: add cuda kernel execution
+        }
+
         [[nodiscard]] inline auto getPreamble() const -> std::string override
         {
             return ""; // @StRigaud TODO: add cuda preamble from header file
@@ -577,6 +581,11 @@ namespace cle
 #else
             throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
 #endif
+        }
+
+        auto executeKernel(const DevicePtr &device, const std::string &kernel_source, const std::string &kernel_name, const std::array<size_t, 3> &global_size, const std::vector<void *> &args, const std::vector<void *> &sizes) const -> void override
+        {
+            // @StRigaud TODO: add OpenCL kernel execution
         }
 
         [[nodiscard]] inline auto getPreamble() const -> std::string override
