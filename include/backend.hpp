@@ -1,14 +1,18 @@
 #ifndef __INCLUDE_BACKEND_HPP
 #define __INCLUDE_BACKEND_HPP
 
-#define CLE_CUDA 1
-#define CLE_OPENCL 1
+// #define CLE_CUDA 1
+// #define CLE_OPENCL 1
 
 #if CLE_OPENCL
 #ifndef CL_HPP_TARGET_OPENCL_VERSION
 #define CL_HPP_TARGET_OPENCL_VERSION 300
 #endif
-#include <CL/opencl.hpp>
+#ifdef __APPLE__
+#include <OpenCL/opencl.h>
+#else
+#include <CL/cl.h>
+#endif
 #endif
 
 #if CLE_CUDA
@@ -19,6 +23,7 @@
 
 #include "device.hpp"
 #include <map>
+#include <vector>
 
 namespace cle
 {
@@ -94,7 +99,7 @@ namespace cle
 #if CLE_CUDA
             int deviceCount;
             auto error = cudaGetDeviceCount(&deviceCount);
-            std::vector<std::shared_ptr<Device>> devices;
+            std::vector<DevicePtr> devices;
             for (int i = 0; i < deviceCount; i++)
             {
                 devices.push_back(std::make_shared<CUDADevice>(i));
@@ -342,10 +347,14 @@ namespace cle
         [[nodiscard]] inline auto getDevices(const std::string &type) const -> std::vector<DevicePtr> override
         {
 #if CLE_OPENCL
-            std::vector<cl::Platform> platforms;
-            cl::Platform::get(&platforms);
 
-            std::vector<DevicePtr> devices;
+            cl_uint platformCount = 0;
+            clGetPlatformIDs(0, NULL, &platformCount); // get number of platforms
+
+            std::vector<cl_platform_id> platformIds(platformCount);
+            clGetPlatformIDs(platformCount, platformIds.data(), NULL); // get platform ids
+
+            std::vector<DevicePtr> devices; // set device type
             cl_device_type deviceType;
             if (type == "cpu")
             {
@@ -365,13 +374,18 @@ namespace cle
                 std::cerr << "\tdefault: fetching 'all' devices type." << std::endl;
                 deviceType = CL_DEVICE_TYPE_ALL;
             }
-            for (int i = 0; i < platforms.size(); i++)
+
+            for (auto &&platform_id : platformIds) // for each platform
             {
-                std::vector<cl::Device> clDevices;
-                platforms[i].getDevices(deviceType, &clDevices);
-                for (int j = 0; j < clDevices.size(); j++)
+                cl_uint deviceCount = 0;
+                clGetDeviceIDs(platform_id, deviceType, 0, NULL, &deviceCount); // get number of devices
+
+                std::vector<cl_device_id> deviceIds(deviceCount);
+                clGetDeviceIDs(platform_id, deviceType, deviceCount, deviceIds.data(), NULL); // get device ids
+
+                for (auto &&device_id : deviceIds) // for each device
                 {
-                    devices.push_back(std::make_shared<OpenCLDevice>(clDevices[j]));
+                    devices.emplace_back(std::make_shared<OpenCLDevice>(platform_id, device_id));
                 }
             }
             return devices;
@@ -408,9 +422,9 @@ namespace cle
 #if CLE_OPENCL
             auto devices = getDevices(type);
             std::vector<std::string> deviceList;
-            for (int i = 0; i < devices.size(); i++)
+            for (auto &&device : devices)
             {
-                deviceList.push_back(devices[i]->getName());
+                deviceList.push_back(device->getName());
             }
             return deviceList;
 #else
@@ -428,8 +442,7 @@ namespace cle
 #if CLE_OPENCL
             cl_int err;
             auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-            auto context = opencl_device->getCLContext();
-            auto mem = clCreateBuffer(context.get(), CL_MEM_READ_WRITE, size, nullptr, &err);
+            auto mem = clCreateBuffer(opencl_device->getCLContext(), CL_MEM_READ_WRITE, size, nullptr, &err);
             if (err != CL_SUCCESS)
             {
                 throw std::runtime_error("Error: Failed to allocate OpenCL memory.");
@@ -458,8 +471,7 @@ namespace cle
         {
 #if CLE_OPENCL
             auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-            auto queue = opencl_device->getCLCommandQueue();
-            auto err = clEnqueueWriteBuffer(queue.get(), *static_cast<cl_mem *>(*data_ptr), CL_TRUE, 0, size, host_ptr, 0, nullptr, nullptr);
+            auto err = clEnqueueWriteBuffer(opencl_device->getCLCommandQueue(), *static_cast<cl_mem *>(*data_ptr), CL_TRUE, 0, size, host_ptr, 0, nullptr, nullptr);
             if (err != CL_SUCCESS)
             {
                 throw std::runtime_error("Error: Failed to write OpenCL memory.");
@@ -473,8 +485,7 @@ namespace cle
         {
 #if CLE_OPENCL
             auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-            auto queue = opencl_device->getCLCommandQueue();
-            auto err = clEnqueueReadBuffer(queue.get(), *static_cast<const cl_mem *>(*data_ptr), CL_TRUE, 0, size, host_ptr, 0, nullptr, nullptr);
+            auto err = clEnqueueReadBuffer(opencl_device->getCLCommandQueue(), *static_cast<const cl_mem *>(*data_ptr), CL_TRUE, 0, size, host_ptr, 0, nullptr, nullptr);
             if (err != CL_SUCCESS)
             {
                 throw std::runtime_error("Error: Failed to read OpenCL memory.");
@@ -488,8 +499,7 @@ namespace cle
         {
 #if CLE_OPENCL
             auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-            auto queue = opencl_device->getCLCommandQueue();
-            auto err = clEnqueueCopyBuffer(queue.get(), *static_cast<const cl_mem *>(*src_data_ptr), *static_cast<cl_mem *>(*dst_data_ptr), 0, 0, size, 0, nullptr, nullptr);
+            auto err = clEnqueueCopyBuffer(opencl_device->getCLCommandQueue(), *static_cast<const cl_mem *>(*src_data_ptr), *static_cast<cl_mem *>(*dst_data_ptr), 0, 0, size, 0, nullptr, nullptr);
             if (err != CL_SUCCESS)
             {
                 throw std::runtime_error("Error: Failed to write OpenCL memory.");
@@ -503,8 +513,7 @@ namespace cle
         {
 #if CLE_OPENCL
             auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-            auto queue = opencl_device->getCLCommandQueue();
-            auto err = clEnqueueFillBuffer(queue.get(), *static_cast<cl_mem *>(*data_ptr), value, value_size, 0, size, 0, nullptr, nullptr);
+            auto err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(), *static_cast<cl_mem *>(*data_ptr), value, value_size, 0, size, 0, nullptr, nullptr);
             if (err != CL_SUCCESS)
             {
                 throw std::runtime_error("Error: Failed to set OpenCL memory.");
@@ -547,18 +556,17 @@ namespace cle
 #if CLE_OPENCL
             cl_int err;
             auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-            auto context = opencl_device->getCLContext();
             cl_program prog = nullptr;
             std::string hash = std::to_string(std::hash<std::string>{}(kernel_source));
             loadProgramFromCache(device, hash, prog);
             if (prog == nullptr)
             {
-                prog = clCreateProgramWithSource(context.get(), 1, (const char **)&kernel_source, nullptr, &err);
+                prog = clCreateProgramWithSource(opencl_device->getCLContext(), 1, (const char **)&kernel_source, nullptr, &err);
                 if (err != CL_SUCCESS)
                 {
                     size_t len;
                     char buffer[2048];
-                    clGetProgramBuildInfo(prog, opencl_device->getCLDevice().get(), CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &len);
+                    clGetProgramBuildInfo(prog, opencl_device->getCLDevice(), CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &len);
                     std::cerr << buffer << std::endl;
                     throw std::runtime_error("Error: Failed to build OpenCL program.");
                 }

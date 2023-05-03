@@ -2,13 +2,18 @@
 #define __INCLUDE_DEVICE_HPP
 
 #include <iostream>
+#include <map>
 #include <sstream>
 
 #if CLE_OPENCL
 #ifndef CL_HPP_TARGET_OPENCL_VERSION
 #define CL_HPP_TARGET_OPENCL_VERSION 300
 #endif
-#include <CL/opencl.hpp>
+#ifdef __APPLE__
+#include <OpenCL/opencl.h>
+#else
+#include <CL/cl.h>
+#endif
 #endif
 
 #if CLE_CUDA
@@ -40,8 +45,6 @@ namespace cle
         [[nodiscard]] virtual auto getInfo() const -> std::string = 0;
         [[nodiscard]] virtual auto getType() const -> Device::Type = 0;
 
-        // [[nodiscard]] virtual auto getProgram(const std::string &hash) const -> void * = 0;
-
         friend auto operator<<(std::ostream &out, const Device::Type &device_type) -> std::ostream &
         {
             switch (device_type)
@@ -67,7 +70,7 @@ namespace cle
     class OpenCLDevice : public Device
     {
     public:
-        OpenCLDevice(const cl::Device &device) : clDevice(device) {}
+        OpenCLDevice(const cl_platform_id &platform, const cl_device_id &device) : clDevice(device), clPlatform(platform) {}
 
         ~OpenCLDevice() override
         {
@@ -90,13 +93,13 @@ namespace cle
                 return;
             }
             cl_int err = CL_SUCCESS;
-            clContext = cl::Context({clDevice}, NULL, NULL, NULL, &err);
+            clContext = clCreateContext(NULL, 1, &clDevice, NULL, NULL, &err);
             if (err != CL_SUCCESS)
             {
                 std::cerr << "Failed to create OpenCL context" << std::endl;
                 return;
             }
-            clCommandQueue = cl::CommandQueue(clContext, clDevice, 0, &err);
+            clCommandQueue = clCreateCommandQueue(clContext, clDevice, 0, &err);
             if (err != CL_SUCCESS)
             {
                 std::cerr << "Failed to create OpenCL command queue" << std::endl;
@@ -112,7 +115,10 @@ namespace cle
                 std::cerr << "OpenCL device not initialized" << std::endl;
                 return;
             }
-            clCommandQueue.finish();
+            this->finish();
+            clReleaseContext(clContext);
+            clReleaseCommandQueue(clCommandQueue);
+            clReleaseDevice(clDevice);
             initialized = false;
         }
 
@@ -123,7 +129,7 @@ namespace cle
                 std::cerr << "OpenCL device not initialized" << std::endl;
                 return;
             }
-            clCommandQueue.finish();
+            clFinish(clCommandQueue);
         }
 
         [[nodiscard]] auto isInitialized() const -> bool override
@@ -131,35 +137,37 @@ namespace cle
             return initialized;
         }
 
-        [[nodiscard]] auto getCLPlatform() const -> const cl::Platform &
+        [[nodiscard]] auto getCLPlatform() const -> const cl_platform_id &
         {
             return clPlatform;
         }
 
-        [[nodiscard]] auto getCLDevice() const -> const cl::Device &
+        [[nodiscard]] auto getCLDevice() const -> const cl_device_id &
         {
             return clDevice;
         }
 
-        [[nodiscard]] auto getCLContext() const -> const cl::Context &
+        [[nodiscard]] auto getCLContext() const -> const cl_context &
         {
             return clContext;
         }
 
-        [[nodiscard]] auto getCLCommandQueue() const -> const cl::CommandQueue &
+        [[nodiscard]] auto getCLCommandQueue() const -> const cl_command_queue &
         {
             return clCommandQueue;
         }
 
         [[nodiscard]] auto getName() const -> std::string override
         {
-            return clDevice.getInfo<CL_DEVICE_NAME>();
+            char name[256];
+            clGetDeviceInfo(clDevice, CL_DEVICE_NAME, sizeof(char) * 256, name, NULL);
+            return std::string(name);
         }
 
         [[nodiscard]] auto getInfo() const -> std::string override
         {
             std::ostringstream result;
-            std::string version;
+            char version[256];
             cl_device_type type;
             cl_uint compute_units;
             size_t global_mem_size;
@@ -167,14 +175,14 @@ namespace cle
 
             // Get device information
             const auto &name = getName();
-            clDevice.getInfo(CL_DEVICE_VERSION, &version);
-            clDevice.getInfo(CL_DEVICE_TYPE, &type);
-            clDevice.getInfo(CL_DEVICE_MAX_COMPUTE_UNITS, &compute_units);
-            clDevice.getInfo(CL_DEVICE_GLOBAL_MEM_SIZE, &global_mem_size);
-            clDevice.getInfo(CL_DEVICE_MAX_MEM_ALLOC_SIZE, &max_mem_size);
+            clGetDeviceInfo(clDevice, CL_DEVICE_VERSION, sizeof(char) * 256, &version, NULL);
+            clGetDeviceInfo(clDevice, CL_DEVICE_TYPE, sizeof(cl_device_type), &type, NULL);
+            clGetDeviceInfo(clDevice, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &compute_units, NULL);
+            clGetDeviceInfo(clDevice, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(size_t), &global_mem_size, NULL);
+            clGetDeviceInfo(clDevice, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(size_t), &max_mem_size, NULL);
 
             // Print device information to output string
-            result << name << " (" << version << ")\n";
+            result << name << " (" << std::string(version) << ")\n";
             switch (type)
             {
             case CL_DEVICE_TYPE_CPU:
@@ -193,17 +201,17 @@ namespace cle
             return result.str();
         }
 
-        [[nodiscard]] auto getCache() -> std::unordered_map<std::string, cl_program> &
+        [[nodiscard]] auto getCache() -> std::map<std::string, cl_program> &
         {
             return this->cache;
         }
 
     private:
-        cl::Platform clPlatform;
-        cl::Device clDevice;
-        cl::Context clContext;
-        cl::CommandQueue clCommandQueue;
-        std::unordered_map<std::string, cl_program> cache;
+        cl_platform_id clPlatform;
+        cl_device_id clDevice;
+        cl_context clContext;
+        cl_command_queue clCommandQueue;
+        std::map<std::string, cl_program> cache;
         bool initialized = false;
     };
 #endif // CLE_OPENCL
@@ -309,7 +317,7 @@ namespace cle
             return result.str();
         }
 
-        [[nodiscard]] auto getCache() -> std::unordered_map<std::string, CUmodule> &
+        [[nodiscard]] auto getCache() -> std::map<std::string, CUmodule> &
         {
             return this->cache;
         }
@@ -318,7 +326,7 @@ namespace cle
         int cudaDeviceIndex;
         cudaStream_t cudaStream;
         bool initialized = false;
-        std::unordered_map<std::string, CUmodule> cache;
+        std::map<std::string, CUmodule> cache;
     };
 #endif // CLE_CUDA
 
