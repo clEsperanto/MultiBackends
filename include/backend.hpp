@@ -32,8 +32,8 @@ namespace cle
     public:
         enum class Type
         {
-            CUDA = 1,
-            OPENCL = 0
+            CUDA,
+            OPENCL
         };
 
         using DevicePtr = std::shared_ptr<cle::Device>;
