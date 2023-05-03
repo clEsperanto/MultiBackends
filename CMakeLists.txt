@@ -15,8 +15,8 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 file(GLOB_RECURSE HEADERS "include/*.hpp")
 
 # find OpenCL and CUDA
-find_package(OpenCL REQUIRED)
-find_package(CUDA REQUIRED)
+find_package(OpenCL)
+find_package(CUDA)
 find_package(CUDAToolkit)
 
 
