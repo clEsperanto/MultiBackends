@@ -15,11 +15,12 @@ namespace cle
     using KernelInfo = std::pair<std::string, std::string>;
     using RangeArray = std::array<size_t, 3>;
 
-    // static auto cudaDefines(const ParameterMap &parameter_list, const ConstantMap &constant_list) -> const std::string
-    // {
-    //     // @StRigaud TODO: write cuda Defines to transform ocl Kernel into compatible cuda kernel
-    //     // See https://github.com/clEsperanto/pyclesperanto_prototype/blob/master/pyclesperanto_prototype/_tier0/_cuda_execute.py
-    // }
+    static auto cudaDefines(const ParameterMap &parameter_list, const ConstantMap &constant_list) -> const std::string
+    {
+        // @StRigaud TODO: write cuda Defines to transform ocl Kernel into compatible cuda kernel
+        // See https://github.com/clEsperanto/pyclesperanto_prototype/blob/master/pyclesperanto_prototype/_tier0/_cuda_execute.py
+        return "";
+    }
 
     static auto oclDefines(const ParameterMap &parameter_list, const ConstantMap &constant_list) -> std::string
     {
@@ -144,9 +145,17 @@ namespace cle
         args_ptr.reserve(parameters.size());
         args_size.reserve(parameters.size());
 
+        std::string defines;
+        switch (device->getType())
+        {
+        case Device::Type::CUDA:
+            defines = cle::cudaDefines(parameters, constants);
+            break;
+        case Device::Type::OPENCL:
+            defines = cle::oclDefines(parameters, constants);
+            break;
+        }
         std::string preamble = cle::BackendManager::getInstance().getBackend().getPreamble();
-        std::string defines = cle::oclDefines(parameters, constants);
-        // std::string defines = cle::cudaDefines(parameters, constants);  @StRigaud TODO: call defines based on backend
         std::string kernel = kernel_func.second;
         std::string func_name = kernel_func.first;
         std::string source = defines + preamble + kernel;
