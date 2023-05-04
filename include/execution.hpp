@@ -145,6 +145,7 @@ namespace cle
         args_ptr.reserve(parameters.size());
         args_size.reserve(parameters.size());
 
+        // build kernel source
         std::string defines;
         switch (device->getType())
         {
@@ -160,6 +161,7 @@ namespace cle
         std::string func_name = kernel_func.first;
         std::string source = defines + preamble + kernel;
 
+        // list kernel arguments and sizes
         for (const auto &[key, value] : parameters)
         {
             if (std::holds_alternative<Array>(value))
