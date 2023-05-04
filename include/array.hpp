@@ -4,6 +4,7 @@
 #include "backend.hpp"
 #include "device.hpp"
 
+#include <algorithm>
 #include <variant>
 
 namespace cle
@@ -33,23 +34,29 @@ namespace cle
             UnsignedLong
         };
 
-        Array() = default;
-        Array(size_t width, size_t height, size_t depth, Array::Type data_type) : width_(width), height_(height), depth_(depth), dataType(data_type)
+        enum class Memory
         {
-            this->device_ = nullptr;
-            this->data = std::make_shared<void *>(nullptr);
+            Buffer,
+            Image
+        };
+
+        Array() = default;
+        Array(const size_t &width, const size_t &height, const size_t &depth, const Array::Type &data_type) : width_(width), height_(height), depth_(depth), dataType(data_type)
+        {
             this->bytes_per_element_ = toBytes(dataType);
+            this->width_ = (this->width_ > 1) ? this->width_ : 1;
+            this->height_ = (this->height_ > 1) ? this->height_ : 1;
+            this->depth_ = (this->depth_ > 1) ? this->depth_ : 1;
         }
 
-        Array(size_t width, size_t height, size_t depth, Array::Type data_type, const DevicePtr &device) : Array(width, height, depth, data_type)
+        Array(const size_t &width, const size_t &height, const size_t &depth, const Array::Type &data_type, const DevicePtr &device) : Array(width, height, depth, data_type)
         {
             this->device_ = device;
-            this->data = std::make_shared<void *>(nullptr);
             backend.allocateMemory(device_, this->nbElements() * bytes_per_element_, this->get());
             this->initialized = true;
         }
 
-        Array(size_t width, size_t height, size_t depth, Array::Type data_type, const void *host_data, const DevicePtr &device) : Array(width, height, depth, data_type, device)
+        Array(const size_t &width, const size_t &height, const size_t &depth, const Array::Type &data_type, const void *host_data, const DevicePtr &device) : Array(width, height, depth, data_type, device)
         {
             backend.writeMemory(device_, this->get(), this->nbElements() * bytes_per_element_, host_data);
         }
@@ -117,7 +124,7 @@ namespace cle
         }
 
         [[nodiscard]] auto
-        nbElements() const -> size_t
+        nbElements() const -> const size_t
         {
             return width_ * height_ * depth_;
         }
@@ -132,7 +139,21 @@ namespace cle
 
         friend auto operator<<(std::ostream &out, const Array &array) -> std::ostream &
         {
-            out << "Array ([" << array.width_ << "," << array.height_ << "," << array.depth_ << "], dtype=" << array.bytes_per_element_ << ")";
+            out << array.memType << " Array ([" << array.width_ << "," << array.height_ << "," << array.depth_ << "], dtype=" << array.bytes_per_element_ << ")";
+            return out;
+        }
+
+        friend auto operator<<(std::ostream &out, const Array::Memory &mtype) -> std::ostream &
+        {
+            switch (mtype)
+            {
+            case Array::Memory::Buffer:
+                out << "Buffer";
+                break;
+            case Array::Memory::Image:
+                out << "Image";
+                break;
+            }
             return out;
         }
 
@@ -171,7 +192,7 @@ namespace cle
             return out;
         }
 
-        friend auto toBytes(const Array::Type &dtype) -> size_t
+        friend auto toBytes(const Array::Type &dtype) -> const size_t
         {
             switch (dtype)
             {
@@ -199,7 +220,7 @@ namespace cle
         }
 
         template <typename T>
-        static auto toType() -> Array::Type
+        static auto toType() -> const Array::Type
         {
             if constexpr (std::is_same_v<T, float>)
             {
@@ -273,16 +294,16 @@ namespace cle
         [[nodiscard]] auto get() const -> void ** { return data.get(); }
         [[nodiscard]] auto c_get() const -> const void ** { return (const void **)data.get(); }
 
-        // protected:
     private:
-        bool initialized = false;
+        Array::Memory memType = Array::Memory::Buffer;
+        Array::Type dataType = Array::Type::Float;
+        size_t bytes_per_element_ = sizeof(float);
         size_t width_ = 1;
         size_t height_ = 1;
         size_t depth_ = 1;
-        size_t bytes_per_element_ = sizeof(float);
-        Array::Type dataType = Array::Type::Float;
-        DevicePtr device_;
-        DataPtr data;
+        bool initialized = false;
+        DevicePtr device_ = nullptr;
+        DataPtr data = std::make_shared<void *>(nullptr);
         const Backend &backend = cle::BackendManager::getInstance().getBackend();
     };
 
