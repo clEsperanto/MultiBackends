@@ -57,7 +57,7 @@ namespace cle
         virtual inline auto buildKernel(const DevicePtr &device, const std::string &kernel_source, const std::string &kernel_name, void *kernel) const -> void = 0;
         virtual inline auto loadProgramFromCache(const DevicePtr &device, const std::string &hash, void *program) const -> void = 0;
         virtual inline auto saveProgramToCache(const DevicePtr &device, const std::string &hash, void *program) const -> void = 0;
-        virtual auto executeKernel(const DevicePtr &device, const std::string &kernel_source, const std::string &kernel_name, const std::array<size_t, 3> &global_size, const std::vector<void *> &args, const std::vector<void *> &sizes) const -> void = 0;
+        virtual auto executeKernel(const DevicePtr &device, const std::string &kernel_source, const std::string &kernel_name, const std::array<size_t, 3> &global_size, const std::vector<void *> &args, const std::vector<size_t> &sizes) const -> void = 0;
 
         friend auto
         operator<<(std::ostream &out, const Backend::Type &backend_type) -> std::ostream &
@@ -325,7 +325,7 @@ namespace cle
 #endif
         }
 
-        auto executeKernel(const DevicePtr &device, const std::string &kernel_source, const std::string &kernel_name, const std::array<size_t, 3> &global_size, const std::vector<void *> &args, const std::vector<void *> &sizes) const -> void override
+        auto executeKernel(const DevicePtr &device, const std::string &kernel_source, const std::string &kernel_name, const std::array<size_t, 3> &global_size, const std::vector<void *> &args, const std::vector<size_t> &sizes) const -> void override
         {
             // @StRigaud TODO: add cuda kernel execution
         }
@@ -583,7 +583,7 @@ namespace cle
 #endif
         }
 
-        auto executeKernel(const DevicePtr &device, const std::string &kernel_source, const std::string &kernel_name, const std::array<size_t, 3> &global_size, const std::vector<void *> &args, const std::vector<void *> &sizes) const -> void override
+        auto executeKernel(const DevicePtr &device, const std::string &kernel_source, const std::string &kernel_name, const std::array<size_t, 3> &global_size, const std::vector<void *> &args, const std::vector<size_t> &sizes) const -> void override
         {
             // @StRigaud TODO: add OpenCL kernel execution
         }
