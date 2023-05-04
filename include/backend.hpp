@@ -48,6 +48,7 @@ namespace cle
         [[nodiscard]] virtual inline auto getPreamble() const -> std::string = 0;
 
         virtual inline auto allocateMemory(const DevicePtr &device, const size_t &size, void **data_ptr) const -> void = 0;
+        virtual inline auto allocateMemory(const DevicePtr &device, const size_t &width, const size_t &height, const size_t &depth, const size_t &bytes, void **data_ptr) const -> void = 0;
         virtual inline auto freeMemory(const DevicePtr &device, void **data_ptr) const -> void = 0;
         virtual inline auto writeMemory(const DevicePtr &device, void **data_ptr, const size_t &size, const void *host_ptr) const -> void = 0;
         virtual inline auto readMemory(const DevicePtr &device, const void **data_ptr, const size_t &size, void *host_ptr) const -> void = 0;
@@ -162,6 +163,30 @@ namespace cle
                 throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
             }
             err = cudaMalloc(data_ptr, size);
+            if (err != cudaSuccess)
+            {
+                throw std::runtime_error("Error: Failed to allocate CUDA memory.");
+            }
+#else
+            throw std::runtime_error("Error: CUDA backend is not enabled");
+#endif
+        }
+
+        inline auto allocateMemory(const DevicePtr &device, const size_t &width, const size_t &height, const size_t &depth, const size_t &bytes, void **data_ptr) const -> void override
+        {
+#if CLE_CUDA
+            auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
+            auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
+            if (err != cudaSuccess)
+            {
+                throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
+            }
+
+            // @StRigaud TODO: adapt channel desc for Unsigned, Signed, Float
+            auto extent = make_cudaExtent(width, height, depth);
+            auto channelDesc = cudaCreateChannelDesc(bytes, 0, 0, 0, cudaChannelFormatKindUnsigned);
+            cudaArray *array;
+            err = cudaMalloc3DArray(&array, &channelDesc, extent);
             if (err != cudaSuccess)
             {
                 throw std::runtime_error("Error: Failed to allocate CUDA memory.");
@@ -457,7 +482,47 @@ namespace cle
 #endif
         }
 
-        inline auto freeMemory(const DevicePtr &device, void **data_ptr) const -> void override
+        inline auto allocateMemory(const DevicePtr &device, const size_t &width, const size_t &height, const size_t &depth, const size_t &bytes, void **data_ptr) const -> void override
+        {
+#if CLE_OPENCL
+            auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+            cl_int err;
+
+            cl_image_format image_format;
+            image_format.image_channel_order = CL_R;
+            image_format.image_channel_data_type = CL_UNSIGNED_INT8; // @StRigaud TODO: adapt channel desc for Unsigned, Signed, Float
+
+            cl_image_desc image_desc;
+            image_desc.image_type = CL_IMAGE_3D; // @StRigaud TODO: adapt for 1D, 2D, 3D
+            image_desc.image_width = width;
+            image_desc.image_height = height;
+            image_desc.image_depth = depth;
+            image_desc.image_row_pitch = 0;
+            image_desc.image_slice_pitch = 0;
+            image_desc.num_mip_levels = 0;
+            image_desc.num_samples = 0;
+            image_desc.buffer = NULL;
+
+            auto image = clCreateImage(
+                opencl_device->getCLContext(),
+                CL_MEM_READ_WRITE,
+                &image_format,
+                &image_desc,
+                NULL,
+                &err);
+
+            if (err != CL_SUCCESS)
+            {
+                throw std::runtime_error("Error: Failed to allocate OpenCL memory.");
+            }
+            *data_ptr = static_cast<void *>(new cl_mem(image));
+#else
+            throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+#endif
+        }
+
+        inline auto
+        freeMemory(const DevicePtr &device, void **data_ptr) const -> void override
         {
 #if CLE_OPENCL
             auto *cl_mem_ptr = static_cast<cl_mem *>(*data_ptr);
