@@ -41,6 +41,7 @@ namespace cle
         virtual auto finish() -> void = 0;
 
         [[nodiscard]] virtual auto isInitialized() const -> bool = 0;
+        [[nodiscard]] virtual auto isAvailable() const -> bool = 0;
         [[nodiscard]] virtual auto getName() const -> std::string = 0;
         [[nodiscard]] virtual auto getInfo() const -> std::string = 0;
         [[nodiscard]] virtual auto getType() const -> Device::Type = 0;
@@ -135,6 +136,13 @@ namespace cle
         [[nodiscard]] auto isInitialized() const -> bool override
         {
             return initialized;
+        }
+
+        [[nodiscard]] auto isAvailable() const -> bool override
+        {
+            cl_bool available;
+            clGetDeviceInfo(clDevice, CL_DEVICE_AVAILABLE, sizeof(cl_bool), &available, NULL);
+            return static_cast<bool>(available);
         }
 
         [[nodiscard]] auto getCLPlatform() const -> const cl_platform_id &
@@ -283,6 +291,13 @@ namespace cle
         [[nodiscard]] auto isInitialized() const -> bool override
         {
             return initialized;
+        }
+
+        [[nodiscard]] auto isAvailable() const -> bool override
+        {
+            int ecc_enabled;
+            cudaDeviceGetAttribute(&ecc_enabled, cudaDevAttrEccEnabled, cudaDeviceIndex);
+            return static_cast<bool>(ecc_enabled);
         }
 
         [[nodiscard]] auto getCUDADeviceIndex() const -> int
