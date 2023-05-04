@@ -183,7 +183,7 @@ namespace cle
         }
 
         // @StRigaud TODO: save source into file for debugging
-        // @StRigaud TODO: call execution based on backend
+        // @StRigaud TODO: call execution based on backend, warning dealing with void** and void* is not safe
         cle::BackendManager::getInstance().getBackend().executeKernel(device, source, func_name, global_rage, args_ptr, args_size);
     }
 

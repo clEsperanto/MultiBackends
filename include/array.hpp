@@ -9,6 +9,11 @@
 namespace cle
 {
 
+    // @StRigaud TODO:
+    // - enable cl_image and cudaArray
+    // - enable backend management of cl_image and cudaArray
+    // - add memory type enum and friend operator (buffer, image)
+    // - add tests corresponding to cl_image and cudaArray managment
     class Array
     {
     public:
