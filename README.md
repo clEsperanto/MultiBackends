@@ -1,4 +1,4 @@
-# GPUbackends
+# Multi-Backends
 
 Playground repo for CUDA and OpenCL Backend development.
 
@@ -13,17 +13,17 @@ Playground repo for CUDA and OpenCL Backend development.
     - [x] Device search
     - [x] Device selection
     - [x] Buffer 
-        -[x] Buffer allocate to device (create)
-        -[x] Buffer copy to host (read)
-        -[x] Buffer copy to device (write)
-        -[x] Buffer copy device to device (copy)
-        -[x] Buffer free
+        - [x] Buffer allocate to device (create)
+        - [x] Buffer copy to host (read)
+        - [x] Buffer copy to device (write)
+        - [x] Buffer copy device to device (copy)
+        - [x] Buffer free
     - [ ] Image (1D/2D/3D)
-        -[ ] Image allocate to device (create)
-        -[ ] Image copy to host (read)
-        -[ ] Image copy to device (write)
-        -[ ] Image copy device to device (copy)
-        -[ ] Image free
+        - [ ] Image allocate to device (create)
+        - [ ] Image copy to host (read)
+        - [ ] Image copy to device (write)
+        - [ ] Image copy device to device (copy)
+        - [ ] Image free
     - [x] Program (ocl) / Module (cuda) creation from source
     - [ ] Kernel launch
 - [x] Backend Manager (singleton)
