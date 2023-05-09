@@ -5,8 +5,8 @@
 // #define CLE_OPENCL 1
 
 #if CLE_OPENCL
-#ifndef CL_HPP_TARGET_OPENCL_VERSION
-#define CL_HPP_TARGET_OPENCL_VERSION 300
+#ifndef CL_TARGET_OPENCL_VERSION
+#define CL_TARGET_OPENCL_VERSION 300
 #endif
 #ifdef __APPLE__
 #include <OpenCL/opencl.h>
@@ -22,7 +22,9 @@
 #endif
 
 #include "device.hpp"
+#include <algorithm>
 #include <map>
+#include <memory>
 #include <vector>
 
 namespace cle
@@ -493,7 +495,7 @@ namespace cle
             image_format.image_channel_data_type = CL_UNSIGNED_INT8; // @StRigaud TODO: adapt channel desc for Unsigned, Signed, Float
 
             cl_image_desc image_desc;
-            image_desc.image_type = CL_IMAGE_3D; // @StRigaud TODO: adapt for 1D, 2D, 3D
+            image_desc.image_type = CL_MEM_OBJECT_IMAGE3D; // @StRigaud TODO: adapt for 1D, 2D, 3D
             image_desc.image_width = width;
             image_desc.image_height = height;
             image_desc.image_depth = depth;
