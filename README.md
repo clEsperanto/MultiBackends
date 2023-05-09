@@ -8,20 +8,31 @@ Playground repo for CUDA and OpenCL Backend development.
 - Device (CUDA, OpenCL)
     - [x] Device initialisation
     - [x] Device info
+    - [x] Device program cache
 - Backends (CUDA, OpenCL)
     - [x] Device search
     - [x] Device selection
-    - [x] Buffer (create, write, read, free, copy)
-    - [ ] Image (create, write, read, free, copy)
-    - [ ] Program (ocl) / Module (cuda) creation from source
+    - [x] Buffer 
+        -[x] Buffer allocate to device (create)
+        -[x] Buffer copy to host (read)
+        -[x] Buffer copy to device (write)
+        -[x] Buffer copy device to device (copy)
+        -[x] Buffer free
+    - [ ] Image (1D/2D/3D)
+        -[ ] Image allocate to device (create)
+        -[ ] Image copy to host (read)
+        -[ ] Image copy to device (write)
+        -[ ] Image copy device to device (copy)
+        -[ ] Image free
+    - [x] Program (ocl) / Module (cuda) creation from source
     - [ ] Kernel launch
-- [x] Backend Manager
+- [x] Backend Manager (singleton)
 - Array (CUDA, OpenCL)
     - [x] Array creation
     - [x] Array allocate to device (create)
     - [x] Array copy to host (read)
     - [x] Array copy to device (write)
-    - [ ] Array copy device to device (copy)
+    - [x] Array copy device to device (copy)
     - [x] Array free
 - Image (CUDA, OpenCL)
     - [ ] Image creation
@@ -30,9 +41,11 @@ Playground repo for CUDA and OpenCL Backend development.
     - [ ] Image copy to device (write)
     - [ ] Image copy device to device (copy)
     - [ ] Image free
-- [ ] Defines Generator
-- [ ] Preamble Generator
-- [ ] Argument manager
+- Execution
+    - [ ] Generate Defines
+    - [ ] Get Preamble
+    - [ ] Manage kernel parameters
+    - [ ] Launch kernel
 
 # Install
 
