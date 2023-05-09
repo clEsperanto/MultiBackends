@@ -6,8 +6,8 @@
 #include <sstream>
 
 #if CLE_OPENCL
-#ifndef CL_HPP_TARGET_OPENCL_VERSION
-#define CL_HPP_TARGET_OPENCL_VERSION 300
+#ifndef CL_TARGET_OPENCL_VERSION
+#define CL_TARGET_OPENCL_VERSION 300
 #endif
 #ifdef __APPLE__
 #include <OpenCL/opencl.h>
@@ -94,13 +94,13 @@ namespace cle
                 return;
             }
             cl_int err = CL_SUCCESS;
-            clContext = clCreateContext(NULL, 1, &clDevice, NULL, NULL, &err);
+            clContext = clCreateContext(nullptr, 1, &clDevice, nullptr, nullptr, &err);
             if (err != CL_SUCCESS)
             {
                 std::cerr << "Failed to create OpenCL context" << std::endl;
                 return;
             }
-            clCommandQueue = clCreateCommandQueue(clContext, clDevice, 0, &err);
+            clCommandQueue = clCreateCommandQueueWithProperties(clContext, clDevice, nullptr, &err);
             if (err != CL_SUCCESS)
             {
                 std::cerr << "Failed to create OpenCL command queue" << std::endl;
