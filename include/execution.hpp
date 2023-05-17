@@ -6,6 +6,7 @@
 #include "device.hpp"
 
 #include <variant>
+#include <string_view>
 
 namespace cle {
 using DevicePtr = std::shared_ptr<cle::Device>;
@@ -226,6 +227,44 @@ static auto oclDefines(const ParameterMap &parameter_list,
   return defines.str();
 }
 
+void replaceWord(std::string& sentence, const std::string_view& wordToReplace, const std::string_view& replacement) {
+    size_t pos = sentence.find(wordToReplace);
+    while (pos != std::string::npos) {
+        sentence.replace(pos, wordToReplace.length(), replacement);
+        pos = sentence.find(wordToReplace, pos + replacement.length());
+    }
+}
+
+std::string srcOpenclToCuda(std::string opencl_code)
+{
+  replaceWord(opencl_code, "(int2){", "make_int2(");
+  replaceWord(opencl_code, "(int4){", "make_int4(");
+  replaceWord(opencl_code, "(int4)  {", "make_int4(");
+  replaceWord(opencl_code, "(float4){", "make_float4(");
+  replaceWord(opencl_code, "(float2){", "make_float2(");
+  replaceWord(opencl_code, "int2 pos = {", "int2 pos = make_int2(");
+  replaceWord(opencl_code, "int4 pos = {", "int4 pos = make_int4(");
+  replaceWord(opencl_code, "};", ");");
+  replaceWord(opencl_code, "})", "))");
+
+  replaceWord(opencl_code, "(int2)", "make_int2");
+  replaceWord(opencl_code, "(int4)", "make_int4");
+  replaceWord(opencl_code, "__constant sampler_t", "__device__ int");
+  replaceWord(opencl_code, "__const sampler_t", "__device__ int");
+  replaceWord(opencl_code, "inline", "__device__ inline");
+  replaceWord(opencl_code, "#pragma", "// #pragma");
+  replaceWord(opencl_code, "\nkernel void", " __global__ void");
+
+
+  replaceWord(opencl_code, "__kernel ", "__global__ ");
+    
+  replaceWord(opencl_code, "get_global_id(0)", "blockDim.x * blockIdx.x + threadIdx.x");
+  replaceWord(opencl_code, "get_global_id(1)", "blockDim.y * blockIdx.y + threadIdx.y");
+  replaceWord(opencl_code, "get_global_id(2)", "blockDim.z * blockIdx.z + threadIdx.z");
+
+  return opencl_code;
+}
+
 static auto execute(const DevicePtr &device, const KernelInfo &kernel_func,
                     const ParameterMap &parameters,
                     const ConstantMap &constants = {},
@@ -240,6 +279,8 @@ static auto execute(const DevicePtr &device, const KernelInfo &kernel_func,
   switch (device->getType()) {
   case Device::Type::CUDA:
     defines = cle::cudaDefines(parameters, constants);
+    // Read kernel
+    kernel = srcOpenclToCuda(kernel_func.second); 
     break;
   case Device::Type::OPENCL:
     defines = cle::oclDefines(parameters, constants);
@@ -247,7 +288,7 @@ static auto execute(const DevicePtr &device, const KernelInfo &kernel_func,
   }
   std::string preamble =
       cle::BackendManager::getInstance().getBackend().getPreamble();
-  std::string kernel = kernel_func.second;
+  // std::string kernel = kernel_func.second;
   std::string func_name = kernel_func.first;
   std::string source = defines + preamble + kernel;
 
