@@ -64,24 +64,41 @@ set_target_properties(${LIBRARY_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 include(CTest)
 add_subdirectory(tests)
 
-# Reading the preamble
+# Reading the preamble for both CUDA & OpenCL
 file(DOWNLOAD "https://raw.githubusercontent.com/CherifMZ/clij-opencl-kernels/cuda_preamble/preamble/preamble.cu" "${CMAKE_CURRENT_BINARY_DIR}/preamble.cu")
+file(DOWNLOAD "https://raw.githubusercontent.com/CherifMZ/clij-opencl-kernels/cuda_preamble/preamble/preamble.cl" "${CMAKE_CURRENT_BINARY_DIR}/preamble.cl")
 
-# Set the input file path and output file path
-set(INPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/preamble.cu")
-set(OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/output.h")
+# Set the input and output file path for both CUDA & OpenCL
+set(INPUT_FILE_CUDA "${CMAKE_CURRENT_BINARY_DIR}/preamble.cu")
+set(OUTPUT_FILE_CUDA "${CMAKE_CURRENT_BINARY_DIR}/output_cu.h")
+
+set(INPUT_FILE_CL "${CMAKE_CURRENT_BINARY_DIR}/preamble.cl")
+set(OUTPUT_FILE_CL "${CMAKE_CURRENT_BINARY_DIR}/output_cl.h")
 
 # Read the content of the input file
-file(READ "${INPUT_FILE}" FILE_CONTENT)
+file(READ "${INPUT_FILE_CUDA}" FILE_CONTENT_CUDA)
+file(READ "${INPUT_FILE_CL}" FILE_CONTENT_CL)
 
 # Split the contents into multiple string literals
-string(REPLACE "\n" "\\n\"\n\"" FILE_CONTENT "${FILE_CONTENT}")
+string(REPLACE "\n" "\\n\"\n\"" FILE_CONTENT_CUDA "${FILE_CONTENT_CUDA}")
 
 # Generate output.h file with the contents of preamble.cu split into string literals
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/output.h" "#ifndef CUDA_PREAMBLE_H\n#define CUDA_PREAMBLE_H\n\n")
-file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/output.h" "const char* preamble = \n")
-file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/output.h" "\"")
-file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/output.h" "${FILE_CONTENT}")
-file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/output.h" "\\n\"")
-file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/output.h" "\n\"\";")
-file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/output.h" "\n\n#endif // CUDA_PREAMBLE_H\n")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/output_cu.h" "#ifndef CUDA_PREAMBLE_H\n#define CUDA_PREAMBLE_H\n\n")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/output_cu.h" "const char* preamble = \n")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/output_cu.h" "\"")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/output_cu.h" "${FILE_CONTENT_CUDA}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/output_cu.h" "\\n\"")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/output_cu.h" "\n\"\";")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/output_cu.h" "\n\n#endif // CUDA_PREAMBLE_H\n")
+
+
+string(REPLACE "\n" "\\n\"\n\"" FILE_CONTENT_CL "${FILE_CONTENT_CL}")
+
+# Generate output.h file with the contents of preamble.cl split into string literals
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/output_cl.h" "#ifndef OCL_PREAMBLE_H\n#define OCL_PREAMBLE_H\n\n")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/output_cl.h" "const char* preamble = \n")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/output_cl.h" "\"")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/output_cl.h" "${FILE_CONTENT_CL}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/output_cl.h" "\\n\"")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/output_cl.h" "\n\"\";")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/output_cl.h" "\n\n#endif // OCL_PREAMBLE_H\n")

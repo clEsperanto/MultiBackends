@@ -10,8 +10,10 @@
 #endif
 #ifdef __APPLE__
 #include <OpenCL/opencl.h>
+#include "build/output_cl.h" 
 #else
 #include <CL/cl.h>
+#include "build/output_cl.h" 
 #endif
 #endif
 
@@ -19,6 +21,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
+#include "build/output_cu.h" 
 #endif
 
 #include "device.hpp"
@@ -26,7 +29,7 @@
 #include <map>
 #include <memory>
 #include <vector>
-#include "build/output.h" 
+
 
 namespace cle
 {
@@ -659,7 +662,7 @@ namespace cle
 
         [[nodiscard]] inline auto getPreamble() const -> std::string override
         {
-            return ""; // @StRigaud TODO: add OpenCL preamble from header file
+            return preamble; // @StRigaud TODO: add OpenCL preamble from header file
         }
     };
 
