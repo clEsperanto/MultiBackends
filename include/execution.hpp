@@ -265,6 +265,7 @@ namespace cle
     {
         std::vector<void *> args_ptr;
         std::vector<size_t> args_size;
+        std::string kernel;
         args_ptr.reserve(parameters.size());
         args_size.reserve(parameters.size());
 
@@ -274,7 +275,7 @@ namespace cle
         {
         case Device::Type::CUDA:
             defines = cle::cudaDefines(parameters, constants);
-            std::string kernel = srcOpenclToCuda(kernel_func.second);
+            kernel = srcOpenclToCuda(kernel_func.second);
             break;
         case Device::Type::OPENCL:
             defines = cle::oclDefines(parameters, constants);

@@ -26,6 +26,7 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include "build/output.h" 
 
 namespace cle
 {
@@ -359,7 +360,8 @@ namespace cle
 
         [[nodiscard]] inline auto getPreamble() const -> std::string override
         {
-            return ""; // @StRigaud TODO: add cuda preamble from header file
+            //read the preamble path and put it into a string and integrate it into the header
+            return preamble; // @StRigaud TODO: add cuda preamble from header file
         }
     };
 
