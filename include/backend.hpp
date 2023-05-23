@@ -10,10 +10,10 @@
 #endif
 #ifdef __APPLE__
 #include <OpenCL/opencl.h>
-#include "build/output_cl.h" 
+#include "output_cl.h"
 #else
 #include <CL/cl.h>
-#include "build/output_cl.h" 
+#include "output_cl.h"
 #endif
 #endif
 
@@ -21,7 +21,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
-#include "build/output_cu.h" 
+#include "output_cu.h"
 #endif
 
 #include "device.hpp"
@@ -364,7 +364,8 @@ namespace cle
         [[nodiscard]] inline auto getPreamble() const -> std::string override
         {
             //read the preamble path and put it into a string and integrate it into the header
-            return preamble; // @StRigaud TODO: add cuda preamble from header file
+            return cudaKernel::preamble; // @StRigaud TODO: add cuda preamble from header file
+            // return "";
         }
     };
 
@@ -662,7 +663,8 @@ namespace cle
 
         [[nodiscard]] inline auto getPreamble() const -> std::string override
         {
-            return preamble; // @StRigaud TODO: add OpenCL preamble from header file
+            return oclKernel::preamble; // @StRigaud TODO: add OpenCL preamble from header file
+            // return "";
         }
     };
 

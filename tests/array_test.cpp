@@ -24,7 +24,8 @@ void run_test()
     cle::Array gpu_arr1(5, 5, 2, cle::Array::Type::Float, device);
 
     std::cout << "Write memory" << std::endl;
-    float data[size];
+    // float data[size];
+    float* data = new float[size];
     for (int i = 0; i < size; i++)
     {
         data[i] = i;
@@ -32,7 +33,8 @@ void run_test()
     cle::Array gpu_arr2(5, 5, 2, cle::Array::Type::Float, data, device);
 
     std::cout << "Read memory" << std::endl;
-    float data_out[size];
+    // float data_out[size];
+    float* data_out = new float[size];
     for (int i = 0; i < size; i++)
     {
         data_out[i] = -i;
@@ -48,7 +50,8 @@ void run_test()
 
     std::cout << "Write existing memory" << std::endl;
     gpu_arr1.write(data);
-    float data_out2[size];
+    // float data_out2[size];
+    float* data_out2 = new float[size];
     gpu_arr1.read(data_out2);
     for (int i = 0; i < size; i++)
     {

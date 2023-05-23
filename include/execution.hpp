@@ -261,58 +261,58 @@ namespace cle
         return defines.str();
     }
 
-    static auto execute(const DevicePtr &device, const KernelInfo &kernel_func, const ParameterMap &parameters, const ConstantMap &constants = {}, const RangeArray &global_rage = {1, 1, 1}) -> void
-    {
-        std::vector<void *> args_ptr;
-        std::vector<size_t> args_size;
-        std::string kernel;
-        args_ptr.reserve(parameters.size());
-        args_size.reserve(parameters.size());
+    // static auto execute(const DevicePtr &device, const KernelInfo &kernel_func, const ParameterMap &parameters, const ConstantMap &constants = {}, const std::array<size_t, 3> &global_range = {1, 1, 1}) -> void
+    // {
+    //     std::vector<void *> args_ptr;
+    //     std::vector<size_t> args_size;
+    //     std::string kernel;
+    //     args_ptr.reserve(parameters.size());
+    //     args_size.reserve(parameters.size());
 
-        // build kernel source
-        std::string defines;
-        switch (device->getType())
-        {
-        case Device::Type::CUDA:
-            defines = cle::cudaDefines(parameters, constants);
-            kernel = srcOpenclToCuda(kernel_func.second);
-            break;
-        case Device::Type::OPENCL:
-            defines = cle::oclDefines(parameters, constants);
-            break;
-        }
-        std::string preamble = cle::BackendManager::getInstance().getBackend().getPreamble();
-        // std::string kernel = kernel_func.second;
-        std::string func_name = kernel_func.first;
-        std::string source = defines + preamble + kernel;
+    //     // build kernel source
+    //     std::string defines;
+    //     switch (device->getType())
+    //     {
+    //     case Device::Type::CUDA:
+    //         defines = cle::cudaDefines(parameters, constants);
+    //         kernel = srcOpenclToCuda(kernel_func.second);
+    //         break;
+    //     case Device::Type::OPENCL:
+    //         defines = cle::oclDefines(parameters, constants);
+    //         break;
+    //     }
+    //     std::string preamble = cle::BackendManager::getInstance().getBackend().getPreamble();
+    //     // std::string kernel = kernel_func.second;
+    //     std::string func_name = kernel_func.first;
+    //     std::string source = defines + preamble + kernel;
 
-        // list kernel arguments and sizes
-        for (const auto &[key, value] : parameters)
-        {
-            if (std::holds_alternative<Array>(value))
-            {
-                const auto &arr = std::get<Array>(value);
-                args_ptr.push_back(*arr.get());
-                args_size.push_back(arr.nbElements() * arr.bytesPerElements());
-            }
-            else if (std::holds_alternative<float>(value))
-            {
-                const auto &f = std::get<float>(value);
-                args_ptr.push_back(const_cast<float *>(&f));
-                args_size.push_back(sizeof(float));
-            }
-            else if (std::holds_alternative<int>(value))
-            {
-                const auto &i = std::get<int>(value);
-                args_ptr.push_back(const_cast<int *>(&i));
-                args_size.push_back(sizeof(int));
-            }
-        }
+    //     // list kernel arguments and sizes
+    //     for (const auto &[key, value] : parameters)
+    //     {
+    //         if (std::holds_alternative<Array>(value))
+    //         {
+    //             const auto &arr = std::get<Array>(value);
+    //             args_ptr.push_back(*arr.get());
+    //             args_size.push_back(arr.nbElements() * arr.bytesPerElements());
+    //         }
+    //         else if (std::holds_alternative<float>(value))
+    //         {
+    //             const auto &f = std::get<float>(value);
+    //             args_ptr.push_back(const_cast<float *>(&f));
+    //             args_size.push_back(sizeof(float));
+    //         }
+    //         else if (std::holds_alternative<int>(value))
+    //         {
+    //             const auto &i = std::get<int>(value);
+    //             args_ptr.push_back(const_cast<int *>(&i));
+    //             args_size.push_back(sizeof(int));
+    //         }
+    //     }
 
-        // @StRigaud TODO: save source into file for debugging
-        // @StRigaud TODO: call execution based on backend, warning dealing with void** and void* is not safe
-        cle::BackendManager::getInstance().getBackend().executeKernel(device, source, func_name, global_rage, args_ptr, args_size);
-    }
+    //     // @StRigaud TODO: save source into file for debugging
+    //     // @StRigaud TODO: call execution based on backend, warning dealing with void** and void* is not safe
+    //     cle::BackendManager::getInstance().getBackend().executeKernel(device, source, func_name, global_range, args_ptr, args_size);
+    // }
 
 } // namespace cle
 
