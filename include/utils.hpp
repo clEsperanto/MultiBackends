@@ -1,5 +1,5 @@
-#ifndef __COBRA_UTILS_HPP
-#define __COBRA_UTILS_HPP
+#ifndef __INCLUDE_UTILS_HPP
+#define __INCLUDE_UTILS_HPP
 
 #include <iostream>
 
@@ -156,4 +156,4 @@ toBytes(const dType & dtype) -> size_t
 
 } // namespace cle
 
-#endif // __COBRA_UTILS_HPP
+#endif // __INCLUDE_UTILS_HPP

@@ -2,7 +2,6 @@
 #define __INCLUDE_MEMORY_HPP
 
 #include "array.hpp"
-// #include "backend.hpp"
 #include "device.hpp"
 #include "utils.hpp"
 

@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(Cobra VERSION 0.0.1) 
-# COBRA : CUDA OPENCL BACKEND RUNTIME API
+project(GEM VERSION 0.0.1) # GEM : GPU Execution Manager
 
 # C++ standard and extensions
 set(CMAKE_CXX_STANDARD 17)

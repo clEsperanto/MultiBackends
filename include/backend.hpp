@@ -1,8 +1,8 @@
-#ifndef __COBRA_BACKEND_HPP
-#define __COBRA_BACKEND_HPP
+#ifndef __INCLUDE_BACKEND_HPP
+#define __INCLUDE_BACKEND_HPP
 
-#include "cobra.hpp"
 #include "device.hpp"
+#include "gem.hpp"
 #include "utils.hpp"
 
 #include <algorithm>
@@ -373,4 +373,4 @@ public:
 
 } // namespace cle
 
-#endif // __COBRA_BACKEND_HPP
+#endif // __INCLUDE_BACKEND_HPP
