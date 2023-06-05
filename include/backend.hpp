@@ -10,10 +10,10 @@
 #endif
 #ifdef __APPLE__
 #include <OpenCL/opencl.h>
-#include "output_cl.h"
+#include "ocl_preamble.h"
 #else
 #include <CL/cl.h>
-#include "output_cl.h"
+#include "ocl_preamble.h"
 #endif
 #endif
 
@@ -21,7 +21,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
-#include "output_cu.h"
+#include "cuda_preamble.h"
 #endif
 
 #include "device.hpp"

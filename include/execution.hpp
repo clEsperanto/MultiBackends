@@ -4,9 +4,11 @@
 #include "array.hpp"
 #include "backend.hpp"
 #include "device.hpp"
+#include "add_image_and_scalar.h"
 
 #include <variant>
 #include <string_view>
+#include <fstream>
 
 namespace cle
 {
@@ -259,6 +261,30 @@ namespace cle
         // return defines as string
         defines << "\n";
         return defines.str();
+    }
+
+    static auto execute()
+    {
+        ParameterMap parameter_list; 
+        ConstantMap &constant_list;
+
+        std::string opencl_code = oclKernel::add_image_and_scalar;
+        std::string cuda_code = srcOpenclToCuda(opencl_code);
+        std::string preamble = cudaKernel::preamble;
+        std::string defines = cudaDefines(parameter_list, constant_list);
+
+        std::string source = defines + preamble + cuda_code;
+
+        std::ofstream file("kernel_output.txt");
+
+        // Check if the file was opened successfully
+        if (file.is_open()) {
+
+        // Write the content to the file
+        file << source;
+
+        // Close the file
+        file.close();
     }
 
     // static auto execute(const DevicePtr &device, const KernelInfo &kernel_func, const ParameterMap &parameters, const ConstantMap &constants = {}, const std::array<size_t, 3> &global_range = {1, 1, 1}) -> void
