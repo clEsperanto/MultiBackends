@@ -1,19 +1,8 @@
-#ifndef __INCLUDE_EXECUTION_HPP
-#define __INCLUDE_EXECUTION_HPP
 
-#include "array.hpp"
-#include "backend.hpp"
-#include "device.hpp"
-
-#include <variant>
+#include "execution.hpp"
 
 namespace cle
 {
-using DevicePtr = std::shared_ptr<cle::Device>;
-using ParameterMap = std::map<std::string, std::variant<Array, float, int>>;
-using ConstantMap = std::map<std::string, int>;
-using KernelInfo = std::pair<std::string, std::string>;
-using RangeArray = std::array<size_t, 3>;
 
 static auto
 cudaDefines(const ParameterMap & parameter_list, const ConstantMap & constant_list) -> std::string
@@ -197,5 +186,3 @@ execute(const DevicePtr &    device,
 }
 
 } // namespace cle
-
-#endif // __INCLUDE_EXECUTION_HPP

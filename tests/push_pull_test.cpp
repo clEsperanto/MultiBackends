@@ -1,4 +1,4 @@
-#include "cobra/memory.hpp"
+#include "memory.hpp"
 
 void
 run_test()

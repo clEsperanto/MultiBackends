@@ -1,8 +1,8 @@
-#ifndef __COBRA_MEMORY_HPP
-#define __COBRA_MEMORY_HPP
+#ifndef __INCLUDE_MEMORY_HPP
+#define __INCLUDE_MEMORY_HPP
 
 #include "array.hpp"
-#include "backend.hpp"
+// #include "backend.hpp"
 #include "device.hpp"
 #include "utils.hpp"
 
@@ -49,4 +49,4 @@ copy(const Array & src) -> Array
 
 } // namespace cle::memory
 
-#endif // __COBRA_MEMORY_HPP
+#endif // __INCLUDE_MEMORY_HPP

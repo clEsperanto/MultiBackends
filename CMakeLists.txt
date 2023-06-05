@@ -3,8 +3,6 @@ cmake_minimum_required(VERSION 3.20)
 project(Cobra VERSION 0.0.1) 
 # COBRA : CUDA OPENCL BACKEND RUNTIME API
 
-
-
 # C++ standard and extensions
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -39,8 +37,8 @@ set(CMAKE_DEBUG_POSTFIX "_d")
 set(CMAKE_RELEASE_POSTFIX "")
 
 # list project source files
-file(GLOB_RECURSE SOURCES "src/*.cpp")
-file(GLOB_RECURSE HEADERS "include/*.hpp")
+file(GLOB_RECURSE SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+file(GLOB_RECURSE HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp")
 set(INCLUDE_DIR_LIST ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # find GPU Framework (OpenCL, CUDA)
@@ -51,8 +49,8 @@ if (NOT OpenCL_FOUND AND NOT CUDAToolkit_FOUND)
 endif()
 
 # target definition
-add_library(${LIBRARY_NAME} INTERFACE)
-target_include_directories(${LIBRARY_NAME} INTERFACE
+add_library(${LIBRARY_NAME} ${SOURCES} ${HEADERS})
+target_include_directories(${LIBRARY_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )

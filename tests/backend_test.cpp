@@ -1,5 +1,6 @@
-#include "cobra/backend.hpp"
-#include "cobra/device.hpp"
+#include "backend.hpp"
+#include "backendmanager.hpp"
+#include "device.hpp"
 
 void
 ocl_list_devices()

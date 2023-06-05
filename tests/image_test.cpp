@@ -1,8 +1,8 @@
-#include "cobra/array.hpp"
-#include "cobra/backend.hpp"
-#include "cobra/device.hpp"
-#include "cobra/execution.hpp"
-#include "cobra/utils.hpp"
+#include "array.hpp"
+#include "backendmanager.hpp"
+#include "device.hpp"
+#include "execution.hpp"
+#include "utils.hpp"
 
 void
 run_test()

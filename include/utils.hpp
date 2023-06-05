@@ -25,7 +25,7 @@ enum class dType
   UInt64
 };
 
-auto
+inline auto
 operator<<(std::ostream & out, const dType & dtype) -> std::ostream &
 {
   switch (dtype)
@@ -64,7 +64,7 @@ operator<<(std::ostream & out, const dType & dtype) -> std::ostream &
   return out;
 }
 
-auto
+inline auto
 operator<<(std::ostream & out, const mType & mtype) -> std::ostream &
 {
   switch (mtype)
@@ -80,7 +80,7 @@ operator<<(std::ostream & out, const mType & mtype) -> std::ostream &
 }
 
 template <typename T>
-auto
+inline auto
 toType() -> dType
 {
   if constexpr (std::is_same_v<T, float>)
@@ -125,7 +125,7 @@ toType() -> dType
   }
 }
 
-auto
+inline auto
 toBytes(const dType & dtype) -> size_t
 {
   switch (dtype)
