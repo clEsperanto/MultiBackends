@@ -5,6 +5,7 @@
 #include "backendmanager.hpp"
 #include "device.hpp"
 
+#include <array>
 #include <variant>
 
 namespace cle
