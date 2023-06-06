@@ -11,33 +11,39 @@ jobs:
 
     build: 
 
-        runs-on: ubuntu-latest
+        runs-on: ${{ matrix.os }}
+        name: build-${{ matrix.os }}
         strategy:
             fail-fast: true
             matrix:
-                cuda_version: [11.2]
+                os: [ubuntu-latest]
 
         steps:
 
             - name: Checkout
               uses: actions/checkout@v3
 
-            - name: Set up OpenCL
+            - name: Install dependencies
               run: |
-                sudo apt update
-                sudo apt install -y ocl-icd-opencl-dev
-    
-            - name: Install CUDA Toolkit
-              run: |
-                wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
-                sudo mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600
-                wget https://developer.download.nvidia.com/compute/cuda/11.4.1/local_installers/cuda-repo-ubuntu2004-11-4-local_11.4.1-470.57.02-1_amd64.deb
-                sudo dpkg -i cuda-repo-ubuntu2004-11-4-local_11.4.1-470.57.02-1_amd64.deb
-                sudo apt-key add /var/cuda-repo-ubuntu2004-11-4-local/7fa2af80.pub
-                sudo apt-get update
-                sudo apt-get -y install cuda
+                if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+                  sudo apt-get update   
+                  sudo apt-get install -y nvidia-cuda-toolkit 
+                  sudo ldconfig /usr/local/cuda/lib64
+                elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+                  brew update
+                  brew install opencl
+                  brew install --cask cuda
+                else
+                  choco install opencl-sdk
+                  choco install cuda
+                fi
       
             - name: Setup cmake
               uses: lukka/get-cmake@v3.26.3
+
+            - name: Configure and build project
+              run: |
+                cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=61
+                cmake --build build --config Release -j 4 
 
             
