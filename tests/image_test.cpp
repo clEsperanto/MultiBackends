@@ -22,18 +22,21 @@ run_test()
 
   std::cout << "Allocate memory" << std::endl;
   static const size_t size = 5 * 5 * 2;
-  cle::Array          gpu_arr1(5, 5, 2, cle::dType::Int32, cle::mType::Buffer, device);
+  cle::Array          gpu_arr1(5, 5, 2, cle::dType::Float, cle::mType::Image, device);
+
+  std::cout << gpu_arr1 << std::endl;
 
   std::cout << "Write memory" << std::endl;
-  int * data = new int[size];
+  float * data = new float[size];
   for (int i = 0; i < size; i++)
   {
     data[i] = i;
   }
-  cle::Array gpu_arr2(5, 5, 2, cle::dType::Int32, cle::mType::Buffer, data, device);
+  cle::Array gpu_arr2(5, 5, 2, cle::dType::Float, cle::mType::Image, data, device);
+  std::cout << gpu_arr2 << std::endl;
 
   std::cout << "Read memory" << std::endl;
-  int * data_out = new int[size];
+  float data_out[size];
   for (int i = 0; i < size; i++)
   {
     data_out[i] = -i;
@@ -49,7 +52,7 @@ run_test()
 
   std::cout << "Write existing memory" << std::endl;
   gpu_arr1.write(data);
-  int * data_out2 = new int[size];
+  float * data_out2 = new float[size];
   gpu_arr1.read(data_out2);
   for (int i = 0; i < size; i++)
   {
@@ -57,25 +60,14 @@ run_test()
   }
   std::cout << std::endl;
 
-  std::cout << "Copy memory" << std::endl;
-  cle::Array gpu_arr3(5, 5, 2, cle::dType::Int32, cle::mType::Buffer, device);
-  int *      data_out3 = new int[size];
-  gpu_arr1.copy(gpu_arr3);
-  gpu_arr3.read(data_out3);
-  for (int i = 0; i < size; i++)
-  {
-    std::cout << data_out3[i] << " ";
-  }
-  std::cout << std::endl;
-
-  std::cout << "Fill up memory " << std::endl;
-  gpu_arr1.fill(1);
-  gpu_arr1.read(data_out2);
-  for (int i = 0; i < size; i++)
-  {
-    std::cout << data_out2[i] << " ";
-  }
-  std::cout << std::endl;
+  // std::cout << "Array type: " << gpu_arr1.dtype() << std::endl;
+  // gpu_arr1.fill(1.0f);
+  // gpu_arr1.read(data_out2);
+  // for (int i = 0; i < size; i++)
+  // {
+  //   std::cout << data_out2[i] << " ";
+  // }
+  // std::cout << std::endl;
 }
 
 int

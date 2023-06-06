@@ -2,47 +2,50 @@
 #define __INCLUDE_MEMORY_HPP
 
 #include "array.hpp"
-#include "backend.hpp"
 #include "device.hpp"
+#include "utils.hpp"
 
-namespace cle
+namespace cle::memory
 {
-    namespace memory
-    {
-        using DevicePtr = std::shared_ptr<cle::Device>;
+using DevicePtr = std::shared_ptr<cle::Device>;
 
-        template <typename T>
-        auto create(const size_t &width, const size_t &height, const size_t &depth, const DevicePtr &device) -> const Array
-        {
-            return Array{width, height, depth, Array::toType<T>(), device};
-        }
+template <typename T>
+static auto
+create(const size_t & width, const size_t & height, const size_t & depth, const DevicePtr & device) -> Array
+{
+  return Array{ width, height, depth, toType<T>(), mType::Buffer, device };
+}
 
-        auto create_like(const Array &arr) -> const Array
-        {
-            return Array{arr.width(), arr.height(), arr.depth(), arr.dtype(), arr.device()};
-        }
+static auto
+create_like(const Array & arr) -> Array
+{
+  return Array{ arr.width(), arr.height(), arr.depth(), arr.dtype(), arr.mtype(), arr.device() };
+}
 
-        template <typename T>
-        auto push(const T *host_data, const size_t &width, const size_t &height, const size_t &depth, const DevicePtr &device) -> const Array
-        {
-            return Array{width, height, depth, Array::toType<T>(), host_data, device};
-        }
+template <typename T>
+static auto
+push(const T * host_data, const size_t & width, const size_t & height, const size_t & depth, const DevicePtr & device)
+  -> Array
+{
+  return Array{ width, height, depth, toType<T>(), mType::Buffer, host_data, device };
+}
 
-        template <typename T>
-        auto pull(const Array &arr, T *host_arr) -> void
-        {
-            arr.read(host_arr);
-        }
+template <typename T>
+static auto
+pull(const Array & arr, T * host_arr) -> void
+{
+  arr.read(host_arr);
+}
 
-        template <typename T>
-        auto copy(const Array &src) -> const Array
-        {
-            Array dst{src.width(), src.height(), src.depth(), Array::toType<T>(), src.device()};
-            src.copy(dst);
-            return dst;
-        }
+template <typename T>
+static auto
+copy(const Array & src) -> Array
+{
+  Array dst{ src.width(), src.height(), src.depth(), toType<T>(), mType::Buffer, src.device() };
+  src.copy(dst);
+  return dst;
+}
 
-    } // namespace memory
-} // namespace cle
+} // namespace cle::memory
 
 #endif // __INCLUDE_MEMORY_HPP
