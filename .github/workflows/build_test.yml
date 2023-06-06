@@ -36,6 +36,7 @@ jobs:
               run: |
                 choco install opencl-sdk
                 choco install cuda
+                refreshenv
             
             - name: Install dependencies (macos)
               if: matrix.os == 'macos-latest'
