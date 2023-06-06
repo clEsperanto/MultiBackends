@@ -61,7 +61,6 @@ public:
 };
 
 #if CLE_OPENCL
-
 class OpenCLDevice : public Device
 {
 public:
@@ -102,11 +101,9 @@ private:
   std::map<std::string, cl_program> cache;
   bool                              initialized = false;
 };
-
 #endif // CLE_OPENCL
 
 #if CLE_CUDA
-
 class CUDADevice : public Device
 {
 public:
@@ -141,7 +138,6 @@ private:
   bool                            initialized = false;
   std::map<std::string, CUmodule> cache;
 };
-
 #endif // CLE_CUDA
 
 } // namespace cle

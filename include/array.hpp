@@ -106,7 +106,6 @@ public:
     return out;
   }
 
-
 private:
   mType           memType_ = mType::Buffer;
   dType           dataType_ = dType::Float;
