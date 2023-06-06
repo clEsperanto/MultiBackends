@@ -3,21 +3,22 @@ cmake_minimum_required(VERSION 3.20)
 project(CLIc VERSION 0.0.1) # GEM : GPU Execution Manager
 
 # C++ standard and extensions
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF) # Don't use e.g. GNU extension (like -std=gnu++11) for portability
+set(CMAKE_CXX_STANDARD 17)           # C++17, global property instead of target property because of wrapper
+set(CMAKE_CXX_STANDARD_REQUIRED ON)  # C++17 is required (no fallback)
+set(CMAKE_CXX_EXTENSIONS OFF)        # Don't use e.g. GNU extension (like -std=gnu++11) for portability
 
+# set library name
 if(NOT LIBRARY_NAME)
   set(LIBRARY_NAME ${PROJECT_NAME})
 endif()
 
-# set build as static or shared
+# set build as static or shared library (default: static)
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 if (WIN32 AND BUILD_SHARED_LIBS)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()
 
-# Manage build type options (default: Release)
+# manage build type options (default: Release)
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if(isMultiConfig)
   set(CMAKE_CONFIGURATION_TYPES "Release;Debug;MinSizeRel;RelWithDebInfo" CACHE STRING "" FORCE)
@@ -31,7 +32,6 @@ else()
   message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
   message(STATUS "CMAKE_GENERATOR: Single-config")
 endif()
-# Configurations tag to avoid compilation colliding
 set(CMAKE_DEBUG_POSTFIX "_d")
 set(CMAKE_RELEASE_POSTFIX "")
 
@@ -44,42 +44,40 @@ set(INCLUDE_DIR_LIST ${CMAKE_CURRENT_SOURCE_DIR}/include)
 find_package(OpenCL)
 find_package(CUDAToolkit)
 if (NOT OpenCL_FOUND AND NOT CUDAToolkit_FOUND)
-    message(FATAL_ERROR "No GPU framework found (OpenCL, CUDA).")
+    message(FATAL_ERROR "No GPU framework found (OpenCL, CUDA). Please install one of them.")
 endif()
 
-# target definition
+# target library definition
 add_library(${LIBRARY_NAME} ${SOURCES} ${HEADERS})
 target_include_directories(${LIBRARY_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
-set_target_properties(${LIBRARY_NAME} PROPERTIES LINKER_LANGUAGE CXX)
-set_target_properties(${LIBRARY_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
+set_target_properties(${LIBRARY_NAME} PROPERTIES LINKER_LANGUAGE CXX)        # force C++ linker
+set_target_properties(${LIBRARY_NAME} PROPERTIES VERSION ${PROJECT_VERSION}) # set version
 
 # link GPU framework to the target
 set(CLE_OPENCL OFF)
 set(CLE_CUDA OFF)
 if (OpenCL_FOUND)
     set(CLE_OPENCL ON)
-    target_include_directories(${LIBRARY_NAME} INTERFACE ${OpenCL_INCLUDE_DIRS})
-    target_link_libraries(${LIBRARY_NAME} INTERFACE ${OpenCL_LIBRARIES})
+    target_include_directories(${LIBRARY_NAME} PUBLIC ${OpenCL_INCLUDE_DIRS})
+    target_link_libraries(${LIBRARY_NAME} PUBLIC ${OpenCL_LIBRARIES})
 endif()
 if (CUDAToolkit_FOUND)
     set(CLE_CUDA ON)
     set_target_properties(${LIBRARY_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
     set_target_properties(${LIBRARY_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
-    target_include_directories(${LIBRARY_NAME} INTERFACE ${CUDA_INCLUDE_DIRS})
-    target_link_libraries(${LIBRARY_NAME} INTERFACE CUDA::cudart CUDA::cuda_driver CUDA::OpenCL)
+    target_include_directories(${LIBRARY_NAME} PUBLIC ${CUDA_INCLUDE_DIRS})
+    target_link_libraries(${LIBRARY_NAME} PUBLIC CUDA::cudart CUDA::cuda_driver CUDA::OpenCL) 
 endif()
 
-# Add the variables to the compile definitions
+# add the variables to the compile definitions for the source code
 add_compile_definitions(
     $<$<BOOL:${CLE_CUDA}>:CLE_CUDA>
     $<$<BOOL:${CLE_OPENCL}>:CLE_OPENCL>
 )
 
+# enable testing
 include(CTest)
 add_subdirectory(tests)
-
-# install headers
-install(DIRECTORY ${INCLUDE_DIR_LIST} DESTINATION include)
