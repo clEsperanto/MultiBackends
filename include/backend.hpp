@@ -1,8 +1,8 @@
 #ifndef __INCLUDE_BACKEND_HPP
 #define __INCLUDE_BACKEND_HPP
 
+#include "clic.hpp"
 #include "device.hpp"
-#include "clicl.hpp"
 #include "utils.hpp"
 
 #include <algorithm>

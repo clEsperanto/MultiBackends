@@ -5,7 +5,7 @@
 #include <map>
 #include <sstream>
 
-#include "clicl.hpp"
+#include "clic.hpp"
 
 namespace cle
 {
