@@ -1,5 +1,5 @@
-#ifndef __INCLUDE_GEM_HPP
-#define __INCLUDE_GEM_HPP
+#ifndef __INCLUDE_CLIC_HPP
+#define __INCLUDE_CLIC_HPP
 
 #if CLE_OPENCL
 #  ifndef CL_TARGET_OPENCL_VERSION
@@ -18,4 +18,4 @@
 #  include <cuda_runtime_api.h>
 #endif
 
-#endif // __INCLUDE_GEM_HPP
+#endif // __INCLUDE_CLIC_HPP

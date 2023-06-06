@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(GEM VERSION 0.0.1) # GEM : GPU Execution Manager
+project(CLIc VERSION 0.0.1) # GEM : GPU Execution Manager
 
 # C++ standard and extensions
 set(CMAKE_CXX_STANDARD 17)
