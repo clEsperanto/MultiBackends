@@ -23,7 +23,7 @@ cudaDefines(const ParameterMap & parameter_list, const ConstantMap & constant_li
 static auto
 oclDefines(const ParameterMap & parameter_list, const ConstantMap & constant_list) -> std::string;
 
-static auto
+auto
 execute(const DevicePtr &    device,
         const KernelInfo &   kernel_func,
         const ParameterMap & parameters,
