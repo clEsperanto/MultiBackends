@@ -8,8 +8,8 @@ run_test()
   std::cout << "run_test : " << device->getName() << std::endl;
 
   std::cout << "make host data" << std::endl;
-  size_t size = 5 * 5 * 2;
-  float  data[size];
+  static const size_t size = 5 * 5 * 2;
+  float *             data = new float[size];
   for (int i = 0; i < size; i++)
   {
     data[i] = i;
@@ -19,7 +19,7 @@ run_test()
   std::cout << "push it" << std::endl;
   auto arr = cle::memory::push(data, 5, 5, 2, device);
 
-  float data_out[arr.nbElements()];
+  float * data_out = new float[arr.nbElements()];
   std::fill(data_out, data_out + size, -1);
 
   auto arr_copy = arr;

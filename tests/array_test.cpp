@@ -21,11 +21,11 @@ run_test()
   device->initialize();
 
   std::cout << "Allocate memory" << std::endl;
-  size_t     size = 5 * 5 * 2;
-  cle::Array gpu_arr1(5, 5, 2, cle::dType::Int32, cle::mType::Buffer, device);
+  static const size_t size = 5 * 5 * 2;
+  cle::Array          gpu_arr1(5, 5, 2, cle::dType::Int32, cle::mType::Buffer, device);
 
   std::cout << "Write memory" << std::endl;
-  int data[size];
+  int * data = new int[size];
   for (int i = 0; i < size; i++)
   {
     data[i] = i;
@@ -33,7 +33,7 @@ run_test()
   cle::Array gpu_arr2(5, 5, 2, cle::dType::Int32, cle::mType::Buffer, data, device);
 
   std::cout << "Read memory" << std::endl;
-  int data_out[size];
+  int * data_out = new int[size];
   for (int i = 0; i < size; i++)
   {
     data_out[i] = -i;
@@ -49,7 +49,7 @@ run_test()
 
   std::cout << "Write existing memory" << std::endl;
   gpu_arr1.write(data);
-  int data_out2[size];
+  int * data_out2 = new int[size];
   gpu_arr1.read(data_out2);
   for (int i = 0; i < size; i++)
   {
@@ -59,7 +59,7 @@ run_test()
 
   std::cout << "Copy memory" << std::endl;
   cle::Array gpu_arr3(5, 5, 2, cle::dType::Int32, cle::mType::Buffer, device);
-  int        data_out3[size];
+  int *      data_out3 = new int[size];
   gpu_arr1.copy(gpu_arr3);
   gpu_arr3.read(data_out3);
   for (int i = 0; i < size; i++)

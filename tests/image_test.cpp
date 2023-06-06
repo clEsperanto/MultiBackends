@@ -21,13 +21,13 @@ run_test()
   device->initialize();
 
   std::cout << "Allocate memory" << std::endl;
-  size_t     size = 5 * 5 * 2;
-  cle::Array gpu_arr1(5, 5, 2, cle::dType::Float, cle::mType::Image, device);
+  static const size_t size = 5 * 5 * 2;
+  cle::Array          gpu_arr1(5, 5, 2, cle::dType::Float, cle::mType::Image, device);
 
   std::cout << gpu_arr1 << std::endl;
 
   std::cout << "Write memory" << std::endl;
-  float data[size];
+  float * data = new float[size];
   for (int i = 0; i < size; i++)
   {
     data[i] = i;
@@ -52,7 +52,7 @@ run_test()
 
   std::cout << "Write existing memory" << std::endl;
   gpu_arr1.write(data);
-  float data_out2[size];
+  float * data_out2 = new float[size];
   gpu_arr1.read(data_out2);
   for (int i = 0; i < size; i++)
   {
