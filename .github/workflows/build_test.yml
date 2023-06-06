@@ -50,7 +50,7 @@ jobs:
             - name: Install dependencies (windows)
               if: matrix.os == 'windows-latest'
               run: |
-                Invoke-WebRequest -Uri "https://developer.download.nvidia.com/compute/cuda/12.1.1/local_installers/cuda_12.1.1_win.exe" -OutFile "cuda_installer.exe"
+                Invoke-WebRequest -Uri "https://developer.download.nvidia.com/compute/cuda/12.1.1/local_installers/cuda_12.1.1_531.14_windows.exe" -OutFile "cuda_installer.exe"
             
                 Start-Process -Wait -FilePath ".\cuda_installer.exe" -ArgumentList "--silent", "--toolkit", "--override", "--installpath=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
             
