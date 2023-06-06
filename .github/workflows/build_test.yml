@@ -41,8 +41,10 @@ jobs:
             - name: Install dependencies (macos)
               if: matrix.os == 'macos-latest'
               run: |
-                brew update
-                brew install --cask cuda
+                wget https://developer.download.nvidia.com/compute/cuda/11.4.1/local_installers/cuda_11.4.1_mac.dmg
+                hdiutil attach cuda_11.4.1_mac.dmg
+                sudo installer -pkg /Volumes/CUDAMacOSXInstaller/CUDAMacOSXInstaller.app/Contents/MacOS/CUDAMacOSXInstaller -target /
+                hdiutil detach /Volumes/CUDAMacOSXInstaller
       
             - name: Setup cmake
               uses: lukka/get-cmake@v3.26.3
