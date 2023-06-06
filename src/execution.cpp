@@ -132,8 +132,8 @@ static auto
 execute(const DevicePtr &    device,
         const KernelInfo &   kernel_func,
         const ParameterMap & parameters,
-        const ConstantMap &  constants = {},
-        const RangeArray &   global_rage = { 1, 1, 1 }) -> void
+        const ConstantMap &  constants,
+        const RangeArray &   global_rage) -> void
 {
   std::vector<void *> args_ptr;
   std::vector<size_t> args_size;
