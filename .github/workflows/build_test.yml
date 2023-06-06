@@ -27,7 +27,7 @@ jobs:
             - name: Install dependencies (ubuntu)
               if: matrix.os == 'ubuntu-latest'
               run: |
-                sudo apt-get update   
+                # sudo apt-get update   
                 # sudo apt-get install -y nvidia-cuda-toolkit 
 
                 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-ubuntu2204.pin
@@ -50,26 +50,27 @@ jobs:
             - name: Install dependencies (windows)
               if: matrix.os == 'windows-latest'
               run: |
-                wget https://developer.download.nvidia.com/compute/cuda/12.1.1/local_installers/cuda_12.1.1_win.exe -O cuda_installer.exe
+                Invoke-WebRequest -Uri "https://developer.download.nvidia.com/compute/cuda/12.1.1/local_installers/cuda_12.1.1_win.exe" -OutFile "cuda_installer.exe"
             
-                ./cuda_installer.exe --silent --toolkit --override --installpath="C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
+                Start-Process -Wait -FilePath ".\cuda_installer.exe" -ArgumentList "--silent", "--toolkit", "--override", "--installpath=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
             
-                echo "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\bin" >> $env:Path
-                echo "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\libnvvp" >> $env:Path
+                $env:Path += ";C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\bin"
+                $env:Path += ";C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\libnvvp"
                 $env:CUDA_PATH = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
                 $env:CUDAToolkit_ROOT = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
                 $env:CUDA_PATH_V1211 = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
             
-                refreshenv
+                RefreshEnv
+          
               
             
-            - name: Install dependencies (macos)
-              if: matrix.os == 'macos-latest'
-              run: |
-                wget https://developer.download.nvidia.com/compute/cuda/11.4.1/local_installers/cuda_11.4.1_mac.dmg
-                hdiutil attach cuda_11.4.1_mac.dmg
-                sudo installer -pkg /Volumes/CUDAMacOSXInstaller/CUDAMacOSXInstaller.app/Contents/MacOS/CUDAMacOSXInstaller -target /
-                hdiutil detach /Volumes/CUDAMacOSXInstaller
+            # - name: Install dependencies (macos)
+            #   if: matrix.os == 'macos-latest'
+            #   run: |
+            #     wget https://developer.download.nvidia.com/compute/cuda/11.4.1/local_installers/cuda_11.4.1_mac.dmg
+            #     hdiutil attach cuda_11.4.1_mac.dmg
+            #     sudo installer -pkg /Volumes/CUDAMacOSXInstaller/CUDAMacOSXInstaller.app/Contents/MacOS/CUDAMacOSXInstaller -target /
+            #     hdiutil detach /Volumes/CUDAMacOSXInstaller
       
             - name: Setup cmake
               uses: lukka/get-cmake@v3.26.3
