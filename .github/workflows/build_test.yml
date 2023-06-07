@@ -40,37 +40,28 @@ jobs:
 
                 sudo ldconfig /usr/local/cuda/lib64
 
-            # - name: Install dependencies (windows)
-            #   if: matrix.os == 'windows-latest'
-            #   run: |
-            #     choco install opencl-sdk
-            #     choco install cuda
-            #     refreshenv
-
             - name: Install dependencies (windows)
               if: matrix.os == 'windows-latest'
               run: |
-                Invoke-WebRequest -Uri "https://developer.download.nvidia.com/compute/cuda/12.1.1/local_installers/cuda_12.1.1_531.14_windows.exe" -OutFile "cuda_installer.exe"
-            
-                Start-Process -Wait -FilePath ".\cuda_installer.exe" -ArgumentList "--silent", "--toolkit", "--override", "--installpath=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
-            
-                $env:Path += ";C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\bin"
-                $env:Path += ";C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\libnvvp"
-                $env:CUDA_PATH = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
-                $env:CUDAToolkit_ROOT = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
-                $env:CUDA_PATH_V1211 = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
-            
-                RefreshEnv
-          
+                # Invoke-WebRequest -Uri "https://developer.download.nvidia.com/compute/cuda/12.1.1/local_installers/cuda_12.1.1_531.14_windows.exe" -OutFile "cuda_installer.exe"
               
-            
-            # - name: Install dependencies (macos)
-            #   if: matrix.os == 'macos-latest'
-            #   run: |
-            #     wget https://developer.download.nvidia.com/compute/cuda/11.4.1/local_installers/cuda_11.4.1_mac.dmg
-            #     hdiutil attach cuda_11.4.1_mac.dmg
-            #     sudo installer -pkg /Volumes/CUDAMacOSXInstaller/CUDAMacOSXInstaller.app/Contents/MacOS/CUDAMacOSXInstaller -target /
-            #     hdiutil detach /Volumes/CUDAMacOSXInstaller
+                # # Wait for the installation process to complete before proceeding
+                # Start-Process -Wait -FilePath ".\cuda_installer.exe" -ArgumentList "--silent", "--toolkit", "--override", "--installpath=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
+              
+                # # Add CUDA binaries to the system path
+                # $cudaBinPath = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\bin"
+                # $cudaLibPath = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\libnvvp"
+                # $env:Path = $cudaBinPath + ";" + $cudaLibPath + ";" + $env:Path
+              
+                # # Set environment variables for CUDA
+                # $env:CUDA_PATH = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
+                # $env:CUDAToolkit_ROOT = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
+                # $env:CUDA_PATH_V12_1_1 = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
+              
+                # Refresh the environment variables to make them available for subsequent steps
+                choco install cuda -y
+                RefreshEnv
+              
       
             - name: Setup cmake
               uses: lukka/get-cmake@v3.26.3
