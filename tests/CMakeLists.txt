@@ -19,7 +19,13 @@ add_dependencies(push_pull_test ${LIBRARY_NAME})
 target_link_libraries(push_pull_test PRIVATE ${LIBRARY_NAME})
 set_target_properties(push_pull_test PROPERTIES FOLDER "Tests")
 
+add_executable(defines_test defines_test.cpp)
+add_dependencies(defines_test ${LIBRARY_NAME})
+target_link_libraries(defines_test PRIVATE ${LIBRARY_NAME})
+set_target_properties(defines_test PROPERTIES FOLDER "Tests")
+
 add_test(NAME backend_test COMMAND backend_test)
 add_test(NAME array_test COMMAND array_test)
 add_test(NAME image_test COMMAND image_test)
 add_test(NAME push_pull_test COMMAND push_pull_test)
+add_test(NAME defines_test COMMAND defines_test)
