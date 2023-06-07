@@ -1,4 +1,10 @@
 #include "backend.hpp"
+#include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <filesystem>
 
 namespace cle
 {
@@ -484,7 +490,23 @@ CUDABackend::executeKernel(const DevicePtr &             device,
 auto
 CUDABackend::getPreamble() const -> std::string
 {
-  return ""; // @StRigaud TODO: add cuda preamble from header file
+  std::string           preamble_cu_content;
+  std::string           filename = "../../include/preamble.cu";
+  std::filesystem::path filepath = std::filesystem::current_path() / filename;
+  std::string           pathString = filepath.string();
+  std::replace(pathString.begin(), pathString.end(), '\\', '/');
+
+  // Read preamble.cu
+  std::ifstream preamble_cu_file(pathString);
+  if (preamble_cu_file.is_open())
+  {
+    std::stringstream buffer;
+    buffer << preamble_cu_file.rdbuf();
+    preamble_cu_content = buffer.str();
+    preamble_cu_file.close();
+  }
+
+  return preamble_cu_content; // @CherifMZ TODO: add cuda preamble from header file
 }
 
 } // namespace cle

@@ -81,3 +81,8 @@ add_compile_definitions(
 # enable testing
 include(CTest)
 add_subdirectory(tests)
+
+
+# # Reading the preamble for both CUDA & OpenCL
+file(DOWNLOAD "https://raw.githubusercontent.com/CherifMZ/clij-opencl-kernels/cuda_preamble/preamble/preamble.cu" "${CMAKE_CURRENT_BINARY_DIR}/../include/preamble.cu")
+file(DOWNLOAD "https://raw.githubusercontent.com/CherifMZ/clij-opencl-kernels/cuda_preamble/preamble/preamble.cl" "${CMAKE_CURRENT_BINARY_DIR}/../include/preamble.cl")

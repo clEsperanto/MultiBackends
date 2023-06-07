@@ -1,5 +1,10 @@
 #include "backend.hpp"
-
+#include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <filesystem>
 #include <array>
 
 
@@ -540,7 +545,23 @@ OpenCLBackend::executeKernel(const DevicePtr &             device,
 auto
 OpenCLBackend::getPreamble() const -> std::string
 {
-  return ""; // @StRigaud TODO: add OpenCL preamble from header file
+  std::string           preamble_cl_content;
+  std::string           filename = "../../include/preamble.cl";
+  std::filesystem::path filepath = std::filesystem::current_path() / filename;
+  std::string           pathString = filepath.string();
+  std::replace(pathString.begin(), pathString.end(), '\\', '/');
+
+  // Read preamble.cl
+  std::ifstream preamble_cl_file(pathString);
+  if (preamble_cl_file.is_open())
+  {
+    std::stringstream buffer;
+    buffer << preamble_cl_file.rdbuf();
+    preamble_cl_content = buffer.str();
+    preamble_cl_file.close();
+  }
+
+  return preamble_cl_content; // @CherifMZ TODO: add OpenCL preamble from header file
 }
 
 } // namespace cle

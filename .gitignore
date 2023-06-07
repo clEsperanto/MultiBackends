@@ -35,3 +35,7 @@ builds
 *.exe
 *.out
 *.app
+
+# Cuda an OpenCL files
+*.cu 
+*.cl
