@@ -46,20 +46,20 @@ jobs:
                 # Invoke-WebRequest -Uri "https://developer.download.nvidia.com/compute/cuda/12.1.1/local_installers/cuda_12.1.1_531.14_windows.exe" -OutFile "cuda_installer.exe"
               
                 # # Wait for the installation process to complete before proceeding
-                # Start-Process -Wait -FilePath ".\cuda_installer.exe" -ArgumentList "--silent", "--toolkit", "--override", "--installpath=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
+                # Start-Process -Wait -FilePath ".\cuda_installer.exe" -ArgumentList "--silent", "--toolkit", "--override", "--installpath=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0"
+                choco install cuda -y
               
-                # # Add CUDA binaries to the system path
-                # $cudaBinPath = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\bin"
-                # $cudaLibPath = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\libnvvp"
-                # $env:Path = $cudaBinPath + ";" + $cudaLibPath + ";" + $env:Path
+                # Add CUDA binaries to the system path
+                $cudaBinPath = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\bin"
+                $cudaLibPath = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\libnvvp"
+                $env:Path = $cudaBinPath + ";" + $cudaLibPath + ";" + $env:Path
               
-                # # Set environment variables for CUDA
-                # $env:CUDA_PATH = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
-                # $env:CUDAToolkit_ROOT = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
-                # $env:CUDA_PATH_V12_1_1 = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
+                # Set environment variables for CUDA
+                $env:CUDA_PATH = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0"
+                $env:CUDAToolkit_ROOT = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0"
+                $env:CUDA_PATH_V12_1_1 = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0"
               
                 # Refresh the environment variables to make them available for subsequent steps
-                choco install cuda -y
                 RefreshEnv
               
       
