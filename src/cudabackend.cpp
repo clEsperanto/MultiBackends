@@ -1,4 +1,5 @@
 #include "backend.hpp"
+#include "cle_preamble_cu.h"
 
 namespace cle
 {
@@ -484,7 +485,7 @@ CUDABackend::executeKernel(const DevicePtr &             device,
 auto
 CUDABackend::getPreamble() const -> std::string
 {
-  return ""; // @StRigaud TODO: add cuda preamble from header file
+  return kernel::preamble_cu; // @StRigaud TODO: add cuda preamble from header file
 }
 
 } // namespace cle
