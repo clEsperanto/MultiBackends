@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.20)
 
 project(CLIc VERSION 0.0.1) # GEM : GPU Execution Manager
 
+# Branch or Release tag to retrive the ocl/cu files
+set(CLESPERANTO_KERNEL_TAG clesperanto_kernels)
+
 # C++ standard and extensions
 set(CMAKE_CXX_STANDARD 17)           # C++17, global property instead of target property because of wrapper
 set(CMAKE_CXX_STANDARD_REQUIRED ON)  # C++17 is required (no fallback)
@@ -35,6 +38,9 @@ endif()
 set(CMAKE_DEBUG_POSTFIX "_d")
 set(CMAKE_RELEASE_POSTFIX "")
 
+# managed third party libraries
+add_subdirectory(thirdparty)
+
 # list project source files
 file(GLOB_RECURSE SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 file(GLOB_RECURSE HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp")
@@ -51,10 +57,12 @@ endif()
 add_library(${LIBRARY_NAME} ${SOURCES} ${HEADERS})
 target_include_directories(${LIBRARY_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${KERNELS_HEADER_DIR}>
     $<INSTALL_INTERFACE:include>
 )
 set_target_properties(${LIBRARY_NAME} PROPERTIES LINKER_LANGUAGE CXX)        # force C++ linker
 set_target_properties(${LIBRARY_NAME} PROPERTIES VERSION ${PROJECT_VERSION}) # set version
+add_dependencies(${LIBRARY_NAME} generate_kernels)
 
 # link GPU framework to the target
 set(CLE_OPENCL OFF)
