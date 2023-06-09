@@ -238,11 +238,11 @@ execute(const DevicePtr &    device,
   }
 
   // getPreamble: not implemented yet
-  // std::string preamble = cle::BackendManager::getInstance().getBackend().getPreamble();
+  std::string preamble = cle::BackendManager::getInstance().getBackend().getPreamble();
   std::string kernel = kernel_func.second;
   std::string func_name = kernel_func.first;
-  // std::string source = defines + preamble + kernel;
-  std::string source = defines;
+  std::string source = defines + preamble + kernel;
+  // std::string source = defines;
 
   // list kernel arguments and sizes
   for (const auto & [key, value] : parameters)
