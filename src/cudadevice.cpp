@@ -1,15 +1,13 @@
-
 #include "device.hpp"
 
 namespace cle
 {
 
-
 #if CLE_CUDA
-
 
 CUDADevice::CUDADevice(int deviceIndex)
   : cudaDeviceIndex(deviceIndex)
+  , cudaStream(nullptr)
 {}
 
 CUDADevice::~CUDADevice()
@@ -107,8 +105,8 @@ CUDADevice::getInfo() const -> std::string
   cudaDeviceProp     prop{};
   cudaGetDeviceProperties(&prop, cudaDeviceIndex);
 
-  result << prop.name << " (" << prop.major << "." << prop.minor << ")\n";
-  result << "\tType: " << (prop.integrated ? "Integrated" : "Discrete") << '\n';
+  result << static_cast<char *>(prop.name) << " (" << prop.major << "." << prop.minor << ")\n";
+  result << "\tType: " << (prop.integrated != 0 ? "Integrated" : "Discrete") << '\n';
   result << "\tCompute Units: " << prop.multiProcessorCount << '\n';
   result << "\tGlobal Memory Size: " << (prop.totalGlobalMem / 1000000) << " MB\n";
   // result << "\tMaximum Object Size: " << (prop.maxMemoryAllocationSize / 1000000) << " MB\n";

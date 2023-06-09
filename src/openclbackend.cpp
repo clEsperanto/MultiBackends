@@ -260,15 +260,15 @@ OpenCLBackend::writeMemory(const DevicePtr & device,
                            const void *      host_ptr) const -> void
 {
 #if CLE_OPENCL
-  auto         opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-  const size_t origin[3] = { 0, 0, 0 };
-  const size_t region[3] = { width * bytes, height, depth };
-  auto         err = clEnqueueWriteBufferRect(opencl_device->getCLCommandQueue(),
+  auto                        opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+  const std::array<size_t, 3> origin = { 0, 0, 0 };
+  const std::array<size_t, 3> region = { width * bytes, height, depth };
+  auto                        err = clEnqueueWriteBufferRect(opencl_device->getCLCommandQueue(),
                                       *static_cast<cl_mem *>(*data_ptr),
                                       CL_TRUE,
-                                      origin,
-                                      origin,
-                                      region,
+                                      origin.data(),
+                                      origin.data(),
+                                      region.data(),
                                       0,
                                       0,
                                       0,
@@ -320,15 +320,15 @@ OpenCLBackend::readMemory(const DevicePtr & device,
                           void *            host_ptr) const -> void
 {
 #if CLE_OPENCL
-  auto         opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-  const size_t origin[3] = { 0, 0, 0 };
-  const size_t region[3] = { width * bytes, height, depth };
-  auto         err = clEnqueueReadBufferRect(opencl_device->getCLCommandQueue(),
+  auto                        opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+  const std::array<size_t, 3> origin = { 0, 0, 0 };
+  const std::array<size_t, 3> region = { width * bytes, height, depth };
+  auto                        err = clEnqueueReadBufferRect(opencl_device->getCLCommandQueue(),
                                      *static_cast<const cl_mem *>(*data_ptr),
                                      CL_TRUE,
-                                     origin,
-                                     origin,
-                                     region,
+                                     origin.data(),
+                                     origin.data(),
+                                     region.data(),
                                      0,
                                      0,
                                      0,
@@ -382,15 +382,15 @@ OpenCLBackend::copyMemory(const DevicePtr & device,
                           void **           dst_data_ptr) const -> void
 {
 #if CLE_OPENCL
-  auto         opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-  const size_t origin[3] = { 0, 0, 0 };
-  const size_t region[3] = { width * bytes, height, depth };
-  auto         err = clEnqueueCopyBufferRect(opencl_device->getCLCommandQueue(),
+  auto                        opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+  const std::array<size_t, 3> origin = { 0, 0, 0 };
+  const std::array<size_t, 3> region = { width * bytes, height, depth };
+  auto                        err = clEnqueueCopyBufferRect(opencl_device->getCLCommandQueue(),
                                      *static_cast<const cl_mem *>(*src_data_ptr),
                                      *static_cast<cl_mem *>(*dst_data_ptr),
-                                     origin,
-                                     origin,
-                                     region,
+                                     origin.data(),
+                                     origin.data(),
+                                     region.data(),
                                      0,
                                      0,
                                      0,
@@ -507,7 +507,8 @@ OpenCLBackend::buildKernel(const DevicePtr &   device,
   loadProgramFromCache(device, hash, prog);
   if (prog == nullptr)
   {
-    prog = clCreateProgramWithSource(opencl_device->getCLContext(), 1, (const char **)&kernel_source, nullptr, &err);
+    const char * source = kernel_source.c_str();
+    prog = clCreateProgramWithSource(opencl_device->getCLContext(), 1, &source, nullptr, &err);
     if (err != CL_SUCCESS)
     {
       size_t                 len;
