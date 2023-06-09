@@ -107,26 +107,24 @@ OpenCLDevice::getCLCommandQueue() const -> const cl_command_queue &
 auto
 OpenCLDevice::getName() const -> std::string
 {
-  std::string vendor_name;
-  vendor_name.reserve(256);
-  clGetDeviceInfo(clDevice, CL_DEVICE_NAME, sizeof(char) * vendor_name.size(), vendor_name.data(), nullptr);
-  return vendor_name;
+  char vendor_name[256];
+  clGetDeviceInfo(clDevice, CL_DEVICE_NAME, sizeof(char) * 256, &vendor_name, nullptr);
+  return std::string(vendor_name);
 }
 
 auto
 OpenCLDevice::getInfo() const -> std::string
 {
   std::ostringstream result;
-  std::string        version;
+  char               version[256];
   cl_device_type     type;
   cl_uint            compute_units;
   size_t             global_mem_size;
   size_t             max_mem_size;
 
   // Get device information
-  version.reserve(256);
   const auto & name = getName();
-  clGetDeviceInfo(clDevice, CL_DEVICE_VERSION, sizeof(char) * version.size(), version.data(), nullptr);
+  clGetDeviceInfo(clDevice, CL_DEVICE_VERSION, sizeof(char) * 256, &version, nullptr);
   clGetDeviceInfo(clDevice, CL_DEVICE_TYPE, sizeof(cl_device_type), &type, nullptr);
   clGetDeviceInfo(clDevice, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &compute_units, nullptr);
   clGetDeviceInfo(clDevice, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(size_t), &global_mem_size, nullptr);
