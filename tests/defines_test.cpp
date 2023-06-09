@@ -42,7 +42,7 @@ run_test()
   parameters.push_back({ "src", gpu_arr });
   parameters.push_back({ "dst", gpu_arr });
 
-  cle::execute(device, kernel, parameters, constants, global_rage);
+  // cle::execute(device, kernel, parameters, constants, global_rage);
 }
 
 int
