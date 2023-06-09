@@ -20,6 +20,12 @@ public:
 
   Device() = default;
   virtual ~Device() = default;
+  Device(const Device &) = default;
+  Device(Device &&) = default;
+  auto
+  operator=(const Device &) -> Device & = default;
+  auto
+  operator=(Device &&) -> Device & = default;
 
   virtual auto
   initialize() -> void = 0;
@@ -66,6 +72,12 @@ class OpenCLDevice : public Device
 public:
   OpenCLDevice(const cl_platform_id & platform, const cl_device_id & device);
   ~OpenCLDevice() override;
+  OpenCLDevice(const OpenCLDevice &) = default;
+  OpenCLDevice(OpenCLDevice &&) = default;
+  auto
+  operator=(const OpenCLDevice &) -> OpenCLDevice & = default;
+  auto
+  operator=(OpenCLDevice &&) -> OpenCLDevice & = default;
 
   auto
   initialize() -> void override;
@@ -107,8 +119,14 @@ private:
 class CUDADevice : public Device
 {
 public:
-  CUDADevice(int deviceIndex);
+  explicit CUDADevice(int deviceIndex);
   ~CUDADevice() override;
+  CUDADevice(const CUDADevice &) = default;
+  CUDADevice(CUDADevice &&) = default;
+  auto
+  operator=(const CUDADevice &) -> CUDADevice & = default;
+  auto
+  operator=(CUDADevice &&) -> CUDADevice & = default;
 
   auto
   initialize() -> void override;

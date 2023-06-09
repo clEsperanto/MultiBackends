@@ -24,7 +24,13 @@ public:
   using DevicePtr = std::shared_ptr<cle::Device>;
 
   Backend() = default;
+  Backend(const Backend &) = default;
+  Backend(Backend &&) = default;
   virtual ~Backend() = default;
+  auto
+  operator=(const Backend &) -> Backend & = default;
+  auto
+  operator=(Backend &&) -> Backend & = default;
 
   [[nodiscard]] virtual auto
   getType() const -> Backend::Type = 0;
@@ -139,7 +145,13 @@ class CUDABackend : public Backend
 {
 public:
   CUDABackend() = default;
+  CUDABackend(const CUDABackend &) = default;
+  CUDABackend(CUDABackend &&) = default;
   ~CUDABackend() override = default;
+  auto
+  operator=(const CUDABackend &) -> CUDABackend & = default;
+  auto
+  operator=(CUDABackend &&) -> CUDABackend & = default;
 
   [[nodiscard]] auto
   getDevices(const std::string & type) const -> std::vector<DevicePtr> override;
@@ -233,7 +245,13 @@ class OpenCLBackend : public Backend
 {
 public:
   OpenCLBackend() = default;
+  OpenCLBackend(const OpenCLBackend &) = default;
+  OpenCLBackend(OpenCLBackend &&) = default;
   ~OpenCLBackend() override = default;
+  auto
+  operator=(const OpenCLBackend &) -> OpenCLBackend & = default;
+  auto
+  operator=(OpenCLBackend &&) -> OpenCLBackend & = default;
 
   [[nodiscard]] auto
   getDevices(const std::string & type) const -> std::vector<DevicePtr> override;
@@ -322,54 +340,38 @@ public:
   getPreamble() const -> std::string override;
 };
 
-// class BackendManager
-// {
-// public:
-//   static auto
-//   getInstance() -> BackendManager &
-//   {
-//     static BackendManager instance;
-//     return instance;
-//   }
+class BackendManager
+{
+public:
+  static auto
+  getInstance() -> BackendManager &;
 
-//   auto
-//   setBackend(bool useCUDA) -> void
-//   {
-//     if (useCUDA)
-//     {
-//       this->backend = std::make_unique<CUDABackend>();
-//     }
-//     else
-//     {
-//       this->backend = std::make_unique<OpenCLBackend>();
-//     }
-//   }
+  auto
+  setBackend(bool useCUDA) -> void;
 
-//   [[nodiscard]] auto
-//   getBackend() const -> const Backend &
-//   {
-//     if (!this->backend)
-//     {
-//       throw std::runtime_error("Backend not selected.");
-//     }
-//     return *this->backend;
-//   }
+  [[nodiscard]] auto
+  getBackend() const -> const Backend &;
 
-//   friend auto
-//   operator<<(std::ostream & out, const BackendManager & backend_manager) -> std::ostream &
-//   {
-//     out << backend_manager.getBackend().getType() << " backend";
-//     return out;
-//   }
+  friend auto
+  operator<<(std::ostream & out, const BackendManager & backend_manager) -> std::ostream &
+  {
+    out << backend_manager.getBackend().getType() << " backend";
+    return out;
+  }
 
-//   auto
-//   operator=(const BackendManager &) -> BackendManager & = delete;
-//   BackendManager(const BackendManager &) = delete;
+  BackendManager(const BackendManager &) = delete;
+  auto
+  operator=(const BackendManager &) -> BackendManager & = delete;
 
-// private:
-//   std::shared_ptr<Backend> backend;
-//   BackendManager() = default;
-// };
+private:
+  std::shared_ptr<Backend> backend;
+
+  BackendManager() = default;
+  ~BackendManager() = default;
+  BackendManager(BackendManager &&) = default;
+  auto
+  operator=(BackendManager &&) -> BackendManager & = default;
+};
 
 } // namespace cle
 

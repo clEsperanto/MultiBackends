@@ -2,7 +2,7 @@
 #define __INCLUDE_EXECUTION_HPP
 
 #include "array.hpp"
-#include "backendmanager.hpp"
+#include "backend.hpp"
 #include "device.hpp"
 
 #include <array>

@@ -176,8 +176,8 @@ CUDABackend::writeMemory(const DevicePtr & device,
 
   if (depth > 1)
   {
-    cudaMemcpy3DParms copyParams = { 0 };
-    copyParams.srcPtr.ptr = (void *)host_ptr;
+    cudaMemcpy3DParms copyParams = { nullptr };
+    copyParams.srcPtr.ptr = const_cast<void *>(host_ptr);
     copyParams.srcPtr.pitch = width * bytes;
     copyParams.srcPtr.xsize = width;
     copyParams.srcPtr.ysize = height;
@@ -244,8 +244,8 @@ CUDABackend::readMemory(const DevicePtr & device,
   }
   if (depth > 1)
   {
-    cudaMemcpy3DParms copyParams = { 0 };
-    copyParams.srcPtr = make_cudaPitchedPtr((void *)*data_ptr, width * bytes, width, height);
+    cudaMemcpy3DParms copyParams = { nullptr };
+    copyParams.srcPtr = make_cudaPitchedPtr(const_cast<void *>(*data_ptr), width * bytes, width, height);
     copyParams.srcPos = make_cudaPos(0, 0, 0);
     copyParams.dstPtr.ptr = host_ptr;
     copyParams.dstPtr.pitch = width * bytes;
@@ -314,8 +314,8 @@ CUDABackend::copyMemory(const DevicePtr & device,
 
   if (depth > 1)
   {
-    cudaMemcpy3DParms copyParams = { 0 };
-    copyParams.srcPtr = make_cudaPitchedPtr((void *)*src_data_ptr, width * bytes, width, height);
+    cudaMemcpy3DParms copyParams = { nullptr };
+    copyParams.srcPtr = make_cudaPitchedPtr(const_cast<void *>(*src_data_ptr), width * bytes, width, height);
     copyParams.srcPos = make_cudaPos(0, 0, 0);
     copyParams.dstPtr.ptr = *dst_data_ptr;
     copyParams.dstPtr.pitch = width * bytes;
@@ -385,7 +385,7 @@ CUDABackend::setMemory(const DevicePtr & device,
   if (depth > 1)
   {
     cudaExtent     extent = make_cudaExtent(width * bytes, height, depth);
-    cudaPitchedPtr devPtr = make_cudaPitchedPtr((void *)*data_ptr, width * bytes, width, height);
+    cudaPitchedPtr devPtr = make_cudaPitchedPtr(*data_ptr, width * bytes, width, height);
     err = cudaMemset3D(devPtr, *static_cast<const int *>(value), extent);
   }
   else if (height > 1)
@@ -427,7 +427,7 @@ CUDABackend::saveProgramToCache(const DevicePtr & device, const std::string & ha
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<CUDADevice>(device);
-  cuda_device->getCache().emplace_hint(cuda_device->getCache().end(), hash, (CUmodule)program);
+  cuda_device->getCache().emplace_hint(cuda_device->getCache().end(), hash, reinterpret_cast<CUmodule>(program));
 #else
   throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif
@@ -464,7 +464,7 @@ CUDABackend::buildKernel(const DevicePtr &   device,
   {
     throw std::runtime_error("Error: Failed to get CUDA kernel.");
   }
-  *((CUfunction *)kernel) = function;
+  *(reinterpret_cast<CUfunction *>(kernel)) = function;
 #else
   throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif

@@ -1,5 +1,4 @@
 #include "backend.hpp"
-#include "backendmanager.hpp"
 #include "device.hpp"
 
 void
