@@ -1,6 +1,6 @@
 #include "tier1.hpp"
 
-namespace cle
+namespace cle::tier1
 {
 
 auto
@@ -13,4 +13,4 @@ absolute_func(const Array & src, const Array & dst, const DevicePtr & device) ->
   execute(device, kernel_func, parameters, constants, global_range);
 }
 
-} // namespace cle
+} // namespace cle::tier1
