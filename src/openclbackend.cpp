@@ -1,7 +1,7 @@
 #include "backend.hpp"
+#include "cle_preamble_cl.h"
 
 #include <array>
-
 
 namespace cle
 {
@@ -541,7 +541,7 @@ OpenCLBackend::executeKernel(const DevicePtr &             device,
 auto
 OpenCLBackend::getPreamble() const -> std::string
 {
-  return ""; // @StRigaud TODO: add OpenCL preamble from header file
+  return kernel::preamble_cl; // @StRigaud TODO: add OpenCL preamble from header file
 }
 
 } // namespace cle
