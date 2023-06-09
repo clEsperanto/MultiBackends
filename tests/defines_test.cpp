@@ -39,8 +39,8 @@ run_test()
   cle::KernelInfo   kernel;
   cle::RangeArray   global_rage;
 
-  parameters.emplace("src", gpu_arr);
-  parameters.emplace("dst", gpu_arr);
+  parameters.push_back({ "src", gpu_arr });
+  parameters.push_back({ "dst", gpu_arr });
 
   cle::execute(device, kernel, parameters, constants, global_rage);
 }
