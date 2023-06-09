@@ -218,7 +218,7 @@ execute(const DevicePtr &    device,
         const KernelInfo &   kernel_func,
         const ParameterMap & parameters,
         const ConstantMap &  constants,
-        const RangeArray &   global_rage) -> void
+        const RangeArray &   global_range) -> void
 {
   std::vector<void *> args_ptr;
   std::vector<size_t> args_size;
@@ -238,11 +238,14 @@ execute(const DevicePtr &    device,
   }
 
   // getPreamble: not implemented yet
+  std::string program_source;
   std::string preamble = cle::BackendManager::getInstance().getBackend().getPreamble();
-  std::string kernel = kernel_func.second;
-  std::string func_name = kernel_func.first;
-  std::string source = defines + preamble + kernel;
-  // std::string source = defines;
+  std::string kernel_name = kernel_func.first;
+  std::string kernel_source = kernel_func.second;
+  program_source.reserve(preamble.size() + defines.size() + kernel_source.size());
+  program_source += defines;
+  program_source += preamble;
+  program_source += kernel_source;
 
   // list kernel arguments and sizes
   for (const auto & [key, value] : parameters)
@@ -251,19 +254,29 @@ execute(const DevicePtr &    device,
     {
       const auto & arr = std::get<Array>(value);
       args_ptr.push_back(*arr.get());
-      args_size.push_back(arr.nbElements() * arr.bytesPerElements());
+      if (device->getType() == Device::Type::CUDA)
+      {
+        args_size.push_back(arr.nbElements() * arr.bytesPerElements());
+      }
+      else if (device->getType() == Device::Type::OPENCL)
+      {
+        args_size.push_back(sizeof(cl_mem));
+      }
+      std::cout << "parameter " << key << " - " << std::get<Array>(value) << std::endl;
     }
     else if (std::holds_alternative<float>(value))
     {
       const auto & f = std::get<float>(value);
       args_ptr.push_back(const_cast<float *>(&f));
       args_size.push_back(sizeof(float));
+      std::cout << "parameter " << key << " - " << std::get<float>(value) << std::endl;
     }
     else if (std::holds_alternative<int>(value))
     {
       const auto & i = std::get<int>(value);
       args_ptr.push_back(const_cast<int *>(&i));
       args_size.push_back(sizeof(int));
+      std::cout << "parameter " << key << " - " << std::get<int>(value) << std::endl;
     }
   }
 
@@ -273,15 +286,23 @@ execute(const DevicePtr &    device,
   if (file.is_open())
   {
     // Write the content to the file
-    file << source;
+    file << program_source;
     // Close the file
     file.close();
   }
 
   // @StRigaud TODO: save source into file for debugging
   // @StRigaud TODO: call execution based on backend, warning dealing with void** and void* is not safe
-  cle::BackendManager::getInstance().getBackend().executeKernel(
-    device, source, func_name, global_rage, args_ptr, args_size);
+  try
+  {
+    std::cout << "Execute kernel: " << kernel_name << std::endl;
+    cle::BackendManager::getInstance().getBackend().executeKernel(
+      device, program_source, kernel_name, global_range, args_ptr, args_size);
+  }
+  catch (const std::exception & e)
+  {
+    throw std::runtime_error("Error while executing kernel : " + std::string(e.what()));
+  }
 }
 
 } // namespace cle
