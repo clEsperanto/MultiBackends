@@ -535,7 +535,29 @@ OpenCLBackend::executeKernel(const DevicePtr &             device,
                              const std::vector<void *> &   args,
                              const std::vector<size_t> &   sizes) const -> void
 {
-  // @StRigaud TODO: add OpenCL kernel execution
+
+  // build kernel from source
+  cl_kernel kernel = nullptr;
+  buildKernel(device, kernel_source, kernel_name, static_cast<void *>(&kernel));
+
+  // set kernel arguments
+  for (size_t i = 0; i < args.size(); i++)
+  {
+    auto err = clSetKernelArg(kernel, i, sizes[i], args[i]);
+    if (err != CL_SUCCESS)
+    {
+      throw std::runtime_error("Error: Failed to set OpenCL kernel arguments.");
+    }
+  }
+
+  // execute kernel
+  auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+  auto err = clEnqueueNDRangeKernel(
+    opencl_device->getCLCommandQueue(), kernel, 3, nullptr, global_size.data(), nullptr, 0, nullptr, nullptr);
+  if (err != CL_SUCCESS)
+  {
+    throw std::runtime_error("Error: Failed to execute OpenCL kernel.");
+  }
 }
 
 auto
