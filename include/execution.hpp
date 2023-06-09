@@ -12,7 +12,6 @@ namespace cle
 {
 
 using DevicePtr = std::shared_ptr<cle::Device>;
-// using ParameterMap = std::map<std::string, std::variant<Array, float, int>>;
 using ParameterMap = std::vector<std::pair<std::string, std::variant<Array, float, int>>>;
 using ConstantMap = std::map<std::string, int>;
 using KernelInfo = std::pair<std::string, std::string>;

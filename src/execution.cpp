@@ -254,29 +254,28 @@ execute(const DevicePtr &    device,
     {
       const auto & arr = std::get<Array>(param.second);
       args_ptr.push_back(*arr.get());
-      if (device->getType() == Device::Type::CUDA)
+      switch (device->getType())
       {
-        args_size.push_back(arr.nbElements() * arr.bytesPerElements());
+        case Device::Type::CUDA:
+          // @StRigaud TODO: to be tested on CUDA side
+          args_size.push_back(arr.nbElements() * arr.bytesPerElements());
+          break;
+        case Device::Type::OPENCL:
+          args_size.push_back(sizeof(cl_mem));
+          break;
       }
-      else if (device->getType() == Device::Type::OPENCL)
-      {
-        args_size.push_back(sizeof(cl_mem));
-      }
-      std::cout << "parameter " << param.first << " - " << std::get<Array>(param.second) << std::endl;
     }
     else if (std::holds_alternative<float>(param.second))
     {
       const auto & f = std::get<float>(param.second);
       args_ptr.push_back(const_cast<float *>(&f));
       args_size.push_back(sizeof(float));
-      std::cout << "parameter " << param.first << " - " << std::get<float>(param.second) << std::endl;
     }
     else if (std::holds_alternative<int>(param.second))
     {
       const auto & i = std::get<int>(param.second);
       args_ptr.push_back(const_cast<int *>(&i));
       args_size.push_back(sizeof(int));
-      std::cout << "parameter " << param.first << " - " << std::get<int>(param.second) << std::endl;
     }
   }
 
@@ -291,17 +290,14 @@ execute(const DevicePtr &    device,
     file.close();
   }
 
-  // @StRigaud TODO: save source into file for debugging
-  // @StRigaud TODO: call execution based on backend, warning dealing with void** and void* is not safe
   try
   {
-    std::cout << "Execute kernel: " << kernel_name << std::endl;
     cle::BackendManager::getInstance().getBackend().executeKernel(
       device, program_source, kernel_name, global_range, args_ptr, args_size);
   }
   catch (const std::exception & e)
   {
-    throw std::runtime_error("Error while executing kernel : " + std::string(e.what()));
+    throw std::runtime_error("Error: Failed to execute the kernel. \n\t > " + std::string(e.what()));
   }
 }
 
