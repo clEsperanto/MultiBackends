@@ -497,11 +497,9 @@ auto
 OpenCLBackend::buildKernel(const DevicePtr &   device,
                            const std::string & kernel_source,
                            const std::string & kernel_name,
-                           cl_kernel &         kernel) const -> void
+                           void *              kernel) const -> void
 {
 #if CLE_OPENCL
-  std::cout << "\tbackend buildKernel START" << std::endl;
-  std::cout << "\t\tbuilding kernel : " << kernel_name << std::endl;
   cl_int     err;
   auto       opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   cl_program prog = nullptr;
@@ -517,35 +515,26 @@ OpenCLBackend::buildKernel(const DevicePtr &   device,
     std::array<char, 2048> buffer;
     clGetProgramBuildInfo(prog, opencl_device->getCLDevice(), CL_PROGRAM_BUILD_LOG, buffer.size(), buffer.data(), &len);
     std::cerr << buffer.data() << std::endl;
-    throw std::runtime_error("Error: Failed to build OpenCL program.");
-  }
-  else
-  {
-    std::cout << "\t\tbuildKernel: clCreateProgramWithSource success" << std::endl;
+    throw std::runtime_error("Error: Failed to create program from source.");
   }
   cl_int buildStatus = clBuildProgram(prog, 0, nullptr, nullptr, nullptr, nullptr);
   if (buildStatus != CL_SUCCESS)
   {
-    // Handle build error, e.g., retrieve build log using clGetProgramBuildInfo
-    size_t logSize;
-    clGetProgramBuildInfo(prog, opencl_device->getCLDevice(), CL_PROGRAM_BUILD_LOG, 0, nullptr, &logSize);
-    char * buildLog = new char[logSize];
-    clGetProgramBuildInfo(prog, opencl_device->getCLDevice(), CL_PROGRAM_BUILD_LOG, logSize, buildLog, nullptr);
-    // Process and display the build log as needed
-    delete[] buildLog;
-  }
-  else
-  {
-    std::cout << "\t\tbuildKernel: clBuildProgram success" << std::endl;
+    size_t                 len;
+    std::array<char, 2048> buffer;
+    clGetProgramBuildInfo(prog, opencl_device->getCLDevice(), CL_PROGRAM_BUILD_LOG, 0, nullptr, &len);
+    clGetProgramBuildInfo(prog, opencl_device->getCLDevice(), CL_PROGRAM_BUILD_LOG, buffer.size(), buffer.data(), &len);
+    std::cerr << buffer.data() << std::endl;
+    throw std::runtime_error("Error: Failed to build program executable.");
   }
   // // saveProgramToCache(device, hash, prog);
   // // }
-  kernel = clCreateKernel(prog, kernel_name.c_str(), &err);
+  auto ocl_kernel = clCreateKernel(prog, kernel_name.c_str(), &err);
   if (err != CL_SUCCESS)
   {
-    throw std::runtime_error("Error: Failed to create OpenCL kernel (" + std::to_string(err) + ").)");
+    throw std::runtime_error("Error: Failed to create kernel (" + std::to_string(err) + ").)");
   }
-  std::cout << "\tbackend buildKernel END" << std::endl;
+  *reinterpret_cast<cl_kernel *>(kernel) = ocl_kernel;
 #else
   throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
 #endif
@@ -559,40 +548,33 @@ OpenCLBackend::executeKernel(const DevicePtr &             device,
                              const std::vector<void *> &   args,
                              const std::vector<size_t> &   sizes) const -> void
 {
-  std::cout << "backend executeKernel START" << std::endl;
-  std::cout << "\texecuting : " << kernel_name << std::endl;
-
   auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-
   // build kernel from source
   cl_kernel ocl_kernel;
   try
   {
-    buildKernel(device, kernel_source, kernel_name, ocl_kernel);
+    buildKernel(device, kernel_source, kernel_name, &ocl_kernel);
   }
   catch (const std::exception & e)
   {
-    throw std::runtime_error("Error while building kernel : " + std::string(e.what()));
+    throw std::runtime_error("Error: Failed to build kernel. \n\t > " + std::string(e.what()));
   }
-
   // set kernel arguments
   for (size_t i = 0; i < args.size(); i++)
   {
     auto err = clSetKernelArg(ocl_kernel, i, sizes[i], args[i]);
     if (err != CL_SUCCESS)
     {
-      throw std::runtime_error("Error: Failed to set OpenCL kernel arguments  (" + std::to_string(err) + ").)");
+      throw std::runtime_error("Error: Failed to set kernel arguments (" + std::to_string(err) + ").)");
     }
   }
-
   // execute kernel
   auto err = clEnqueueNDRangeKernel(
     opencl_device->getCLCommandQueue(), ocl_kernel, 3, nullptr, global_size.data(), nullptr, 0, nullptr, nullptr);
   if (err != CL_SUCCESS)
   {
-    throw std::runtime_error("Error: Failed to execute OpenCL kernel(" + std::to_string(err) + ").)");
+    throw std::runtime_error("Error: Failed to enqueue kernel (" + std::to_string(err) + ").)");
   }
-  std::cout << "backend executeKernel END" << std::endl;
 }
 
 auto

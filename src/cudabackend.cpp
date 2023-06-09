@@ -438,7 +438,7 @@ auto
 CUDABackend::buildKernel(const DevicePtr &   device,
                          const std::string & kernel_source,
                          const std::string & kernel_name,
-                         CUfunction *        kernel) const -> void
+                         void *              kernel) const -> void
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
@@ -447,25 +447,26 @@ CUDABackend::buildKernel(const DevicePtr &   device,
   {
     throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
   }
+  CUresult    res;
   CUmodule    module;
   CUfunction  function;
   std::string hash = std::to_string(std::hash<std::string>{}(kernel_source));
   // loadProgramFromCache(device, hash, module);
   // if (module == nullptr)
   // {
-  auto res = cuModuleLoadDataEx(&module, kernel_source.c_str(), 0, 0, 0);
+  res = cuModuleLoadDataEx(&module, kernel_source.c_str(), 0, 0, 0);
   if (res != CUDA_SUCCESS)
   {
-    throw std::runtime_error("Error: Failed to build CUDA program.");
+    throw std::runtime_error("Error: Failed to build program.");
   }
   //   saveProgramToCache(device, hash, module);
   // }
-  auto res2 = cuModuleGetFunction(&function, module, kernel_name.c_str());
-  if (res2 != CUDA_SUCCESS)
+  res = cuModuleGetFunction(&function, module, kernel_name.c_str());
+  if (res != CUDA_SUCCESS)
   {
-    throw std::runtime_error("Error: Failed to get CUDA kernel.");
+    throw std::runtime_error("Error: Failed to get kernel.");
   }
-  *kernel = function;
+  *(reinterpret_cast<CUfunction *>(kernel)) = function;
 #else
   throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif

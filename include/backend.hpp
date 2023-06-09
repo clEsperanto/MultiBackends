@@ -101,11 +101,11 @@ public:
             const size_t &    bytes,
             const void *      value) const -> void = 0;
 
-  // virtual auto
-  // buildKernel(const DevicePtr &   device,
-  //             const std::string & kernel_source,
-  //             const std::string & kernel_name,
-  //             void *              kernel) const -> void = 0;
+  virtual auto
+  buildKernel(const DevicePtr &   device,
+              const std::string & kernel_source,
+              const std::string & kernel_name,
+              void *              kernel) const -> void = 0;
   virtual auto
   loadProgramFromCache(const DevicePtr & device, const std::string & hash, void * program) const -> void = 0;
   virtual auto
@@ -229,7 +229,7 @@ public:
   buildKernel(const DevicePtr &   device,
               const std::string & kernel_source,
               const std::string & kernel_name,
-              CUfunction *        kernel) const -> void;
+              void *              kernel) const -> void override;
   auto
   executeKernel(const DevicePtr &             device,
                 const std::string &           kernel_source,
@@ -328,7 +328,7 @@ public:
   buildKernel(const DevicePtr &   device,
               const std::string & kernel_source,
               const std::string & kernel_name,
-              cl_kernel &         kernel) const -> void;
+              void *              kernel) const -> void override;
   auto
   executeKernel(const DevicePtr &             device,
                 const std::string &           kernel_source,
