@@ -1,5 +1,5 @@
 #include "array.hpp"
-#include "backendmanager.hpp"
+#include "backend.hpp"
 #include "device.hpp"
 #include "execution.hpp"
 #include "memory.hpp"

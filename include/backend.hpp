@@ -322,54 +322,33 @@ public:
   getPreamble() const -> std::string override;
 };
 
-// class BackendManager
-// {
-// public:
-//   static auto
-//   getInstance() -> BackendManager &
-//   {
-//     static BackendManager instance;
-//     return instance;
-//   }
+class BackendManager
+{
+public:
+  static auto
+  getInstance() -> BackendManager &;
 
-//   auto
-//   setBackend(bool useCUDA) -> void
-//   {
-//     if (useCUDA)
-//     {
-//       this->backend = std::make_unique<CUDABackend>();
-//     }
-//     else
-//     {
-//       this->backend = std::make_unique<OpenCLBackend>();
-//     }
-//   }
+  auto
+  setBackend(bool useCUDA) -> void;
 
-//   [[nodiscard]] auto
-//   getBackend() const -> const Backend &
-//   {
-//     if (!this->backend)
-//     {
-//       throw std::runtime_error("Backend not selected.");
-//     }
-//     return *this->backend;
-//   }
+  [[nodiscard]] auto
+  getBackend() const -> const Backend &;
 
-//   friend auto
-//   operator<<(std::ostream & out, const BackendManager & backend_manager) -> std::ostream &
-//   {
-//     out << backend_manager.getBackend().getType() << " backend";
-//     return out;
-//   }
+  friend auto
+  operator<<(std::ostream & out, const BackendManager & backend_manager) -> std::ostream &
+  {
+    out << backend_manager.getBackend().getType() << " backend";
+    return out;
+  }
 
-//   auto
-//   operator=(const BackendManager &) -> BackendManager & = delete;
-//   BackendManager(const BackendManager &) = delete;
+  auto
+  operator=(const BackendManager &) -> BackendManager & = delete;
+  BackendManager(const BackendManager &) = delete;
 
-// private:
-//   std::shared_ptr<Backend> backend;
-//   BackendManager() = default;
-// };
+private:
+  std::shared_ptr<Backend> backend;
+  BackendManager() = default;
+};
 
 } // namespace cle
 

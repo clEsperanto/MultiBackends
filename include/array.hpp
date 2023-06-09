@@ -1,7 +1,7 @@
 #ifndef __INCLUDE_ARRAY_HPP
 #define __INCLUDE_ARRAY_HPP
 
-#include "backendmanager.hpp"
+#include "backend.hpp"
 #include "device.hpp"
 #include "utils.hpp"
 
@@ -62,13 +62,16 @@ public:
     }
     if (dim() > 1)
     {
-      backend_.setMemory(device(), get(), width(), height(), depth(), bytesPerElements(), (const void *)&value);
+      backend_.setMemory(
+        device(), get(), width(), height(), depth(), bytesPerElements(), static_cast<const void *>(&value));
     }
     else
     {
-      backend_.setMemory(device(), get(), nbElements() * bytesPerElements(), (const void *)&value, bytesPerElements());
+      backend_.setMemory(
+        device(), get(), nbElements() * bytesPerElements(), static_cast<const void *>(&value), bytesPerElements());
     }
-    // backend_.setMemory(device(), get(), nbElements() * bytesPerElements(), (const void *)&value, sizeof(T));
+    // backend_.setMemory(device(), get(), nbElements() * bytesPerElements(), static_cast<const void *>(&value),
+    // sizeof(T));
   }
 
   [[nodiscard]] auto
