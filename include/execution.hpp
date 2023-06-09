@@ -28,7 +28,7 @@ execute(const DevicePtr &    device,
         const KernelInfo &   kernel_func,
         const ParameterMap & parameters,
         const ConstantMap &  constants = {},
-        const RangeArray &   global_rage = { 1, 1, 1 }) -> void;
+        const RangeArray &   global_range = { 1, 1, 1 }) -> void;
 
 } // namespace cle
 
