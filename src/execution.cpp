@@ -8,7 +8,7 @@ namespace cle
 {
 
 static auto
-cudaDefines(const ParameterMap & parameter_list, const ConstantMap & constant_list) -> std::string
+cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_list) -> std::string
 {
   // @CherifMZ TODO: write cuda Defines to transform ocl Kernel into compatible cuda kernel
   // See
@@ -99,7 +99,7 @@ cudaDefines(const ParameterMap & parameter_list, const ConstantMap & constant_li
 }
 
 static auto
-oclDefines(const ParameterMap & parameter_list, const ConstantMap & constant_list) -> std::string
+oclDefines(const ParameterList & parameter_list, const ConstantList & constant_list) -> std::string
 {
   std::ostringstream defines;
   defines << "\n#define GET_IMAGE_WIDTH(image_key) IMAGE_SIZE_ ## image_key ## _WIDTH";
@@ -214,11 +214,11 @@ oclDefines(const ParameterMap & parameter_list, const ConstantMap & constant_lis
 }
 
 auto
-execute(const DevicePtr &    device,
-        const KernelInfo &   kernel_func,
-        const ParameterMap & parameters,
-        const ConstantMap &  constants,
-        const RangeArray &   global_range) -> void
+execute(const DevicePtr &     device,
+        const KernelInfo &    kernel_func,
+        const ParameterList & parameters,
+        const ConstantList &  constants,
+        const RangeArray &    global_range) -> void
 {
   std::vector<void *> args_ptr;
   std::vector<size_t> args_size;
