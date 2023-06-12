@@ -153,6 +153,12 @@ toBytes(const dType & dtype) -> size_t
   }
 }
 
+inline auto
+sigma2radius(const float & sigma) -> int
+{
+  auto rad = static_cast<int>(sigma * 8.0);
+  return (rad % 2 == 0) ? rad + 1 : rad;
+}
 
 } // namespace cle
 
