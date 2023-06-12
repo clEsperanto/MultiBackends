@@ -41,6 +41,7 @@ public:
         const mType &     mem_type,
         const void *      host_data,
         const DevicePtr & device_ptr);
+  Array(const Array & src);
   ~Array();
 
   auto
