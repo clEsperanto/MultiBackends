@@ -7,11 +7,11 @@ namespace cle
 {
 
 auto
-OpenCLBackend::getDevices(const std::string & type) const -> std::vector<DevicePtr>
+OpenCLBackend::getDevices(const std::string & type) const -> std::vector<Device::Pointer>
 {
 #if CLE_OPENCL
 
-  std::vector<DevicePtr> devices; // set device type
+  std::vector<Device::Pointer> devices; // set device type
 
   cl_uint platformCount = 0;
   clGetPlatformIDs(0, nullptr, &platformCount); // get number of platforms
@@ -74,11 +74,11 @@ OpenCLBackend::getDevices(const std::string & type) const -> std::vector<DeviceP
 }
 
 auto
-OpenCLBackend::getDevice(const std::string & name, const std::string & type) const -> DevicePtr
+OpenCLBackend::getDevice(const std::string & name, const std::string & type) const -> Device::Pointer
 {
 #if CLE_OPENCL
   auto devices = getDevices(type);
-  auto ite = std::find_if(devices.begin(), devices.end(), [&name](const DevicePtr & dev) {
+  auto ite = std::find_if(devices.begin(), devices.end(), [&name](const Device::Pointer & dev) {
     return dev->getName().find(name) != std::string::npos;
   });
   if (ite != devices.end())
@@ -118,7 +118,7 @@ OpenCLBackend::getType() const -> Backend::Type
 }
 
 auto
-OpenCLBackend::allocateMemory(const DevicePtr & device, const size_t & size, void ** data_ptr) const -> void
+OpenCLBackend::allocateMemory(const Device::Pointer & device, const size_t & size, void ** data_ptr) const -> void
 {
 #if CLE_OPENCL
   cl_int err;
@@ -135,12 +135,12 @@ OpenCLBackend::allocateMemory(const DevicePtr & device, const size_t & size, voi
 }
 
 auto
-OpenCLBackend::allocateMemory(const DevicePtr & device,
-                              const size_t &    width,
-                              const size_t &    height,
-                              const size_t &    depth,
-                              const dType &     dtype,
-                              void **           data_ptr) const -> void
+OpenCLBackend::allocateMemory(const Device::Pointer & device,
+                              const size_t &          width,
+                              const size_t &          height,
+                              const size_t &          depth,
+                              const dType &           dtype,
+                              void **                 data_ptr) const -> void
 {
 #if CLE_OPENCL
   allocateMemory(device, width * height * depth * toBytes(dtype), data_ptr);
@@ -212,7 +212,7 @@ OpenCLBackend::allocateMemory(const DevicePtr & device,
 }
 
 auto
-OpenCLBackend::freeMemory(const DevicePtr & device, const mType & mtype, void ** data_ptr) const -> void
+OpenCLBackend::freeMemory(const Device::Pointer & device, const mType & mtype, void ** data_ptr) const -> void
 {
 #if CLE_OPENCL
   auto * cl_mem_ptr = static_cast<cl_mem *>(*data_ptr);
@@ -227,8 +227,10 @@ OpenCLBackend::freeMemory(const DevicePtr & device, const mType & mtype, void **
 }
 
 auto
-OpenCLBackend::writeMemory(const DevicePtr & device, void ** data_ptr, const size_t & size, const void * host_ptr) const
-  -> void
+OpenCLBackend::writeMemory(const Device::Pointer & device,
+                           void **                 data_ptr,
+                           const size_t &          size,
+                           const void *            host_ptr) const -> void
 {
 #if CLE_OPENCL
   auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
@@ -251,13 +253,13 @@ OpenCLBackend::writeMemory(const DevicePtr & device, void ** data_ptr, const siz
 }
 
 auto
-OpenCLBackend::writeMemory(const DevicePtr & device,
-                           void **           data_ptr,
-                           const size_t &    width,
-                           const size_t &    height,
-                           const size_t &    depth,
-                           const size_t &    bytes,
-                           const void *      host_ptr) const -> void
+OpenCLBackend::writeMemory(const Device::Pointer & device,
+                           void **                 data_ptr,
+                           const size_t &          width,
+                           const size_t &          height,
+                           const size_t &          depth,
+                           const size_t &          bytes,
+                           const void *            host_ptr) const -> void
 {
 #if CLE_OPENCL
   auto                        opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
@@ -287,8 +289,10 @@ OpenCLBackend::writeMemory(const DevicePtr & device,
 }
 
 auto
-OpenCLBackend::readMemory(const DevicePtr & device, const void ** data_ptr, const size_t & size, void * host_ptr) const
-  -> void
+OpenCLBackend::readMemory(const Device::Pointer & device,
+                          const void **           data_ptr,
+                          const size_t &          size,
+                          void *                  host_ptr) const -> void
 {
 #if CLE_OPENCL
   auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
@@ -311,13 +315,13 @@ OpenCLBackend::readMemory(const DevicePtr & device, const void ** data_ptr, cons
 }
 
 auto
-OpenCLBackend::readMemory(const DevicePtr & device,
-                          const void **     data_ptr,
-                          const size_t &    width,
-                          const size_t &    height,
-                          const size_t &    depth,
-                          const size_t &    bytes,
-                          void *            host_ptr) const -> void
+OpenCLBackend::readMemory(const Device::Pointer & device,
+                          const void **           data_ptr,
+                          const size_t &          width,
+                          const size_t &          height,
+                          const size_t &          depth,
+                          const size_t &          bytes,
+                          void *                  host_ptr) const -> void
 {
 #if CLE_OPENCL
   auto                        opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
@@ -347,10 +351,10 @@ OpenCLBackend::readMemory(const DevicePtr & device,
 }
 
 auto
-OpenCLBackend::copyMemory(const DevicePtr & device,
-                          const void **     src_data_ptr,
-                          const size_t &    size,
-                          void **           dst_data_ptr) const -> void
+OpenCLBackend::copyMemory(const Device::Pointer & device,
+                          const void **           src_data_ptr,
+                          const size_t &          size,
+                          void **                 dst_data_ptr) const -> void
 {
 #if CLE_OPENCL
   auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
@@ -373,13 +377,13 @@ OpenCLBackend::copyMemory(const DevicePtr & device,
 }
 
 auto
-OpenCLBackend::copyMemory(const DevicePtr & device,
-                          const void **     src_data_ptr,
-                          const size_t &    width,
-                          const size_t &    height,
-                          const size_t &    depth,
-                          const size_t &    bytes,
-                          void **           dst_data_ptr) const -> void
+OpenCLBackend::copyMemory(const Device::Pointer & device,
+                          const void **           src_data_ptr,
+                          const size_t &          width,
+                          const size_t &          height,
+                          const size_t &          depth,
+                          const size_t &          bytes,
+                          void **                 dst_data_ptr) const -> void
 {
 #if CLE_OPENCL
   auto                        opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
@@ -408,11 +412,11 @@ OpenCLBackend::copyMemory(const DevicePtr & device,
 }
 
 auto
-OpenCLBackend::setMemory(const DevicePtr & device,
-                         void **           data_ptr,
-                         const size_t &    size,
-                         const void *      value,
-                         const size_t &    value_size) const -> void
+OpenCLBackend::setMemory(const Device::Pointer & device,
+                         void **                 data_ptr,
+                         const size_t &          size,
+                         const void *            value,
+                         const size_t &          value_size) const -> void
 {
 #if CLE_OPENCL
   auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
@@ -435,13 +439,13 @@ OpenCLBackend::setMemory(const DevicePtr & device,
 }
 
 auto
-OpenCLBackend::setMemory(const DevicePtr & device,
-                         void **           data_ptr,
-                         const size_t &    width,
-                         const size_t &    height,
-                         const size_t &    depth,
-                         const size_t &    bytes,
-                         const void *      value) const -> void
+OpenCLBackend::setMemory(const Device::Pointer & device,
+                         void **                 data_ptr,
+                         const size_t &          width,
+                         const size_t &          height,
+                         const size_t &          depth,
+                         const size_t &          bytes,
+                         const void *            value) const -> void
 {
 #if CLE_OPENCL
   auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
@@ -464,7 +468,8 @@ OpenCLBackend::setMemory(const DevicePtr & device,
 }
 
 auto
-OpenCLBackend::loadProgramFromCache(const DevicePtr & device, const std::string & hash, void * program) const -> void
+OpenCLBackend::loadProgramFromCache(const Device::Pointer & device, const std::string & hash, void * program) const
+  -> void
 {
 #if CLE_OPENCL
   auto opencl_device = std::dynamic_pointer_cast<OpenCLDevice>(device);
@@ -482,7 +487,8 @@ OpenCLBackend::loadProgramFromCache(const DevicePtr & device, const std::string 
 }
 
 auto
-OpenCLBackend::saveProgramToCache(const DevicePtr & device, const std::string & hash, void * program) const -> void
+OpenCLBackend::saveProgramToCache(const Device::Pointer & device, const std::string & hash, void * program) const
+  -> void
 {
 
 #if CLE_OPENCL
@@ -494,10 +500,10 @@ OpenCLBackend::saveProgramToCache(const DevicePtr & device, const std::string & 
 }
 
 auto
-OpenCLBackend::buildKernel(const DevicePtr &   device,
-                           const std::string & kernel_source,
-                           const std::string & kernel_name,
-                           void *              kernel) const -> void
+OpenCLBackend::buildKernel(const Device::Pointer & device,
+                           const std::string &     kernel_source,
+                           const std::string &     kernel_name,
+                           void *                  kernel) const -> void
 {
 #if CLE_OPENCL
   cl_int     err;
@@ -541,7 +547,7 @@ OpenCLBackend::buildKernel(const DevicePtr &   device,
 }
 
 auto
-OpenCLBackend::executeKernel(const DevicePtr &             device,
+OpenCLBackend::executeKernel(const Device::Pointer &       device,
                              const std::string &           kernel_source,
                              const std::string &           kernel_name,
                              const std::array<size_t, 3> & global_size,

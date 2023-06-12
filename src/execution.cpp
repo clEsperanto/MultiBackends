@@ -214,11 +214,11 @@ oclDefines(const ParameterList & parameter_list, const ConstantList & constant_l
 }
 
 auto
-execute(const DevicePtr &     device,
-        const KernelInfo &    kernel_func,
-        const ParameterList & parameters,
-        const ConstantList &  constants,
-        const RangeArray &    global_range) -> void
+execute(const Device::Pointer & device,
+        const KernelInfo &      kernel_func,
+        const ParameterList &   parameters,
+        const ConstantList &    constants,
+        const RangeArray &      global_range) -> void
 {
   std::vector<void *> args_ptr;
   std::vector<size_t> args_size;

@@ -6,7 +6,7 @@ namespace cle::tier1
 {
 
 auto
-absolute_func(const Array & src, const Array & dst, const DevicePtr & device) -> void
+absolute_func(const Array & src, const Array & dst, const Device::Pointer & device) -> void
 {
   const KernelInfo    kernel_func = { "absolute", kernel::absolute };
   const ConstantList  constants = {};
