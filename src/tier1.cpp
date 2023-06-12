@@ -11,25 +11,8 @@ absolute_func(const Array & src, const Array & dst, const DevicePtr & device) ->
 {
   const KernelInfo    kernel = { "absolute", kernel::absolute };
   const ConstantList  constants = {};
-  const ParameterList parameters = { { "src", src }, { "dst", dst } };
+  const ParameterList parameters = { { "src", std::cref(src) }, { "dst", std::cref(dst) } };
   const RangeArray    global_range = { dst.width(), dst.height(), dst.depth() };
-  execute(device, kernel, parameters, constants, global_range);
-}
-
-auto
-separable_func(const Array &      src,
-               const Array &      dst,
-               const float &      sigma,
-               const int &        radius,
-               const int &        dimension,
-               const KernelInfo & kernel,
-               const DevicePtr &  device) -> void
-{
-  const ParameterList parameters = {
-    { "src", src }, { "dst", dst }, { "dim", dimension }, { "N", radius }, { "s", sigma }
-  };
-  const RangeArray   global_range = { dst.width(), dst.height(), dst.depth() };
-  const ConstantList constants = {};
   execute(device, kernel, parameters, constants, global_range);
 }
 
@@ -41,12 +24,30 @@ execute_separable_func(const Array &                src,
                        const KernelInfo &           kernel,
                        const DevicePtr &            device) -> void
 {
+  std::vector<float> src_data(src.nbElements());
+  src.read(src_data.data());
+  std::cout << "src: ";
+  for (auto i : src_data)
+  {
+    std::cout << i << " ";
+  }
+  std::cout << std::endl;
+
+  const ConstantList constants = {};
+  const RangeArray   global_range = { dst.width(), dst.height(), dst.depth() };
+
+  std::cout << sigma[0] << " " << sigma[1] << " " << sigma[2] << std::endl;
+  std::cout << radius[0] << " " << radius[1] << " " << radius[2] << std::endl;
+
   Array tmp1(dst.width(), dst.height(), dst.depth(), dst.dtype(), dst.mtype(), dst.device());
   Array tmp2(dst.width(), dst.height(), dst.depth(), dst.dtype(), dst.mtype(), dst.device());
 
   if (dst.width() > 1 && sigma[0] > 0)
   {
-    separable_func(src, tmp1, sigma[0], radius[0], 0, kernel, device);
+    const ParameterList parameters = {
+      { "src", std::cref(src) }, { "dst", std::cref(tmp1) }, { "dim", 0 }, { "N", radius[0] }, { "s", sigma[0] }
+    };
+    execute(device, kernel, parameters, constants, global_range);
   }
   else
   {
@@ -54,7 +55,10 @@ execute_separable_func(const Array &                src,
   }
   if (dst.height() > 1 && sigma[1] > 0)
   {
-    separable_func(tmp1, tmp2, sigma[1], radius[1], 1, kernel, device);
+    const ParameterList parameters = {
+      { "src", std::cref(tmp1) }, { "dst", std::cref(tmp2) }, { "dim", 1 }, { "N", radius[1] }, { "s", sigma[1] }
+    };
+    execute(device, kernel, parameters, constants, global_range);
   }
   else
   {
@@ -62,7 +66,10 @@ execute_separable_func(const Array &                src,
   }
   if (dst.depth() > 1 && sigma[2] > 0)
   {
-    separable_func(tmp2, dst, sigma[2], radius[2], 2, kernel, device);
+    const ParameterList parameters = {
+      { "src", std::cref(tmp2) }, { "dst", std::cref(dst) }, { "dim", 2 }, { "N", radius[2] }, { "s", sigma[2] }
+    };
+    execute(device, kernel, parameters, constants, global_range);
   }
   else
   {
@@ -78,6 +85,15 @@ gaussian_blur_func(const Array &     src,
                    const float &     sigma_z,
                    const DevicePtr & device) -> void
 {
+  std::vector<float> src_data(src.nbElements());
+  src.read(src_data.data());
+  std::cout << "src: ";
+  for (auto i : src_data)
+  {
+    std::cout << i << " ";
+  }
+  std::cout << std::endl;
+
   const KernelInfo kernel = { "gaussian_blur_separable", kernel::gaussian_blur_separable };
   execute_separable_func(src,
                          dst,

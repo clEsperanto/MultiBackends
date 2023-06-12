@@ -40,11 +40,11 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
 
   for (const auto & param : parameter_list)
   {
-    if (std::holds_alternative<float>(param.second) || std::holds_alternative<int>(param.second))
+    if (std::holds_alternative<const float>(param.second) || std::holds_alternative<const int>(param.second))
     {
       continue;
     }
-    const auto & arr = std::get<Array>(param.second);
+    const auto & arr = std::get<std::reference_wrapper<const Array>>(param.second).get();
 
     std::string ndim;
     std::string pos_type;
@@ -109,11 +109,11 @@ oclDefines(const ParameterList & parameter_list, const ConstantList & constant_l
 
   for (const auto & param : parameter_list)
   {
-    if (std::holds_alternative<float>(param.second) || std::holds_alternative<int>(param.second))
+    if (std::holds_alternative<const float>(param.second) || std::holds_alternative<const int>(param.second))
     {
       continue;
     }
-    const auto & arr = std::get<Array>(param.second);
+    const auto & arr = std::get<std::reference_wrapper<const Array>>(param.second).get();
 
     // manage dimensions and coordinates
     std::string pos_type;
@@ -237,6 +237,16 @@ execute(const DevicePtr &     device,
       break;
   }
 
+  std::vector<float> src_data(
+    std::get<std::reference_wrapper<const Array>>(parameters.front().second).get().nbElements());
+  std::get<std::reference_wrapper<const Array>>(parameters.front().second).get().read(src_data.data());
+  std::cout << parameters.front().first << ": ";
+  for (auto i : src_data)
+  {
+    std::cout << i << " ";
+  }
+  std::cout << std::endl;
+
   // getPreamble: not implemented yet
   std::string program_source;
   std::string preamble = cle::BackendManager::getInstance().getBackend().getPreamble();
@@ -250,9 +260,9 @@ execute(const DevicePtr &     device,
   // list kernel arguments and sizes
   for (const auto & param : parameters)
   {
-    if (std::holds_alternative<Array>(param.second))
+    if (std::holds_alternative<std::reference_wrapper<const Array>>(param.second))
     {
-      const auto & arr = std::get<Array>(param.second);
+      const auto & arr = std::get<std::reference_wrapper<const Array>>(param.second).get();
       args_ptr.push_back(*arr.get());
       switch (device->getType())
       {
@@ -265,30 +275,64 @@ execute(const DevicePtr &     device,
           break;
       }
     }
-    else if (std::holds_alternative<float>(param.second))
+    else if (std::holds_alternative<const float>(param.second))
     {
-      const auto & f = std::get<float>(param.second);
+      const auto & f = std::get<const float>(param.second);
       args_ptr.push_back(const_cast<float *>(&f));
       args_size.push_back(sizeof(float));
     }
-    else if (std::holds_alternative<int>(param.second))
+    else if (std::holds_alternative<const int>(param.second))
     {
-      const auto & i = std::get<int>(param.second);
+      const auto & i = std::get<const int>(param.second);
       args_ptr.push_back(const_cast<int *>(&i));
       args_size.push_back(sizeof(int));
     }
   }
 
-  // @CherifMZ: for TEST only, I added this chunk of code to write the content of the source into an external file
-  std::ofstream file("kernel_output.txt");
+  for (const auto & i : parameters)
+  {
+    if (std::holds_alternative<std::reference_wrapper<const Array>>(i.second))
+      std::cout << "param " << i.first << " : " << std::get<std::reference_wrapper<const Array>>(i.second).get()
+                << std::endl;
+    if (std::holds_alternative<const float>(i.second))
+      std::cout << "param " << i.first << " : " << std::get<const float>(i.second) << std::endl;
+    if (std::holds_alternative<const int>(i.second))
+      std::cout << "param " << i.first << " : " << std::get<const int>(i.second) << std::endl;
+  }
+
+
+  // save in a file the kernel_source
+  std::ofstream kernel_source_file("kernel_source.txt");
   // Check if the file was opened successfully
-  if (file.is_open())
+  if (kernel_source_file.is_open())
   {
     // Write the content to the file
-    file << program_source;
+    kernel_source_file << kernel_source;
     // Close the file
-    file.close();
+    kernel_source_file.close();
   }
+
+  // save in a file the kernel_source
+  std::ofstream kernel_defines_file("kernel_defines.txt");
+  // Check if the file was opened successfully
+  if (kernel_defines_file.is_open())
+  {
+    // Write the content to the file
+    kernel_defines_file << defines;
+    // Close the file
+    kernel_defines_file.close();
+  }
+
+  // // @CherifMZ: for TEST only, I added this chunk of code to write the content of the source into an external file
+  // std::ofstream file("kernel_output.txt");
+  // // Check if the file was opened successfully
+  // if (file.is_open())
+  // {
+  //   // Write the content to the file
+  //   file << program_source;
+  //   // Close the file
+  //   file.close();
+  // }
 
   try
   {
@@ -299,6 +343,18 @@ execute(const DevicePtr &     device,
   {
     throw std::runtime_error("Error: Failed to execute the kernel. \n\t > " + std::string(e.what()));
   }
+}
+
+auto
+loadSource(const std::string & source_path) -> std::string
+{
+  std::ifstream ifs(source_path);
+  if (!ifs.is_open())
+  {
+    throw std::runtime_error("Error: Failed to open file: " + source_path);
+  }
+  std::string source((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+  return source;
 }
 
 } // namespace cle
