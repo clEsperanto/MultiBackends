@@ -500,28 +500,41 @@ OpenCLBackend::buildKernel(const DevicePtr &   device,
                            void *              kernel) const -> void
 {
 #if CLE_OPENCL
-  cl_int      err;
-  auto        opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-  cl_program  prog = nullptr;
-  std::string hash = std::to_string(std::hash<std::string>{}(kernel_source));
-  loadProgramFromCache(device, hash, prog);
-  if (prog == nullptr)
+  cl_int     err;
+  auto       opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+  cl_program prog = nullptr;
+  // // std::string hash = std::to_string(std::hash<std::string>{}(kernel_source));
+  // // loadProgramFromCache(device, hash, prog);
+  // // if (prog == nullptr)
+  // // {
+  const char * source = kernel_source.c_str();
+  prog = clCreateProgramWithSource(opencl_device->getCLContext(), 1, &source, nullptr, &err);
+  if (err != CL_SUCCESS)
   {
-    const char * source = kernel_source.c_str();
-    prog = clCreateProgramWithSource(opencl_device->getCLContext(), 1, &source, nullptr, &err);
-    if (err != CL_SUCCESS)
-    {
-      size_t                 len;
-      std::array<char, 2048> buffer;
-      clGetProgramBuildInfo(
-        prog, opencl_device->getCLDevice(), CL_PROGRAM_BUILD_LOG, buffer.size(), buffer.data(), &len);
-      std::cerr << buffer.data() << std::endl;
-      throw std::runtime_error("Error: Failed to build OpenCL program.");
-    }
-    saveProgramToCache(device, hash, prog);
+    size_t                 len;
+    std::array<char, 2048> buffer;
+    clGetProgramBuildInfo(prog, opencl_device->getCLDevice(), CL_PROGRAM_BUILD_LOG, buffer.size(), buffer.data(), &len);
+    std::cerr << buffer.data() << std::endl;
+    throw std::runtime_error("Error: Failed to create program from source.");
   }
-  auto clkernel = clCreateKernel(prog, kernel_name.c_str(), nullptr);
-  *static_cast<cl_kernel *>(kernel) = clkernel;
+  cl_int buildStatus = clBuildProgram(prog, 0, nullptr, nullptr, nullptr, nullptr);
+  if (buildStatus != CL_SUCCESS)
+  {
+    size_t                 len;
+    std::array<char, 2048> buffer;
+    clGetProgramBuildInfo(prog, opencl_device->getCLDevice(), CL_PROGRAM_BUILD_LOG, 0, nullptr, &len);
+    clGetProgramBuildInfo(prog, opencl_device->getCLDevice(), CL_PROGRAM_BUILD_LOG, buffer.size(), buffer.data(), &len);
+    std::cerr << buffer.data() << std::endl;
+    throw std::runtime_error("Error: Failed to build program executable.");
+  }
+  // // saveProgramToCache(device, hash, prog);
+  // // }
+  auto ocl_kernel = clCreateKernel(prog, kernel_name.c_str(), &err);
+  if (err != CL_SUCCESS)
+  {
+    throw std::runtime_error("Error: Failed to create kernel (" + std::to_string(err) + ").)");
+  }
+  *reinterpret_cast<cl_kernel *>(kernel) = ocl_kernel;
 #else
   throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
 #endif
@@ -535,7 +548,33 @@ OpenCLBackend::executeKernel(const DevicePtr &             device,
                              const std::vector<void *> &   args,
                              const std::vector<size_t> &   sizes) const -> void
 {
-  // @StRigaud TODO: add OpenCL kernel execution
+  auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+  // build kernel from source
+  cl_kernel ocl_kernel;
+  try
+  {
+    buildKernel(device, kernel_source, kernel_name, &ocl_kernel);
+  }
+  catch (const std::exception & e)
+  {
+    throw std::runtime_error("Error: Failed to build kernel. \n\t > " + std::string(e.what()));
+  }
+  // set kernel arguments
+  for (size_t i = 0; i < args.size(); i++)
+  {
+    auto err = clSetKernelArg(ocl_kernel, i, sizes[i], args[i]);
+    if (err != CL_SUCCESS)
+    {
+      throw std::runtime_error("Error: Failed to set kernel arguments (" + std::to_string(err) + ").)");
+    }
+  }
+  // execute kernel
+  auto err = clEnqueueNDRangeKernel(
+    opencl_device->getCLCommandQueue(), ocl_kernel, 3, nullptr, global_size.data(), nullptr, 0, nullptr, nullptr);
+  if (err != CL_SUCCESS)
+  {
+    throw std::runtime_error("Error: Failed to enqueue kernel (" + std::to_string(err) + ").)");
+  }
 }
 
 auto

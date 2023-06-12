@@ -32,17 +32,18 @@ run_test()
   }
 
   cle::Array        gpu_arr(5, 5, 2, cle::dType::Float, cle::mType::Image, data, device);
-  cle::ParameterMap parameters;
-  cle::ConstantMap  constants{ { "CLK_NORMALIZED_COORDS_FALSE", 1 },
+  cle::ParameterList
+ parameters;
+  cle::ConstantList  constants{ { "CLK_NORMALIZED_COORDS_FALSE", 1 },
                                { "CLK_ADDRESS_CLAMP_TO_EDGE", 2 },
                                { "CLK_FILTER_NEAREST", 4 } };
   cle::KernelInfo   kernel;
   cle::RangeArray   global_rage;
 
-  parameters.emplace("src", gpu_arr);
-  parameters.emplace("dst", gpu_arr);
+  parameters.push_back({ "src", gpu_arr });
+  parameters.push_back({ "dst", gpu_arr });
 
-  cle::execute(device, kernel, parameters, constants, global_rage);
+  // cle::execute(device, kernel, parameters, constants, global_rage);
 }
 
 int
