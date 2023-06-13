@@ -87,7 +87,7 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
     std::string pixel_type;
     std::string type_id;
 
-    switch (arr.dim())
+    switch (arr->dim())
     {
       case 1:
         ndim = "1";
@@ -273,7 +273,6 @@ execute(const DevicePtr &     device,
   std::string kernel_name = kernel_func.first;
   std::string kernel_source = kernel_func.second;
   std::string defines;
-  std::string kernel_source = kernel_func.second;
   switch (device->getType())
   {
     case Device::Type::CUDA:
