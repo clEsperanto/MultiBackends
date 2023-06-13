@@ -21,7 +21,7 @@ class Array
 public:
   using Pointer = std::shared_ptr<const Array>;
 
-  auto
+  [[nodiscard]] inline auto
   ptr() const -> Pointer
   {
     return std::make_shared<const Array>(*this);
@@ -116,7 +116,7 @@ public:
   }
 
 private:
-  using DataPtr = std::shared_ptr<void *>;
+  using MemoryPointer = std::shared_ptr<void *>;
 
   mType           memType_ = mType::Buffer;
   dType           dataType_ = dType::Float;
@@ -125,7 +125,7 @@ private:
   size_t          depth_ = 1;
   bool            initialized_ = false;
   Device::Pointer device_ = nullptr;
-  DataPtr         data_ = std::make_shared<void *>(nullptr);
+  MemoryPointer   data_ = std::make_shared<void *>(nullptr);
   const Backend & backend_ = cle::BackendManager::getInstance().getBackend();
 };
 

@@ -69,9 +69,7 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
     defines << "\n";
   }
 
-  std::string size_params = "int global_size_0_size, int global_size_1_size, "
-                            "int global_size_2_size, ";
-
+  std::string size_params = "int global_size_0_size, int global_size_1_size, int global_size_2_size, ";
   for (const auto & param : parameter_list)
   {
     if (std::holds_alternative<const float>(param.second) || std::holds_alternative<const int>(param.second))
@@ -83,10 +81,8 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
     std::string ndim;
     std::string pos_type;
     std::string pos;
-
     std::string pixel_type;
     std::string type_id;
-
     switch (arr->dim())
     {
       case 1:
@@ -114,7 +110,6 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
     std::string width = "image_" + param.first + "_width";
     std::string height = "image_" + param.first + "_height";
     std::string depth = "image_" + param.first + "_depth";
-
     size_params = size_params + "int " + width + ", int " + height + ", int " + depth + ", ";
 
     defines << "\n";
@@ -140,8 +135,8 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
 
     size_params = "";
   }
-
   defines << "\n";
+
   return defines.str();
 }
 
@@ -149,6 +144,16 @@ static auto
 oclDefines(const ParameterList & parameter_list, const ConstantList & constant_list) -> std::string
 {
   std::ostringstream defines;
+
+  if (!constant_list.empty())
+  {
+    for (const auto & [key, value] : constant_list)
+    {
+      defines << "#define " << key << " " << value << "\n";
+    }
+    defines << "\n";
+  }
+
   defines << "\n#define GET_IMAGE_WIDTH(image_key) IMAGE_SIZE_ ## image_key ## _WIDTH";
   defines << "\n#define GET_IMAGE_HEIGHT(image_key) IMAGE_SIZE_ ## image_key ## _HEIGHT";
   defines << "\n#define GET_IMAGE_DEPTH(image_key) IMAGE_SIZE_ ## image_key ## _DEPTH";
@@ -162,7 +167,6 @@ oclDefines(const ParameterList & parameter_list, const ConstantList & constant_l
     }
     const auto & arr = std::get<Array::Pointer>(param.second);
 
-    // manage dimensions and coordinates
     std::string pos_type;
     std::string pos;
     std::string ndim;
@@ -190,7 +194,6 @@ oclDefines(const ParameterList & parameter_list, const ConstantList & constant_l
         break;
     }
 
-    // define common information
     defines << "\n";
     defines << "\n#define CONVERT_" << param.first << "_PIXEL_TYPE clij_convert_" << arr->dtype() << "_sat";
     defines << "\n#define IMAGE_" << param.first << "_PIXEL_TYPE " << arr->dtype() << "";
@@ -198,7 +201,6 @@ oclDefines(const ParameterList & parameter_list, const ConstantList & constant_l
     defines << "\n#define POS_" << param.first << "_INSTANCE(pos0,pos1,pos2,pos3) (" << pos_type << ")" << pos;
     defines << "\n";
 
-    // define specific information
     if (true) // @StRigaud TODO: introduce cl_image / cudaArray
     {
       defines << "\n#define IMAGE_" << param.first << "_TYPE __global " << arr->dtype() << "*";
@@ -237,26 +239,14 @@ oclDefines(const ParameterList & parameter_list, const ConstantList & constant_l
       defines << "\n#define WRITE_" << param.first << "_IMAGE(a,b,c) write_image" << prefix << "(a,b,c)";
     }
 
-    // define size information
     defines << "\n";
     defines << "\n#define IMAGE_SIZE_" << param.first << "_WIDTH " << std::to_string(arr->width());
     defines << "\n#define IMAGE_SIZE_" << param.first << "_HEIGHT " << std::to_string(arr->height());
     defines << "\n#define IMAGE_SIZE_" << param.first << "_DEPTH " << std::to_string(arr->depth());
     defines << "\n";
   }
-
-  // add constant memory defines
-  if (!constant_list.empty())
-  {
-    for (const auto & [key, value] : constant_list)
-    {
-      defines << "#define " << key << " " << value << "\n";
-    }
-    defines << "\n";
-  }
-
-  // return defines as string
   defines << "\n";
+
   return defines.str();
 }
 
@@ -298,7 +288,6 @@ execute(const Device::Pointer & device,
     if (std::holds_alternative<Array::Pointer>(param.second))
     {
       const auto & arr = std::get<Array::Pointer>(param.second);
-      std::cout << param.first << " : " << *arr << std::endl;
       args_ptr.push_back(*arr->get());
       switch (device->getType())
       {
@@ -313,16 +302,12 @@ execute(const Device::Pointer & device,
     else if (std::holds_alternative<const float>(param.second))
     {
       const auto & f = std::get<const float>(param.second);
-      std::cout << param.first << " : " << f << std::endl;
-
       args_ptr.push_back(const_cast<float *>(&f));
       args_size.push_back(sizeof(float));
     }
     else if (std::holds_alternative<const int>(param.second))
     {
       const auto & i = std::get<const int>(param.second);
-      std::cout << param.first << " : " << i << std::endl;
-
       args_ptr.push_back(const_cast<int *>(&i));
       args_size.push_back(sizeof(int));
     }
