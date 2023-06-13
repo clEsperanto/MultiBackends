@@ -19,7 +19,13 @@ namespace cle
 class Array
 {
 public:
-  using ParameterType = std::variant<const Array*, const float, const int>;
+  using Pointer = std::shared_ptr<const Array>;
+
+  auto
+  ptr() const -> Pointer
+  {
+    return std::make_shared<const Array>(*this);
+  }
 
   Array() = default;
   Array(const size_t & width,
@@ -27,20 +33,20 @@ public:
         const size_t & depth,
         const dType &  data_type,
         const mType &  mem_type);
-  Array(const size_t &    width,
-        const size_t &    height,
-        const size_t &    depth,
-        const dType &     data_type,
-        const mType &     mem_type,
-        const DevicePtr & device_ptr);
-  Array(const size_t &    width,
-        const size_t &    height,
-        const size_t &    depth,
-        const dType &     data_type,
-        const mType &     mem_type,
-        const void *      host_data,
-        const DevicePtr & device_ptr);
-  Array(const Array & src);
+  Array(const size_t &          width,
+        const size_t &          height,
+        const size_t &          depth,
+        const dType &           data_type,
+        const mType &           mem_type,
+        const Device::Pointer & device_ptr);
+  Array(const size_t &          width,
+        const size_t &          height,
+        const size_t &          depth,
+        const dType &           data_type,
+        const mType &           mem_type,
+        const void *            host_data,
+        const Device::Pointer & device_ptr);
+  Array(const Array & arr);
   ~Array();
 
   auto
