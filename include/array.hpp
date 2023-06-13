@@ -19,12 +19,14 @@ namespace cle
 class Array
 {
 public:
-  using Pointer = std::shared_ptr<const Array>;
+  using Pointer = const Array *;
 
   [[nodiscard]] inline auto
   ptr() const -> Pointer
   {
-    return std::make_shared<const Array>(*this);
+    // @StRigaud: best if we can use shared_ptr but we loose the data ... ?
+    // auto ptr = std::make_shared<const Array>(*this);
+    return this;
   }
 
   Array() = default;
