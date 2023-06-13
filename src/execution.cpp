@@ -7,6 +7,50 @@
 namespace cle
 {
 
+// Helper function for word replacements
+static auto
+replaceWord(std::string & sentence, const std::string_view & wordToReplace, const std::string_view & replacement)
+  -> void
+{
+  size_t pos = sentence.find(wordToReplace);
+  while (pos != std::string::npos)
+  {
+    sentence.replace(pos, wordToReplace.length(), replacement);
+    pos = sentence.find(wordToReplace, pos + replacement.length());
+  }
+}
+
+// Helper function for OpenCL to Cuda translation
+static auto
+srcOpenclToCuda(std::string opencl_code) -> std::string
+{
+  replaceWord(opencl_code, "(int2){", "make_int2(");
+  replaceWord(opencl_code, "(int4){", "make_int4(");
+  replaceWord(opencl_code, "(int4)  {", "make_int4(");
+  replaceWord(opencl_code, "(float4){", "make_float4(");
+  replaceWord(opencl_code, "(float2){", "make_float2(");
+  replaceWord(opencl_code, "int2 pos = {", "int2 pos = make_int2(");
+  replaceWord(opencl_code, "int4 pos = {", "int4 pos = make_int4(");
+  replaceWord(opencl_code, "};", ");");
+  replaceWord(opencl_code, "})", "))");
+
+  replaceWord(opencl_code, "(int2)", "make_int2");
+  replaceWord(opencl_code, "(int4)", "make_int4");
+  replaceWord(opencl_code, "__constant sampler_t", "__device__ int");
+  replaceWord(opencl_code, "__const sampler_t", "__device__ int");
+  replaceWord(opencl_code, "inline", "__device__ inline");
+  replaceWord(opencl_code, "#pragma", "// #pragma");
+
+  replaceWord(opencl_code, "\nkernel void", "\nextern \"C\" __global__ void");
+  replaceWord(opencl_code, "__kernel ", "extern \"C\" __global__ ");
+
+  replaceWord(opencl_code, "get_global_id(0)", "blockDim.x * blockIdx.x + threadIdx.x");
+  replaceWord(opencl_code, "get_global_id(1)", "blockDim.y * blockIdx.y + threadIdx.y");
+  replaceWord(opencl_code, "get_global_id(2)", "blockDim.z * blockIdx.z + threadIdx.z");
+
+  return opencl_code;
+}
+
 static auto
 cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_list) -> std::string
 {
@@ -15,16 +59,6 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
   // https://github.com/clEsperanto/pyclesperanto_prototype/blob/master/pyclesperanto_prototype/_tier0/_cuda_execute.py
 
   std::ostringstream defines;
-  defines << "\n#define get_global_size(dim) global_size_ ## dim ## _size";
-  defines << "\n";
-
-  defines << "\n#define GET_IMAGE_WIDTH(image_key) IMAGE_SIZE_ ## image_key ## "
-             "_WIDTH";
-  defines << "\n#define GET_IMAGE_HEIGHT(image_key) IMAGE_SIZE_ ## image_key "
-             "## _HEIGHT";
-  defines << "\n#define GET_IMAGE_DEPTH(image_key) IMAGE_SIZE_ ## image_key ## "
-             "_DEPTH";
-  defines << "\n";
 
   if (!constant_list.empty())
   {
@@ -53,17 +87,28 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
     std::string pixel_type;
     std::string type_id;
 
-    if (arr->dim() < 3)
+    switch (arr.dim())
     {
-      ndim = "2";
-      pos_type = "int2";
-      pos = "(pos0, pos1)";
-    }
-    else
-    {
-      ndim = "3";
-      pos_type = "int4";
-      pos = "(pos0, pos1, pos2, 0)";
+      case 1:
+        ndim = "1";
+        pos_type = "int";
+        pos = "(pos0)";
+        break;
+      case 2:
+        ndim = "2";
+        pos_type = "int2";
+        pos = "(pos0, pos1)";
+        break;
+      case 3:
+        ndim = "3";
+        pos_type = "int4";
+        pos = "(pos0, pos1, pos2, 0)";
+        break;
+      default:
+        ndim = "3";
+        pos_type = "int4";
+        pos = "(pos0, pos1, pos2, 0)";
+        break;
     }
 
     std::string width = "image_" + param.first + "_width";
@@ -92,6 +137,8 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
     defines << "\n#define WRITE_" << param.first << "_IMAGE(a,b,c) write_buffer" << ndim << "d" << arr->shortType()
             << "(GET_IMAGE_WIDTH(a),GET_IMAGE_HEIGHT(a),GET_IMAGE_DEPTH(a),a,b,c)";
     defines << "\n";
+
+    size_params = "";
   }
 
   defines << "\n";
@@ -226,10 +273,12 @@ execute(const DevicePtr &     device,
   std::string kernel_name = kernel_func.first;
   std::string kernel_source = kernel_func.second;
   std::string defines;
+  std::string kernel_source = kernel_func.second;
   switch (device->getType())
   {
     case Device::Type::CUDA:
       defines = cle::cudaDefines(parameters, constants);
+      kernel_source = cle::srcOpenclToCuda(kernel_source);
       break;
     case Device::Type::OPENCL:
       defines = cle::oclDefines(parameters, constants);
