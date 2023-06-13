@@ -24,8 +24,16 @@ public:
   [[nodiscard]] inline auto
   ptr() const -> Pointer
   {
-    // @StRigaud: best if we can use shared_ptr but we loose the data ... ?
-    // auto ptr = std::make_shared<const Array>(*this);
+    // @StRigaud: possible safety issue, using shared_ptr is pain ...
+    // class Array : public std::enable_shared_from_this<Array> {
+    // public:
+    //     using Pointer = std::shared_ptr<const Array>;
+    //     static auto create() -> Pointer {
+    //         return std::make_shared<Array>();
+    //     }
+    //}
+    // Array::Pointer arr = Array::create();
+    // Array::Pointer arr_ptr = arr->ptr();
     return this;
   }
 
