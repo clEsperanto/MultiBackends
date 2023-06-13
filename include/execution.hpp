@@ -11,8 +11,10 @@
 namespace cle
 {
 
-using ParameterList = std::vector<std::pair<std::string, cle::Array::ParameterType>>;
-using ConstantList = std::vector<std::pair<std::string, int>>;
+using ConstantType = int;
+using ParameterType = std::variant<Array::Pointer, const float, const int>;
+using ParameterList = std::vector<std::pair<std::string, ParameterType>>;
+using ConstantList = std::vector<std::pair<std::string, ConstantType>>;
 using KernelInfo = std::pair<std::string, std::string>;
 using RangeArray = std::array<size_t, 3>;
 
