@@ -59,10 +59,10 @@ Array::Array(const size_t &          width,
   }
 }
 
-Array::Array(const Array & array)
-  : Array(array.width(), array.height(), array.depth(), array.dtype(), array.mtype())
+Array::Array(const Array & arr)
+  : Array(arr.width(), arr.height(), arr.depth(), arr.dtype(), arr.mtype())
 {
-  device_ = array.device();
+  device_ = arr.device();
   allocate();
 }
 

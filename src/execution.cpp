@@ -78,7 +78,7 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
     {
       continue;
     }
-    const auto & arr = std::get<const Array *>(param.second);
+    const auto & arr = std::get<Array::Pointer>(param.second);
 
     std::string ndim;
     std::string pos_type;
@@ -160,7 +160,7 @@ oclDefines(const ParameterList & parameter_list, const ConstantList & constant_l
     {
       continue;
     }
-    const auto & arr = std::get<const Array *>(param.second);
+    const auto & arr = std::get<Array::Pointer>(param.second);
 
     // manage dimensions and coordinates
     std::string pos_type;
@@ -295,9 +295,10 @@ execute(const Device::Pointer & device,
   args_size.reserve(parameters.size());
   for (const auto & param : parameters)
   {
-    if (std::holds_alternative<const Array *>(param.second))
+    if (std::holds_alternative<Array::Pointer>(param.second))
     {
-      const auto & arr = std::get<const Array *>(param.second);
+      const auto & arr = std::get<Array::Pointer>(param.second);
+      std::cout << param.first << " : " << *arr << std::endl;
       args_ptr.push_back(*arr->get());
       switch (device->getType())
       {
@@ -312,12 +313,16 @@ execute(const Device::Pointer & device,
     else if (std::holds_alternative<const float>(param.second))
     {
       const auto & f = std::get<const float>(param.second);
+      std::cout << param.first << " : " << f << std::endl;
+
       args_ptr.push_back(const_cast<float *>(&f));
       args_size.push_back(sizeof(float));
     }
     else if (std::holds_alternative<const int>(param.second))
     {
       const auto & i = std::get<const int>(param.second);
+      std::cout << param.first << " : " << i << std::endl;
+
       args_ptr.push_back(const_cast<int *>(&i));
       args_size.push_back(sizeof(int));
     }

@@ -11,7 +11,7 @@ absolute_func(const Array & src, const Array & dst, const Device::Pointer & devi
 {
   const KernelInfo    kernel = { "absolute", kernel::absolute };
   const ConstantList  constants = {};
-  const ParameterList parameters = { { "src", &src }, { "dst", &dst } };
+  const ParameterList parameters = { { "src", src.ptr() }, { "dst", dst.ptr() } };
   const RangeArray    global_range = { dst.width(), dst.height(), dst.depth() };
   execute(device, kernel, parameters, constants, global_range);
 }
@@ -22,7 +22,7 @@ execute_separable_func(const Array &                src,
                        const std::array<float, 3> & sigma,
                        const std::array<int, 3> &   radius,
                        const KernelInfo &           kernel,
-                       const DevicePtr &            device) -> void
+                       const Device::Pointer &      device) -> void
 {
   const ConstantList constants = {};
   const RangeArray   global_range = { dst.width(), dst.height(), dst.depth() };
@@ -33,7 +33,7 @@ execute_separable_func(const Array &                src,
   if (dst.width() > 1 && sigma[0] > 0)
   {
     const ParameterList parameters = {
-      { "src", &src }, { "dst", &tmp1 }, { "dim", 0 }, { "N", radius[0] }, { "s", sigma[0] }
+      { "src", src.ptr() }, { "dst", tmp1.ptr() }, { "dim", 0 }, { "N", radius[0] }, { "s", sigma[0] }
     };
     execute(device, kernel, parameters, constants, global_range);
   }
@@ -44,7 +44,7 @@ execute_separable_func(const Array &                src,
   if (dst.height() > 1 && sigma[1] > 0)
   {
     const ParameterList parameters = {
-      { "src", &tmp1 }, { "dst", &tmp2 }, { "dim", 1 }, { "N", radius[1] }, { "s", sigma[1] }
+      { "src", tmp1.ptr() }, { "dst", tmp2.ptr() }, { "dim", 1 }, { "N", radius[1] }, { "s", sigma[1] }
     };
     execute(device, kernel, parameters, constants, global_range);
   }
@@ -55,7 +55,7 @@ execute_separable_func(const Array &                src,
   if (dst.depth() > 1 && sigma[2] > 0)
   {
     const ParameterList parameters = {
-      { "src", &tmp2 }, { "dst", &dst }, { "dim", 2 }, { "N", radius[2] }, { "s", sigma[2] }
+      { "src", tmp2.ptr() }, { "dst", dst.ptr() }, { "dim", 2 }, { "N", radius[2] }, { "s", sigma[2] }
     };
     execute(device, kernel, parameters, constants, global_range);
   }
@@ -66,12 +66,12 @@ execute_separable_func(const Array &                src,
 }
 
 auto
-gaussian_blur_func(const Array &     src,
-                   const Array &     dst,
-                   const float &     sigma_x,
-                   const float &     sigma_y,
-                   const float &     sigma_z,
-                   const DevicePtr & device) -> void
+gaussian_blur_func(const Array &           src,
+                   const Array &           dst,
+                   const float &           sigma_x,
+                   const float &           sigma_y,
+                   const float &           sigma_z,
+                   const Device::Pointer & device) -> void
 {
   const KernelInfo kernel = { "gaussian_blur_separable", kernel::gaussian_blur_separable };
   execute_separable_func(src,
