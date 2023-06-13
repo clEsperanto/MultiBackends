@@ -38,8 +38,8 @@ run_test()
   cle::KernelInfo    kernel = { "absolute", kernel::absolute };
   cle::RangeArray    global_rage;
 
-  parameters.push_back({ "dst", &gpu_arr });
-  parameters.push_back({ "src", &gpu_arr });
+  parameters.push_back({ "dst", gpu_arr.ptr() });
+  parameters.push_back({ "src", gpu_arr.ptr() });
 
   // cle::execute(device, kernel, parameters, constants, global_rage);
 }

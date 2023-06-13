@@ -5,7 +5,7 @@ namespace cle
 {
 
 auto
-CUDABackend::getDevices(const std::string & type) const -> std::vector<DevicePtr>
+CUDABackend::getDevices(const std::string & type) const -> std::vector<Device::Pointer>
 {
 #if CLE_CUDA
   int  deviceCount;
@@ -14,7 +14,7 @@ CUDABackend::getDevices(const std::string & type) const -> std::vector<DevicePtr
   {
     throw std::runtime_error("Error: Failed to get CUDA device count.");
   }
-  std::vector<DevicePtr> devices;
+  std::vector<Device::Pointer> devices;
   for (int i = 0; i < deviceCount; i++)
   {
     devices.push_back(std::make_shared<CUDADevice>(i));
@@ -26,11 +26,11 @@ CUDABackend::getDevices(const std::string & type) const -> std::vector<DevicePtr
 }
 
 auto
-CUDABackend::getDevice(const std::string & name, const std::string & type) const -> DevicePtr
+CUDABackend::getDevice(const std::string & name, const std::string & type) const -> Device::Pointer
 {
 #if CLE_CUDA
   auto devices = getDevices(type);
-  auto ite = std::find_if(devices.begin(), devices.end(), [&name](const DevicePtr & dev) {
+  auto ite = std::find_if(devices.begin(), devices.end(), [&name](const Device::Pointer & dev) {
     return dev->getName().find(name) != std::string::npos;
   });
   if (ite != devices.end())
@@ -70,7 +70,7 @@ CUDABackend::getType() const -> Backend::Type
 }
 
 auto
-CUDABackend::allocateMemory(const DevicePtr & device, const size_t & size, void ** data_ptr) const -> void
+CUDABackend::allocateMemory(const Device::Pointer & device, const size_t & size, void ** data_ptr) const -> void
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
@@ -90,12 +90,12 @@ CUDABackend::allocateMemory(const DevicePtr & device, const size_t & size, void 
 }
 
 auto
-CUDABackend::allocateMemory(const DevicePtr & device,
-                            const size_t &    width,
-                            const size_t &    height,
-                            const size_t &    depth,
-                            const dType &     dtype,
-                            void **           data_ptr) const -> void
+CUDABackend::allocateMemory(const Device::Pointer & device,
+                            const size_t &          width,
+                            const size_t &          height,
+                            const size_t &          depth,
+                            const dType &           dtype,
+                            void **                 data_ptr) const -> void
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
@@ -118,7 +118,7 @@ CUDABackend::allocateMemory(const DevicePtr & device,
 }
 
 auto
-CUDABackend::freeMemory(const DevicePtr & device, const mType & mtype, void ** data_ptr) const -> void
+CUDABackend::freeMemory(const Device::Pointer & device, const mType & mtype, void ** data_ptr) const -> void
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
@@ -138,8 +138,10 @@ CUDABackend::freeMemory(const DevicePtr & device, const mType & mtype, void ** d
 }
 
 auto
-CUDABackend::writeMemory(const DevicePtr & device, void ** data_ptr, const size_t & size, const void * host_ptr) const
-  -> void
+CUDABackend::writeMemory(const Device::Pointer & device,
+                         void **                 data_ptr,
+                         const size_t &          size,
+                         const void *            host_ptr) const -> void
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
@@ -159,13 +161,13 @@ CUDABackend::writeMemory(const DevicePtr & device, void ** data_ptr, const size_
 }
 
 auto
-CUDABackend::writeMemory(const DevicePtr & device,
-                         void **           data_ptr,
-                         const size_t &    width,
-                         const size_t &    height,
-                         const size_t &    depth,
-                         const size_t &    bytes,
-                         const void *      host_ptr) const -> void
+CUDABackend::writeMemory(const Device::Pointer & device,
+                         void **                 data_ptr,
+                         const size_t &          width,
+                         const size_t &          height,
+                         const size_t &          depth,
+                         const size_t &          bytes,
+                         const void *            host_ptr) const -> void
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
@@ -207,8 +209,10 @@ CUDABackend::writeMemory(const DevicePtr & device,
 }
 
 auto
-CUDABackend::readMemory(const DevicePtr & device, const void ** data_ptr, const size_t & size, void * host_ptr) const
-  -> void
+CUDABackend::readMemory(const Device::Pointer & device,
+                        const void **           data_ptr,
+                        const size_t &          size,
+                        void *                  host_ptr) const -> void
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
@@ -228,13 +232,13 @@ CUDABackend::readMemory(const DevicePtr & device, const void ** data_ptr, const 
 }
 
 auto
-CUDABackend::readMemory(const DevicePtr & device,
-                        const void **     data_ptr,
-                        const size_t &    width,
-                        const size_t &    height,
-                        const size_t &    depth,
-                        const size_t &    bytes,
-                        void *            host_ptr) const -> void
+CUDABackend::readMemory(const Device::Pointer & device,
+                        const void **           data_ptr,
+                        const size_t &          width,
+                        const size_t &          height,
+                        const size_t &          depth,
+                        const size_t &          bytes,
+                        void *                  host_ptr) const -> void
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
@@ -274,10 +278,10 @@ CUDABackend::readMemory(const DevicePtr & device,
 }
 
 auto
-CUDABackend::copyMemory(const DevicePtr & device,
-                        const void **     src_data_ptr,
-                        const size_t &    size,
-                        void **           dst_data_ptr) const -> void
+CUDABackend::copyMemory(const Device::Pointer & device,
+                        const void **           src_data_ptr,
+                        const size_t &          size,
+                        void **                 dst_data_ptr) const -> void
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
@@ -297,13 +301,13 @@ CUDABackend::copyMemory(const DevicePtr & device,
 }
 
 auto
-CUDABackend::copyMemory(const DevicePtr & device,
-                        const void **     src_data_ptr,
-                        const size_t &    width,
-                        const size_t &    height,
-                        const size_t &    depth,
-                        const size_t &    bytes,
-                        void **           dst_data_ptr) const -> void
+CUDABackend::copyMemory(const Device::Pointer & device,
+                        const void **           src_data_ptr,
+                        const size_t &          width,
+                        const size_t &          height,
+                        const size_t &          depth,
+                        const size_t &          bytes,
+                        void **                 dst_data_ptr) const -> void
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
@@ -344,11 +348,11 @@ CUDABackend::copyMemory(const DevicePtr & device,
 }
 
 auto
-CUDABackend::setMemory(const DevicePtr & device,
-                       void **           data_ptr,
-                       const size_t &    size,
-                       const void *      value,
-                       const size_t &    value_size) const -> void
+CUDABackend::setMemory(const Device::Pointer & device,
+                       void **                 data_ptr,
+                       const size_t &          size,
+                       const void *            value,
+                       const size_t &          value_size) const -> void
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
@@ -368,13 +372,13 @@ CUDABackend::setMemory(const DevicePtr & device,
 }
 
 auto
-CUDABackend::setMemory(const DevicePtr & device,
-                       void **           data_ptr,
-                       const size_t &    width,
-                       const size_t &    height,
-                       const size_t &    depth,
-                       const size_t &    bytes,
-                       const void *      value) const -> void
+CUDABackend::setMemory(const Device::Pointer & device,
+                       void **                 data_ptr,
+                       const size_t &          width,
+                       const size_t &          height,
+                       const size_t &          depth,
+                       const size_t &          bytes,
+                       const void *            value) const -> void
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
@@ -407,7 +411,8 @@ CUDABackend::setMemory(const DevicePtr & device,
 }
 
 auto
-CUDABackend::loadProgramFromCache(const DevicePtr & device, const std::string & hash, void * program) const -> void
+CUDABackend::loadProgramFromCache(const Device::Pointer & device, const std::string & hash, void * program) const
+  -> void
 {
 #if CLE_CUDA
   auto     cuda_device = std::dynamic_pointer_cast<CUDADevice>(device);
@@ -424,7 +429,7 @@ CUDABackend::loadProgramFromCache(const DevicePtr & device, const std::string & 
 }
 
 auto
-CUDABackend::saveProgramToCache(const DevicePtr & device, const std::string & hash, void * program) const -> void
+CUDABackend::saveProgramToCache(const Device::Pointer & device, const std::string & hash, void * program) const -> void
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<CUDADevice>(device);
@@ -435,10 +440,10 @@ CUDABackend::saveProgramToCache(const DevicePtr & device, const std::string & ha
 }
 
 auto
-CUDABackend::buildKernel(const DevicePtr &   device,
-                         const std::string & kernel_source,
-                         const std::string & kernel_name,
-                         void *              kernel) const -> void
+CUDABackend::buildKernel(const Device::Pointer & device,
+                         const std::string &     kernel_source,
+                         const std::string &     kernel_name,
+                         void *                  kernel) const -> void
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
@@ -473,7 +478,7 @@ CUDABackend::buildKernel(const DevicePtr &   device,
 }
 
 auto
-CUDABackend::executeKernel(const DevicePtr &             device,
+CUDABackend::executeKernel(const Device::Pointer &       device,
                            const std::string &           kernel_source,
                            const std::string &           kernel_name,
                            const std::array<size_t, 3> & global_size,

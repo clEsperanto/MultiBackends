@@ -19,8 +19,13 @@ namespace cle
 class Array
 {
 public:
-  using DevicePtr = std::shared_ptr<cle::Device>;
-  using DataPtr = std::shared_ptr<void *>;
+  using Pointer = std::shared_ptr<const Array>;
+
+  [[nodiscard]] inline auto
+  ptr() const -> Pointer
+  {
+    return std::make_shared<const Array>(*this);
+  }
 
   Array() = default;
   Array(const size_t & width,
@@ -28,20 +33,20 @@ public:
         const size_t & depth,
         const dType &  data_type,
         const mType &  mem_type);
-  Array(const size_t &    width,
-        const size_t &    height,
-        const size_t &    depth,
-        const dType &     data_type,
-        const mType &     mem_type,
-        const DevicePtr & device_ptr);
-  Array(const size_t &    width,
-        const size_t &    height,
-        const size_t &    depth,
-        const dType &     data_type,
-        const mType &     mem_type,
-        const void *      host_data,
-        const DevicePtr & device_ptr);
-  Array(const Array & src);
+  Array(const size_t &          width,
+        const size_t &          height,
+        const size_t &          depth,
+        const dType &           data_type,
+        const mType &           mem_type,
+        const Device::Pointer & device_ptr);
+  Array(const size_t &          width,
+        const size_t &          height,
+        const size_t &          depth,
+        const dType &           data_type,
+        const mType &           mem_type,
+        const void *            host_data,
+        const Device::Pointer & device_ptr);
+  Array(const Array & arr);
   ~Array();
 
   auto
@@ -90,7 +95,7 @@ public:
   [[nodiscard]] auto
   mtype() const -> mType;
   [[nodiscard]] auto
-  device() const -> DevicePtr;
+  device() const -> Device::Pointer;
   [[nodiscard]] auto
   dim() const -> unsigned int;
   [[nodiscard]] auto
@@ -111,14 +116,16 @@ public:
   }
 
 private:
+  using MemoryPointer = std::shared_ptr<void *>;
+
   mType           memType_ = mType::Buffer;
   dType           dataType_ = dType::Float;
   size_t          width_ = 1;
   size_t          height_ = 1;
   size_t          depth_ = 1;
   bool            initialized_ = false;
-  DevicePtr       device_ = nullptr;
-  DataPtr         data_ = std::make_shared<void *>(nullptr);
+  Device::Pointer device_ = nullptr;
+  MemoryPointer   data_ = std::make_shared<void *>(nullptr);
   const Backend & backend_ = cle::BackendManager::getInstance().getBackend();
 };
 

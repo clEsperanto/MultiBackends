@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <map>
+#include <memory>
 #include <sstream>
 
 #include "clic.hpp"
@@ -17,6 +18,8 @@ public:
     CUDA,
     OPENCL
   };
+
+  using Pointer = std::shared_ptr<Device>;
 
   Device() = default;
   virtual ~Device() = default;

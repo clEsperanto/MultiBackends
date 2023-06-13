@@ -19,12 +19,12 @@ Array::Array(const size_t & width,
   depth_ = (depth_ > 1) ? depth_ : 1;
 }
 
-Array::Array(const size_t &    width,
-             const size_t &    height,
-             const size_t &    depth,
-             const dType &     data_type,
-             const mType &     mem_type,
-             const DevicePtr & device_ptr)
+Array::Array(const size_t &          width,
+             const size_t &          height,
+             const size_t &          depth,
+             const dType &           data_type,
+             const mType &           mem_type,
+             const Device::Pointer & device_ptr)
   : Array(width, height, depth, data_type, mem_type)
 {
   device_ = device_ptr;
@@ -40,13 +40,13 @@ Array::Array(const size_t &    width,
   // initialized_ = true;
 }
 
-Array::Array(const size_t &    width,
-             const size_t &    height,
-             const size_t &    depth,
-             const dType &     data_type,
-             const mType &     mem_type,
-             const void *      host_data,
-             const DevicePtr & device_ptr)
+Array::Array(const size_t &          width,
+             const size_t &          height,
+             const size_t &          depth,
+             const dType &           data_type,
+             const mType &           mem_type,
+             const void *            host_data,
+             const Device::Pointer & device_ptr)
   : Array(width, height, depth, data_type, mem_type, device_ptr)
 {
   if (dim() > 1)
@@ -59,10 +59,10 @@ Array::Array(const size_t &    width,
   }
 }
 
-Array::Array(const Array & array)
-  : Array(array.width(), array.height(), array.depth(), array.dtype(), array.mtype())
+Array::Array(const Array & arr)
+  : Array(arr.width(), arr.height(), arr.depth(), arr.dtype(), arr.mtype())
 {
-  device_ = array.device();
+  device_ = arr.device();
   allocate();
 }
 
@@ -212,7 +212,7 @@ Array::mtype() const -> mType
   return memType_;
 }
 auto
-Array::device() const -> DevicePtr
+Array::device() const -> Device::Pointer
 {
   return device_;
 }

@@ -7,11 +7,10 @@
 
 namespace cle::memory
 {
-using DevicePtr = std::shared_ptr<cle::Device>;
 
 template <typename T>
 static auto
-create(const size_t & width, const size_t & height, const size_t & depth, const DevicePtr & device) -> Array
+create(const size_t & width, const size_t & height, const size_t & depth, const Device::Pointer & device) -> Array
 {
   return Array{ width, height, depth, toType<T>(), mType::Buffer, device };
 }
@@ -24,8 +23,11 @@ create_like(const Array & arr) -> Array
 
 template <typename T>
 static auto
-push(const T * host_data, const size_t & width, const size_t & height, const size_t & depth, const DevicePtr & device)
-  -> Array
+push(const T *               host_data,
+     const size_t &          width,
+     const size_t &          height,
+     const size_t &          depth,
+     const Device::Pointer & device) -> Array
 {
   return Array{ width, height, depth, toType<T>(), mType::Buffer, host_data, device };
 }

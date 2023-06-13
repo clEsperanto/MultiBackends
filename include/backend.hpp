@@ -21,8 +21,6 @@ public:
     OPENCL
   };
 
-  using DevicePtr = std::shared_ptr<cle::Device>;
-
   Backend() = default;
   Backend(const Backend &) = default;
   Backend(Backend &&) = default;
@@ -37,81 +35,85 @@ public:
   [[nodiscard]] virtual auto
   getDevicesList(const std::string & type) const -> std::vector<std::string> = 0;
   [[nodiscard]] virtual auto
-  getDevices(const std::string & type) const -> std::vector<DevicePtr> = 0;
+  getDevices(const std::string & type) const -> std::vector<Device::Pointer> = 0;
   [[nodiscard]] virtual auto
-  getDevice(const std::string & name, const std::string & type) const -> DevicePtr = 0;
+  getDevice(const std::string & name, const std::string & type) const -> Device::Pointer = 0;
 
   [[nodiscard]] virtual auto
   getPreamble() const -> std::string = 0;
 
   virtual auto
-  allocateMemory(const DevicePtr & device, const size_t & size, void ** data_ptr) const -> void = 0;
+  allocateMemory(const Device::Pointer & device, const size_t & size, void ** data_ptr) const -> void = 0;
   virtual auto
-  allocateMemory(const DevicePtr & device,
-                 const size_t &    width,
-                 const size_t &    height,
-                 const size_t &    depth,
-                 const dType &     dtype,
-                 void **           data_ptr) const -> void = 0;
+  allocateMemory(const Device::Pointer & device,
+                 const size_t &          width,
+                 const size_t &          height,
+                 const size_t &          depth,
+                 const dType &           dtype,
+                 void **                 data_ptr) const -> void = 0;
   virtual auto
-  freeMemory(const DevicePtr & device, const mType & mtype, void ** data_ptr) const -> void = 0;
+  freeMemory(const Device::Pointer & device, const mType & mtype, void ** data_ptr) const -> void = 0;
   virtual auto
-  writeMemory(const DevicePtr & device, void ** data_ptr, const size_t & size, const void * host_ptr) const -> void = 0;
-  virtual auto
-  writeMemory(const DevicePtr & device,
-              void **           data_ptr,
-              const size_t &    width,
-              const size_t &    height,
-              const size_t &    depth,
-              const size_t &    bytes,
-              const void *      host_ptr) const -> void = 0;
-  virtual auto
-  readMemory(const DevicePtr & device, const void ** data_ptr, const size_t & size, void * host_ptr) const -> void = 0;
-  virtual auto
-  readMemory(const DevicePtr & device,
-             const void **     data_ptr,
-             const size_t &    width,
-             const size_t &    height,
-             const size_t &    depth,
-             const size_t &    bytes,
-             void *            host_ptr) const -> void = 0;
-  virtual auto
-  copyMemory(const DevicePtr & device, const void ** src_data_ptr, const size_t & size, void ** dst_data_ptr) const
+  writeMemory(const Device::Pointer & device, void ** data_ptr, const size_t & size, const void * host_ptr) const
     -> void = 0;
   virtual auto
-  copyMemory(const DevicePtr & device,
-             const void **     src_data_ptr,
-             const size_t &    width,
-             const size_t &    height,
-             const size_t &    depth,
-             const size_t &    bytes,
-             void **           dst_data_ptr) const -> void = 0;
+  writeMemory(const Device::Pointer & device,
+              void **                 data_ptr,
+              const size_t &          width,
+              const size_t &          height,
+              const size_t &          depth,
+              const size_t &          bytes,
+              const void *            host_ptr) const -> void = 0;
   virtual auto
-  setMemory(const DevicePtr & device,
-            void **           data_ptr,
-            const size_t &    size,
-            const void *      value,
-            const size_t &    value_size) const -> void = 0;
+  readMemory(const Device::Pointer & device, const void ** data_ptr, const size_t & size, void * host_ptr) const
+    -> void = 0;
   virtual auto
-  setMemory(const DevicePtr & device,
-            void **           data_ptr,
-            const size_t &    width,
-            const size_t &    height,
-            const size_t &    depth,
-            const size_t &    bytes,
-            const void *      value) const -> void = 0;
+  readMemory(const Device::Pointer & device,
+             const void **           data_ptr,
+             const size_t &          width,
+             const size_t &          height,
+             const size_t &          depth,
+             const size_t &          bytes,
+             void *                  host_ptr) const -> void = 0;
+  virtual auto
+  copyMemory(const Device::Pointer & device,
+             const void **           src_data_ptr,
+             const size_t &          size,
+             void **                 dst_data_ptr) const -> void = 0;
+  virtual auto
+  copyMemory(const Device::Pointer & device,
+             const void **           src_data_ptr,
+             const size_t &          width,
+             const size_t &          height,
+             const size_t &          depth,
+             const size_t &          bytes,
+             void **                 dst_data_ptr) const -> void = 0;
+  virtual auto
+  setMemory(const Device::Pointer & device,
+            void **                 data_ptr,
+            const size_t &          size,
+            const void *            value,
+            const size_t &          value_size) const -> void = 0;
+  virtual auto
+  setMemory(const Device::Pointer & device,
+            void **                 data_ptr,
+            const size_t &          width,
+            const size_t &          height,
+            const size_t &          depth,
+            const size_t &          bytes,
+            const void *            value) const -> void = 0;
 
   virtual auto
-  buildKernel(const DevicePtr &   device,
-              const std::string & kernel_source,
-              const std::string & kernel_name,
-              void *              kernel) const -> void = 0;
+  buildKernel(const Device::Pointer & device,
+              const std::string &     kernel_source,
+              const std::string &     kernel_name,
+              void *                  kernel) const -> void = 0;
   virtual auto
-  loadProgramFromCache(const DevicePtr & device, const std::string & hash, void * program) const -> void = 0;
+  loadProgramFromCache(const Device::Pointer & device, const std::string & hash, void * program) const -> void = 0;
   virtual auto
-  saveProgramToCache(const DevicePtr & device, const std::string & hash, void * program) const -> void = 0;
+  saveProgramToCache(const Device::Pointer & device, const std::string & hash, void * program) const -> void = 0;
   virtual auto
-  executeKernel(const DevicePtr &             device,
+  executeKernel(const Device::Pointer &       device,
                 const std::string &           kernel_source,
                 const std::string &           kernel_name,
                 const std::array<size_t, 3> & global_size,
@@ -154,84 +156,86 @@ public:
   operator=(CUDABackend &&) -> CUDABackend & = default;
 
   [[nodiscard]] auto
-  getDevices(const std::string & type) const -> std::vector<DevicePtr> override;
+  getDevices(const std::string & type) const -> std::vector<Device::Pointer> override;
   [[nodiscard]] auto
-  getDevice(const std::string & name, const std::string & type) const -> DevicePtr override;
+  getDevice(const std::string & name, const std::string & type) const -> Device::Pointer override;
   [[nodiscard]] auto
   getDevicesList(const std::string & type) const -> std::vector<std::string> override;
   [[nodiscard]] auto
   getType() const -> Backend::Type override;
 
   auto
-  allocateMemory(const DevicePtr & device, const size_t & size, void ** data_ptr) const -> void override;
+  allocateMemory(const Device::Pointer & device, const size_t & size, void ** data_ptr) const -> void override;
   auto
-  allocateMemory(const DevicePtr & device,
-                 const size_t &    width,
-                 const size_t &    height,
-                 const size_t &    depth,
-                 const dType &     dtype,
-                 void **           data_ptr) const -> void override;
+  allocateMemory(const Device::Pointer & device,
+                 const size_t &          width,
+                 const size_t &          height,
+                 const size_t &          depth,
+                 const dType &           dtype,
+                 void **                 data_ptr) const -> void override;
   auto
-  freeMemory(const DevicePtr & device, const mType & mtype, void ** data_ptr) const -> void override;
+  freeMemory(const Device::Pointer & device, const mType & mtype, void ** data_ptr) const -> void override;
   auto
-  writeMemory(const DevicePtr & device, void ** data_ptr, const size_t & size, const void * host_ptr) const
+  writeMemory(const Device::Pointer & device, void ** data_ptr, const size_t & size, const void * host_ptr) const
     -> void override;
   auto
-  writeMemory(const DevicePtr & device,
-              void **           data_ptr,
-              const size_t &    width,
-              const size_t &    height,
-              const size_t &    depth,
-              const size_t &    bytes,
-              const void *      host_ptr) const -> void override;
+  writeMemory(const Device::Pointer & device,
+              void **                 data_ptr,
+              const size_t &          width,
+              const size_t &          height,
+              const size_t &          depth,
+              const size_t &          bytes,
+              const void *            host_ptr) const -> void override;
   auto
-  readMemory(const DevicePtr & device, const void ** data_ptr, const size_t & size, void * host_ptr) const
+  readMemory(const Device::Pointer & device, const void ** data_ptr, const size_t & size, void * host_ptr) const
     -> void override;
   auto
-  readMemory(const DevicePtr & device,
-             const void **     data_ptr,
-             const size_t &    width,
-             const size_t &    height,
-             const size_t &    depth,
-             const size_t &    bytes,
-             void *            host_ptr) const -> void override;
+  readMemory(const Device::Pointer & device,
+             const void **           data_ptr,
+             const size_t &          width,
+             const size_t &          height,
+             const size_t &          depth,
+             const size_t &          bytes,
+             void *                  host_ptr) const -> void override;
 
   auto
-  copyMemory(const DevicePtr & device, const void ** src_data_ptr, const size_t & size, void ** dst_data_ptr) const
-    -> void override;
+  copyMemory(const Device::Pointer & device,
+             const void **           src_data_ptr,
+             const size_t &          size,
+             void **                 dst_data_ptr) const -> void override;
   auto
-  copyMemory(const DevicePtr & device,
-             const void **     src_data_ptr,
-             const size_t &    width,
-             const size_t &    height,
-             const size_t &    depth,
-             const size_t &    bytes,
-             void **           dst_data_ptr) const -> void override;
+  copyMemory(const Device::Pointer & device,
+             const void **           src_data_ptr,
+             const size_t &          width,
+             const size_t &          height,
+             const size_t &          depth,
+             const size_t &          bytes,
+             void **                 dst_data_ptr) const -> void override;
   auto
-  setMemory(const DevicePtr & device,
-            void **           data_ptr,
-            const size_t &    size,
-            const void *      value,
-            const size_t &    value_size) const -> void override;
+  setMemory(const Device::Pointer & device,
+            void **                 data_ptr,
+            const size_t &          size,
+            const void *            value,
+            const size_t &          value_size) const -> void override;
   auto
-  setMemory(const DevicePtr & device,
-            void **           data_ptr,
-            const size_t &    width,
-            const size_t &    height,
-            const size_t &    depth,
-            const size_t &    bytes,
-            const void *      value) const -> void override;
+  setMemory(const Device::Pointer & device,
+            void **                 data_ptr,
+            const size_t &          width,
+            const size_t &          height,
+            const size_t &          depth,
+            const size_t &          bytes,
+            const void *            value) const -> void override;
   auto
-  loadProgramFromCache(const DevicePtr & device, const std::string & hash, void * program) const -> void override;
+  loadProgramFromCache(const Device::Pointer & device, const std::string & hash, void * program) const -> void override;
   auto
-  saveProgramToCache(const DevicePtr & device, const std::string & hash, void * program) const -> void override;
+  saveProgramToCache(const Device::Pointer & device, const std::string & hash, void * program) const -> void override;
   auto
-  buildKernel(const DevicePtr &   device,
-              const std::string & kernel_source,
-              const std::string & kernel_name,
-              void *              kernel) const -> void override;
+  buildKernel(const Device::Pointer & device,
+              const std::string &     kernel_source,
+              const std::string &     kernel_name,
+              void *                  kernel) const -> void override;
   auto
-  executeKernel(const DevicePtr &             device,
+  executeKernel(const Device::Pointer &       device,
                 const std::string &           kernel_source,
                 const std::string &           kernel_name,
                 const std::array<size_t, 3> & global_size,
@@ -254,83 +258,85 @@ public:
   operator=(OpenCLBackend &&) -> OpenCLBackend & = default;
 
   [[nodiscard]] auto
-  getDevices(const std::string & type) const -> std::vector<DevicePtr> override;
+  getDevices(const std::string & type) const -> std::vector<Device::Pointer> override;
   [[nodiscard]] auto
-  getDevice(const std::string & name, const std::string & type) const -> DevicePtr override;
+  getDevice(const std::string & name, const std::string & type) const -> Device::Pointer override;
   [[nodiscard]] auto
   getDevicesList(const std::string & type) const -> std::vector<std::string> override;
   [[nodiscard]] auto
   getType() const -> Backend::Type override;
 
   auto
-  allocateMemory(const DevicePtr & device, const size_t & size, void ** data_ptr) const -> void override;
+  allocateMemory(const Device::Pointer & device, const size_t & size, void ** data_ptr) const -> void override;
   auto
-  allocateMemory(const DevicePtr & device,
-                 const size_t &    width,
-                 const size_t &    height,
-                 const size_t &    depth,
-                 const dType &     dtype,
-                 void **           data_ptr) const -> void override;
+  allocateMemory(const Device::Pointer & device,
+                 const size_t &          width,
+                 const size_t &          height,
+                 const size_t &          depth,
+                 const dType &           dtype,
+                 void **                 data_ptr) const -> void override;
   auto
-  freeMemory(const DevicePtr & device, const mType & mtype, void ** data_ptr) const -> void override;
+  freeMemory(const Device::Pointer & device, const mType & mtype, void ** data_ptr) const -> void override;
   auto
-  writeMemory(const DevicePtr & device, void ** data_ptr, const size_t & size, const void * host_ptr) const
+  writeMemory(const Device::Pointer & device, void ** data_ptr, const size_t & size, const void * host_ptr) const
     -> void override;
   auto
-  writeMemory(const DevicePtr & device,
-              void **           data_ptr,
-              const size_t &    width,
-              const size_t &    height,
-              const size_t &    depth,
-              const size_t &    bytes,
-              const void *      host_ptr) const -> void override;
+  writeMemory(const Device::Pointer & device,
+              void **                 data_ptr,
+              const size_t &          width,
+              const size_t &          height,
+              const size_t &          depth,
+              const size_t &          bytes,
+              const void *            host_ptr) const -> void override;
   auto
-  readMemory(const DevicePtr & device, const void ** data_ptr, const size_t & size, void * host_ptr) const
+  readMemory(const Device::Pointer & device, const void ** data_ptr, const size_t & size, void * host_ptr) const
     -> void override;
   auto
-  readMemory(const DevicePtr & device,
-             const void **     data_ptr,
-             const size_t &    width,
-             const size_t &    height,
-             const size_t &    depth,
-             const size_t &    bytes,
-             void *            host_ptr) const -> void override;
+  readMemory(const Device::Pointer & device,
+             const void **           data_ptr,
+             const size_t &          width,
+             const size_t &          height,
+             const size_t &          depth,
+             const size_t &          bytes,
+             void *                  host_ptr) const -> void override;
   auto
-  copyMemory(const DevicePtr & device, const void ** src_data_ptr, const size_t & size, void ** dst_data_ptr) const
-    -> void override;
+  copyMemory(const Device::Pointer & device,
+             const void **           src_data_ptr,
+             const size_t &          size,
+             void **                 dst_data_ptr) const -> void override;
   auto
-  copyMemory(const DevicePtr & device,
-             const void **     src_data_ptr,
-             const size_t &    width,
-             const size_t &    height,
-             const size_t &    depth,
-             const size_t &    bytes,
-             void **           dst_data_ptr) const -> void override;
+  copyMemory(const Device::Pointer & device,
+             const void **           src_data_ptr,
+             const size_t &          width,
+             const size_t &          height,
+             const size_t &          depth,
+             const size_t &          bytes,
+             void **                 dst_data_ptr) const -> void override;
   auto
-  setMemory(const DevicePtr & device,
-            void **           data_ptr,
-            const size_t &    size,
-            const void *      value,
-            const size_t &    value_size) const -> void override;
+  setMemory(const Device::Pointer & device,
+            void **                 data_ptr,
+            const size_t &          size,
+            const void *            value,
+            const size_t &          value_size) const -> void override;
   auto
-  setMemory(const DevicePtr & device,
-            void **           data_ptr,
-            const size_t &    width,
-            const size_t &    height,
-            const size_t &    depth,
-            const size_t &    bytes,
-            const void *      value) const -> void override;
+  setMemory(const Device::Pointer & device,
+            void **                 data_ptr,
+            const size_t &          width,
+            const size_t &          height,
+            const size_t &          depth,
+            const size_t &          bytes,
+            const void *            value) const -> void override;
   auto
-  loadProgramFromCache(const DevicePtr & device, const std::string & hash, void * program) const -> void override;
+  loadProgramFromCache(const Device::Pointer & device, const std::string & hash, void * program) const -> void override;
   auto
-  saveProgramToCache(const DevicePtr & device, const std::string & hash, void * program) const -> void override;
+  saveProgramToCache(const Device::Pointer & device, const std::string & hash, void * program) const -> void override;
   auto
-  buildKernel(const DevicePtr &   device,
-              const std::string & kernel_source,
-              const std::string & kernel_name,
-              void *              kernel) const -> void override;
+  buildKernel(const Device::Pointer & device,
+              const std::string &     kernel_source,
+              const std::string &     kernel_name,
+              void *                  kernel) const -> void override;
   auto
-  executeKernel(const DevicePtr &             device,
+  executeKernel(const Device::Pointer &       device,
                 const std::string &           kernel_source,
                 const std::string &           kernel_name,
                 const std::array<size_t, 3> & global_size,
