@@ -28,15 +28,16 @@ Array::Array(const size_t &          width,
   : Array(width, height, depth, data_type, mem_type)
 {
   device_ = device_ptr;
-  if (dim() > 1)
-  {
-    backend_.allocateMemory(device(), this->width(), this->height(), this->depth(), dType(), get());
-  }
-  else
-  {
-    backend_.allocateMemory(device(), nbElements() * bytesPerElements(), get());
-  }
-  initialized_ = true;
+  allocate();
+  // if (dim() > 1)
+  // {
+  //   backend_.allocateMemory(device(), this->width(), this->height(), this->depth(), dType(), get());
+  // }
+  // else
+  // {
+  //   backend_.allocateMemory(device(), nbElements() * bytesPerElements(), get());
+  // }
+  // initialized_ = true;
 }
 
 Array::Array(const size_t &          width,
@@ -58,6 +59,13 @@ Array::Array(const size_t &          width,
   }
 }
 
+Array::Array(const Array & array)
+  : Array(array.width(), array.height(), array.depth(), array.dtype(), array.mtype())
+{
+  device_ = array.device();
+  allocate();
+}
+
 Array::~Array()
 {
   if (initialized() && data_.unique())
@@ -71,7 +79,16 @@ Array::allocate() -> void
 {
   if (!initialized())
   {
-    backend_.allocateMemory(device(), nbElements() * bytesPerElements(), get());
+    // backend_.allocateMemory(device(), nbElements() * bytesPerElements(), get());
+    // initialized_ = true;
+    if (dim() > 1)
+    {
+      backend_.allocateMemory(device(), this->width(), this->height(), this->depth(), dType(), get());
+    }
+    else
+    {
+      backend_.allocateMemory(device(), nbElements() * bytesPerElements(), get());
+    }
     initialized_ = true;
   }
   else

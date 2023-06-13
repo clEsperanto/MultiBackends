@@ -7,6 +7,50 @@
 namespace cle
 {
 
+// Helper function for word replacements
+static auto
+replaceWord(std::string & sentence, const std::string_view & wordToReplace, const std::string_view & replacement)
+  -> void
+{
+  size_t pos = sentence.find(wordToReplace);
+  while (pos != std::string::npos)
+  {
+    sentence.replace(pos, wordToReplace.length(), replacement);
+    pos = sentence.find(wordToReplace, pos + replacement.length());
+  }
+}
+
+// Helper function for OpenCL to Cuda translation
+static auto
+srcOpenclToCuda(std::string opencl_code) -> std::string
+{
+  replaceWord(opencl_code, "(int2){", "make_int2(");
+  replaceWord(opencl_code, "(int4){", "make_int4(");
+  replaceWord(opencl_code, "(int4)  {", "make_int4(");
+  replaceWord(opencl_code, "(float4){", "make_float4(");
+  replaceWord(opencl_code, "(float2){", "make_float2(");
+  replaceWord(opencl_code, "int2 pos = {", "int2 pos = make_int2(");
+  replaceWord(opencl_code, "int4 pos = {", "int4 pos = make_int4(");
+  replaceWord(opencl_code, "};", ");");
+  replaceWord(opencl_code, "})", "))");
+
+  replaceWord(opencl_code, "(int2)", "make_int2");
+  replaceWord(opencl_code, "(int4)", "make_int4");
+  replaceWord(opencl_code, "__constant sampler_t", "__device__ int");
+  replaceWord(opencl_code, "__const sampler_t", "__device__ int");
+  replaceWord(opencl_code, "inline", "__device__ inline");
+  replaceWord(opencl_code, "#pragma", "// #pragma");
+
+  replaceWord(opencl_code, "\nkernel void", "\nextern \"C\" __global__ void");
+  replaceWord(opencl_code, "__kernel ", "extern \"C\" __global__ ");
+
+  replaceWord(opencl_code, "get_global_id(0)", "blockDim.x * blockIdx.x + threadIdx.x");
+  replaceWord(opencl_code, "get_global_id(1)", "blockDim.y * blockIdx.y + threadIdx.y");
+  replaceWord(opencl_code, "get_global_id(2)", "blockDim.z * blockIdx.z + threadIdx.z");
+
+  return opencl_code;
+}
+
 static auto
 cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_list) -> std::string
 {
@@ -15,16 +59,6 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
   // https://github.com/clEsperanto/pyclesperanto_prototype/blob/master/pyclesperanto_prototype/_tier0/_cuda_execute.py
 
   std::ostringstream defines;
-  defines << "\n#define get_global_size(dim) global_size_ ## dim ## _size";
-  defines << "\n";
-
-  defines << "\n#define GET_IMAGE_WIDTH(image_key) IMAGE_SIZE_ ## image_key ## "
-             "_WIDTH";
-  defines << "\n#define GET_IMAGE_HEIGHT(image_key) IMAGE_SIZE_ ## image_key "
-             "## _HEIGHT";
-  defines << "\n#define GET_IMAGE_DEPTH(image_key) IMAGE_SIZE_ ## image_key ## "
-             "_DEPTH";
-  defines << "\n";
 
   if (!constant_list.empty())
   {
@@ -40,11 +74,11 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
 
   for (const auto & param : parameter_list)
   {
-    if (std::holds_alternative<float>(param.second) || std::holds_alternative<int>(param.second))
+    if (std::holds_alternative<const float>(param.second) || std::holds_alternative<const int>(param.second))
     {
       continue;
     }
-    const auto & arr = std::get<Array>(param.second);
+    const auto & arr = std::get<const Array *>(param.second);
 
     std::string ndim;
     std::string pos_type;
@@ -53,17 +87,28 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
     std::string pixel_type;
     std::string type_id;
 
-    if (arr.dim() < 3)
+    switch (arr->dim())
     {
-      ndim = "2";
-      pos_type = "int2";
-      pos = "(pos0, pos1)";
-    }
-    else
-    {
-      ndim = "3";
-      pos_type = "int4";
-      pos = "(pos0, pos1, pos2, 0)";
+      case 1:
+        ndim = "1";
+        pos_type = "int";
+        pos = "(pos0)";
+        break;
+      case 2:
+        ndim = "2";
+        pos_type = "int2";
+        pos = "(pos0, pos1)";
+        break;
+      case 3:
+        ndim = "3";
+        pos_type = "int4";
+        pos = "(pos0, pos1, pos2, 0)";
+        break;
+      default:
+        ndim = "3";
+        pos_type = "int4";
+        pos = "(pos0, pos1, pos2, 0)";
+        break;
     }
 
     std::string width = "image_" + param.first + "_width";
@@ -79,19 +124,21 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
     defines << "\n";
 
     defines << "\n";
-    defines << "\n#define CONVERT_" << param.first << "_PIXEL_TYPE clij_convert_" << arr.dtype() << "_sat";
-    defines << "\n#define IMAGE_" << param.first << "_PIXEL_TYPE " << arr.dtype() << "";
+    defines << "\n#define CONVERT_" << param.first << "_PIXEL_TYPE clij_convert_" << arr->dtype() << "_sat";
+    defines << "\n#define IMAGE_" << param.first << "_PIXEL_TYPE " << arr->dtype() << "";
     defines << "\n#define POS_" << param.first << "_TYPE " << pos_type;
     defines << "\n#define POS_" << param.first << "_INSTANCE(pos0,pos1,pos2,pos3) make_" << pos_type << "" << pos;
     defines << "\n";
 
     defines << "\n";
-    defines << "\n#define IMAGE_" << param.first << "_TYPE " << size_params << "" << arr.dtype() << "*";
-    defines << "\n#define READ_" << param.first << "_IMAGE(a,b,c) read_buffer" << ndim << "d" << arr.shortType()
+    defines << "\n#define IMAGE_" << param.first << "_TYPE " << size_params << "" << arr->dtype() << "*";
+    defines << "\n#define READ_" << param.first << "_IMAGE(a,b,c) read_buffer" << ndim << "d" << arr->shortType()
             << "(GET_IMAGE_WIDTH(a),GET_IMAGE_HEIGHT(a),GET_IMAGE_DEPTH(a),a,b,c)";
-    defines << "\n#define WRITE_" << param.first << "_IMAGE(a,b,c) write_buffer" << ndim << "d" << arr.shortType()
+    defines << "\n#define WRITE_" << param.first << "_IMAGE(a,b,c) write_buffer" << ndim << "d" << arr->shortType()
             << "(GET_IMAGE_WIDTH(a),GET_IMAGE_HEIGHT(a),GET_IMAGE_DEPTH(a),a,b,c)";
     defines << "\n";
+
+    size_params = "";
   }
 
   defines << "\n";
@@ -109,17 +156,17 @@ oclDefines(const ParameterList & parameter_list, const ConstantList & constant_l
 
   for (const auto & param : parameter_list)
   {
-    if (std::holds_alternative<float>(param.second) || std::holds_alternative<int>(param.second))
+    if (std::holds_alternative<const float>(param.second) || std::holds_alternative<const int>(param.second))
     {
       continue;
     }
-    const auto & arr = std::get<Array>(param.second);
+    const auto & arr = std::get<const Array *>(param.second);
 
     // manage dimensions and coordinates
     std::string pos_type;
     std::string pos;
     std::string ndim;
-    switch (arr.dim())
+    switch (arr->dim())
     {
       case 1:
         ndim = "1";
@@ -145,8 +192,8 @@ oclDefines(const ParameterList & parameter_list, const ConstantList & constant_l
 
     // define common information
     defines << "\n";
-    defines << "\n#define CONVERT_" << param.first << "_PIXEL_TYPE clij_convert_" << arr.dtype() << "_sat";
-    defines << "\n#define IMAGE_" << param.first << "_PIXEL_TYPE " << arr.dtype() << "";
+    defines << "\n#define CONVERT_" << param.first << "_PIXEL_TYPE clij_convert_" << arr->dtype() << "_sat";
+    defines << "\n#define IMAGE_" << param.first << "_PIXEL_TYPE " << arr->dtype() << "";
     defines << "\n#define POS_" << param.first << "_TYPE " << pos_type;
     defines << "\n#define POS_" << param.first << "_INSTANCE(pos0,pos1,pos2,pos3) (" << pos_type << ")" << pos;
     defines << "\n";
@@ -154,10 +201,10 @@ oclDefines(const ParameterList & parameter_list, const ConstantList & constant_l
     // define specific information
     if (true) // @StRigaud TODO: introduce cl_image / cudaArray
     {
-      defines << "\n#define IMAGE_" << param.first << "_TYPE __global " << arr.dtype() << "*";
-      defines << "\n#define READ_" << param.first << "_IMAGE(a,b,c) read_buffer" << ndim << "d" << arr.shortType()
+      defines << "\n#define IMAGE_" << param.first << "_TYPE __global " << arr->dtype() << "*";
+      defines << "\n#define READ_" << param.first << "_IMAGE(a,b,c) read_buffer" << ndim << "d" << arr->shortType()
               << "(GET_IMAGE_WIDTH(a),GET_IMAGE_HEIGHT(a),GET_IMAGE_DEPTH(a),a,b,c)";
-      defines << "\n#define WRITE_" << param.first << "_IMAGE(a,b,c) write_buffer" << ndim << "d" << arr.shortType()
+      defines << "\n#define WRITE_" << param.first << "_IMAGE(a,b,c) write_buffer" << ndim << "d" << arr->shortType()
               << "(GET_IMAGE_WIDTH(a),GET_IMAGE_HEIGHT(a),GET_IMAGE_DEPTH(a),a,b,c)";
     }
     else
@@ -173,7 +220,7 @@ oclDefines(const ParameterList & parameter_list, const ConstantList & constant_l
         img_type_name = "__read_only image" + ndim + "d_t";
       }
       std::string prefix;
-      switch (arr.shortType().front())
+      switch (arr->shortType().front())
       {
         case 'u':
           prefix = "ui";
@@ -192,9 +239,9 @@ oclDefines(const ParameterList & parameter_list, const ConstantList & constant_l
 
     // define size information
     defines << "\n";
-    defines << "\n#define IMAGE_SIZE_" << param.first << "_WIDTH " << std::to_string(arr.width());
-    defines << "\n#define IMAGE_SIZE_" << param.first << "_HEIGHT " << std::to_string(arr.height());
-    defines << "\n#define IMAGE_SIZE_" << param.first << "_DEPTH " << std::to_string(arr.depth());
+    defines << "\n#define IMAGE_SIZE_" << param.first << "_WIDTH " << std::to_string(arr->width());
+    defines << "\n#define IMAGE_SIZE_" << param.first << "_HEIGHT " << std::to_string(arr->height());
+    defines << "\n#define IMAGE_SIZE_" << param.first << "_DEPTH " << std::to_string(arr->depth());
     defines << "\n";
   }
 
@@ -220,76 +267,63 @@ execute(const Device::Pointer & device,
         const ConstantList &    constants,
         const RangeArray &      global_range) -> void
 {
-  std::vector<void *> args_ptr;
-  std::vector<size_t> args_size;
-  args_ptr.reserve(parameters.size());
-  args_size.reserve(parameters.size());
-
-  // build kernel source
+  // build program source
+  std::string program_source;
+  std::string preamble = cle::BackendManager::getInstance().getBackend().getPreamble();
+  std::string kernel_name = kernel_func.first;
+  std::string kernel_source = kernel_func.second;
   std::string defines;
   switch (device->getType())
   {
     case Device::Type::CUDA:
       defines = cle::cudaDefines(parameters, constants);
+      kernel_source = cle::srcOpenclToCuda(kernel_source);
       break;
     case Device::Type::OPENCL:
       defines = cle::oclDefines(parameters, constants);
       break;
   }
-
-  // getPreamble: not implemented yet
-  std::string program_source;
-  std::string preamble = cle::BackendManager::getInstance().getBackend().getPreamble();
-  std::string kernel_name = kernel_func.first;
-  std::string kernel_source = kernel_func.second;
   program_source.reserve(preamble.size() + defines.size() + kernel_source.size());
   program_source += defines;
   program_source += preamble;
   program_source += kernel_source;
 
-  // list kernel arguments and sizes
+  // prepare parameters to be passed to the backend
+  std::vector<void *> args_ptr;
+  std::vector<size_t> args_size;
+  args_ptr.reserve(parameters.size());
+  args_size.reserve(parameters.size());
   for (const auto & param : parameters)
   {
-    if (std::holds_alternative<Array>(param.second))
+    if (std::holds_alternative<const Array *>(param.second))
     {
-      const auto & arr = std::get<Array>(param.second);
-      args_ptr.push_back(*arr.get());
+      const auto & arr = std::get<const Array *>(param.second);
+      args_ptr.push_back(*arr->get());
       switch (device->getType())
       {
         case Device::Type::CUDA:
-          // @StRigaud TODO: to be tested on CUDA side
-          args_size.push_back(arr.nbElements() * arr.bytesPerElements());
+          args_size.push_back(arr->nbElements() * arr->bytesPerElements()); // @StRigaud TODO: to be tested on CUDA side
           break;
         case Device::Type::OPENCL:
           args_size.push_back(sizeof(cl_mem));
           break;
       }
     }
-    else if (std::holds_alternative<float>(param.second))
+    else if (std::holds_alternative<const float>(param.second))
     {
-      const auto & f = std::get<float>(param.second);
+      const auto & f = std::get<const float>(param.second);
       args_ptr.push_back(const_cast<float *>(&f));
       args_size.push_back(sizeof(float));
     }
-    else if (std::holds_alternative<int>(param.second))
+    else if (std::holds_alternative<const int>(param.second))
     {
-      const auto & i = std::get<int>(param.second);
+      const auto & i = std::get<const int>(param.second);
       args_ptr.push_back(const_cast<int *>(&i));
       args_size.push_back(sizeof(int));
     }
   }
 
-  // @CherifMZ: for TEST only, I added this chunk of code to write the content of the source into an external file
-  std::ofstream file("kernel_output.txt");
-  // Check if the file was opened successfully
-  if (file.is_open())
-  {
-    // Write the content to the file
-    file << program_source;
-    // Close the file
-    file.close();
-  }
-
+  // execute kernel
   try
   {
     cle::BackendManager::getInstance().getBackend().executeKernel(

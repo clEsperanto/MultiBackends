@@ -1,6 +1,7 @@
 #ifndef __INCLUDE_UTILS_HPP
 #define __INCLUDE_UTILS_HPP
 
+#include <fstream>
 #include <iostream>
 
 namespace cle
@@ -153,6 +154,37 @@ toBytes(const dType & dtype) -> size_t
   }
 }
 
+inline auto
+sigma2radius(const float & sigma) -> int
+{
+  auto rad = static_cast<int>(sigma * 8.0);
+  return (rad % 2 == 0) ? rad + 1 : rad;
+}
+
+inline auto
+loadFile(const std::string & file_path) -> std::string
+{
+  std::ifstream ifs(file_path);
+  if (!ifs.is_open())
+  {
+    throw std::runtime_error("Error: Failed to open file: " + file_path);
+  }
+  std::string source((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+  ifs.close();
+  return source;
+}
+
+inline auto
+saveFile(const std::string & file_path, const std::string & source) -> void
+{
+  std::ofstream ofs(file_path);
+  if (!ofs.is_open())
+  {
+    throw std::runtime_error("Error: Failed to open file: " + file_path);
+  }
+  ofs << source;
+  ofs.close();
+}
 
 } // namespace cle
 

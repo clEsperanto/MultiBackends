@@ -29,6 +29,9 @@ execute(const Device::Pointer & device,
         const ConstantList &    constants = {},
         const RangeArray &      global_range = { 1, 1, 1 }) -> void;
 
+auto
+loadSource(const std::string & source_path) -> std::string;
+
 } // namespace cle
 
 #endif // __INCLUDE_EXECUTION_HPP
