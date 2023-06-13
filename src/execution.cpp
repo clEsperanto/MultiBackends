@@ -44,7 +44,7 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
     {
       continue;
     }
-    const auto & arr = std::get<std::reference_wrapper<const Array>>(param.second).get();
+    const auto & arr = std::get<const Array *>(param.second);
 
     std::string ndim;
     std::string pos_type;
@@ -53,7 +53,7 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
     std::string pixel_type;
     std::string type_id;
 
-    if (arr.dim() < 3)
+    if (arr->dim() < 3)
     {
       ndim = "2";
       pos_type = "int2";
@@ -79,17 +79,17 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
     defines << "\n";
 
     defines << "\n";
-    defines << "\n#define CONVERT_" << param.first << "_PIXEL_TYPE clij_convert_" << arr.dtype() << "_sat";
-    defines << "\n#define IMAGE_" << param.first << "_PIXEL_TYPE " << arr.dtype() << "";
+    defines << "\n#define CONVERT_" << param.first << "_PIXEL_TYPE clij_convert_" << arr->dtype() << "_sat";
+    defines << "\n#define IMAGE_" << param.first << "_PIXEL_TYPE " << arr->dtype() << "";
     defines << "\n#define POS_" << param.first << "_TYPE " << pos_type;
     defines << "\n#define POS_" << param.first << "_INSTANCE(pos0,pos1,pos2,pos3) make_" << pos_type << "" << pos;
     defines << "\n";
 
     defines << "\n";
-    defines << "\n#define IMAGE_" << param.first << "_TYPE " << size_params << "" << arr.dtype() << "*";
-    defines << "\n#define READ_" << param.first << "_IMAGE(a,b,c) read_buffer" << ndim << "d" << arr.shortType()
+    defines << "\n#define IMAGE_" << param.first << "_TYPE " << size_params << "" << arr->dtype() << "*";
+    defines << "\n#define READ_" << param.first << "_IMAGE(a,b,c) read_buffer" << ndim << "d" << arr->shortType()
             << "(GET_IMAGE_WIDTH(a),GET_IMAGE_HEIGHT(a),GET_IMAGE_DEPTH(a),a,b,c)";
-    defines << "\n#define WRITE_" << param.first << "_IMAGE(a,b,c) write_buffer" << ndim << "d" << arr.shortType()
+    defines << "\n#define WRITE_" << param.first << "_IMAGE(a,b,c) write_buffer" << ndim << "d" << arr->shortType()
             << "(GET_IMAGE_WIDTH(a),GET_IMAGE_HEIGHT(a),GET_IMAGE_DEPTH(a),a,b,c)";
     defines << "\n";
   }
@@ -113,13 +113,13 @@ oclDefines(const ParameterList & parameter_list, const ConstantList & constant_l
     {
       continue;
     }
-    const auto & arr = std::get<std::reference_wrapper<const Array>>(param.second).get();
+    const auto & arr = std::get<const Array *>(param.second);
 
     // manage dimensions and coordinates
     std::string pos_type;
     std::string pos;
     std::string ndim;
-    switch (arr.dim())
+    switch (arr->dim())
     {
       case 1:
         ndim = "1";
@@ -145,8 +145,8 @@ oclDefines(const ParameterList & parameter_list, const ConstantList & constant_l
 
     // define common information
     defines << "\n";
-    defines << "\n#define CONVERT_" << param.first << "_PIXEL_TYPE clij_convert_" << arr.dtype() << "_sat";
-    defines << "\n#define IMAGE_" << param.first << "_PIXEL_TYPE " << arr.dtype() << "";
+    defines << "\n#define CONVERT_" << param.first << "_PIXEL_TYPE clij_convert_" << arr->dtype() << "_sat";
+    defines << "\n#define IMAGE_" << param.first << "_PIXEL_TYPE " << arr->dtype() << "";
     defines << "\n#define POS_" << param.first << "_TYPE " << pos_type;
     defines << "\n#define POS_" << param.first << "_INSTANCE(pos0,pos1,pos2,pos3) (" << pos_type << ")" << pos;
     defines << "\n";
@@ -154,10 +154,10 @@ oclDefines(const ParameterList & parameter_list, const ConstantList & constant_l
     // define specific information
     if (true) // @StRigaud TODO: introduce cl_image / cudaArray
     {
-      defines << "\n#define IMAGE_" << param.first << "_TYPE __global " << arr.dtype() << "*";
-      defines << "\n#define READ_" << param.first << "_IMAGE(a,b,c) read_buffer" << ndim << "d" << arr.shortType()
+      defines << "\n#define IMAGE_" << param.first << "_TYPE __global " << arr->dtype() << "*";
+      defines << "\n#define READ_" << param.first << "_IMAGE(a,b,c) read_buffer" << ndim << "d" << arr->shortType()
               << "(GET_IMAGE_WIDTH(a),GET_IMAGE_HEIGHT(a),GET_IMAGE_DEPTH(a),a,b,c)";
-      defines << "\n#define WRITE_" << param.first << "_IMAGE(a,b,c) write_buffer" << ndim << "d" << arr.shortType()
+      defines << "\n#define WRITE_" << param.first << "_IMAGE(a,b,c) write_buffer" << ndim << "d" << arr->shortType()
               << "(GET_IMAGE_WIDTH(a),GET_IMAGE_HEIGHT(a),GET_IMAGE_DEPTH(a),a,b,c)";
     }
     else
@@ -173,7 +173,7 @@ oclDefines(const ParameterList & parameter_list, const ConstantList & constant_l
         img_type_name = "__read_only image" + ndim + "d_t";
       }
       std::string prefix;
-      switch (arr.shortType().front())
+      switch (arr->shortType().front())
       {
         case 'u':
           prefix = "ui";
@@ -192,9 +192,9 @@ oclDefines(const ParameterList & parameter_list, const ConstantList & constant_l
 
     // define size information
     defines << "\n";
-    defines << "\n#define IMAGE_SIZE_" << param.first << "_WIDTH " << std::to_string(arr.width());
-    defines << "\n#define IMAGE_SIZE_" << param.first << "_HEIGHT " << std::to_string(arr.height());
-    defines << "\n#define IMAGE_SIZE_" << param.first << "_DEPTH " << std::to_string(arr.depth());
+    defines << "\n#define IMAGE_SIZE_" << param.first << "_WIDTH " << std::to_string(arr->width());
+    defines << "\n#define IMAGE_SIZE_" << param.first << "_HEIGHT " << std::to_string(arr->height());
+    defines << "\n#define IMAGE_SIZE_" << param.first << "_DEPTH " << std::to_string(arr->depth());
     defines << "\n";
   }
 
@@ -220,12 +220,11 @@ execute(const DevicePtr &     device,
         const ConstantList &  constants,
         const RangeArray &    global_range) -> void
 {
-  std::vector<void *> args_ptr;
-  std::vector<size_t> args_size;
-  args_ptr.reserve(parameters.size());
-  args_size.reserve(parameters.size());
-
-  // build kernel source
+  // build program source
+  std::string program_source;
+  std::string preamble = cle::BackendManager::getInstance().getBackend().getPreamble();
+  std::string kernel_name = kernel_func.first;
+  std::string kernel_source = kernel_func.second;
   std::string defines;
   switch (device->getType())
   {
@@ -236,39 +235,26 @@ execute(const DevicePtr &     device,
       defines = cle::oclDefines(parameters, constants);
       break;
   }
-
-  std::vector<float> src_data(
-    std::get<std::reference_wrapper<const Array>>(parameters.front().second).get().nbElements());
-  std::get<std::reference_wrapper<const Array>>(parameters.front().second).get().read(src_data.data());
-  std::cout << parameters.front().first << ": ";
-  for (auto i : src_data)
-  {
-    std::cout << i << " ";
-  }
-  std::cout << std::endl;
-
-  // getPreamble: not implemented yet
-  std::string program_source;
-  std::string preamble = cle::BackendManager::getInstance().getBackend().getPreamble();
-  std::string kernel_name = kernel_func.first;
-  std::string kernel_source = kernel_func.second;
   program_source.reserve(preamble.size() + defines.size() + kernel_source.size());
   program_source += defines;
   program_source += preamble;
   program_source += kernel_source;
 
-  // list kernel arguments and sizes
+  // prepare parameters to be passed to the backend
+  std::vector<void *> args_ptr;
+  std::vector<size_t> args_size;
+  args_ptr.reserve(parameters.size());
+  args_size.reserve(parameters.size());
   for (const auto & param : parameters)
   {
-    if (std::holds_alternative<std::reference_wrapper<const Array>>(param.second))
+    if (std::holds_alternative<const Array *>(param.second))
     {
-      const auto & arr = std::get<std::reference_wrapper<const Array>>(param.second).get();
-      args_ptr.push_back(*arr.get());
+      const auto & arr = std::get<const Array *>(param.second);
+      args_ptr.push_back(*arr->get());
       switch (device->getType())
       {
         case Device::Type::CUDA:
-          // @StRigaud TODO: to be tested on CUDA side
-          args_size.push_back(arr.nbElements() * arr.bytesPerElements());
+          args_size.push_back(arr->nbElements() * arr->bytesPerElements()); // @StRigaud TODO: to be tested on CUDA side
           break;
         case Device::Type::OPENCL:
           args_size.push_back(sizeof(cl_mem));
@@ -289,51 +275,7 @@ execute(const DevicePtr &     device,
     }
   }
 
-  for (const auto & i : parameters)
-  {
-    if (std::holds_alternative<std::reference_wrapper<const Array>>(i.second))
-      std::cout << "param " << i.first << " : " << std::get<std::reference_wrapper<const Array>>(i.second).get()
-                << std::endl;
-    if (std::holds_alternative<const float>(i.second))
-      std::cout << "param " << i.first << " : " << std::get<const float>(i.second) << std::endl;
-    if (std::holds_alternative<const int>(i.second))
-      std::cout << "param " << i.first << " : " << std::get<const int>(i.second) << std::endl;
-  }
-
-
-  // save in a file the kernel_source
-  std::ofstream kernel_source_file("kernel_source.txt");
-  // Check if the file was opened successfully
-  if (kernel_source_file.is_open())
-  {
-    // Write the content to the file
-    kernel_source_file << kernel_source;
-    // Close the file
-    kernel_source_file.close();
-  }
-
-  // save in a file the kernel_source
-  std::ofstream kernel_defines_file("kernel_defines.txt");
-  // Check if the file was opened successfully
-  if (kernel_defines_file.is_open())
-  {
-    // Write the content to the file
-    kernel_defines_file << defines;
-    // Close the file
-    kernel_defines_file.close();
-  }
-
-  // // @CherifMZ: for TEST only, I added this chunk of code to write the content of the source into an external file
-  // std::ofstream file("kernel_output.txt");
-  // // Check if the file was opened successfully
-  // if (file.is_open())
-  // {
-  //   // Write the content to the file
-  //   file << program_source;
-  //   // Close the file
-  //   file.close();
-  // }
-
+  // execute kernel
   try
   {
     cle::BackendManager::getInstance().getBackend().executeKernel(
@@ -343,18 +285,6 @@ execute(const DevicePtr &     device,
   {
     throw std::runtime_error("Error: Failed to execute the kernel. \n\t > " + std::string(e.what()));
   }
-}
-
-auto
-loadSource(const std::string & source_path) -> std::string
-{
-  std::ifstream ifs(source_path);
-  if (!ifs.is_open())
-  {
-    throw std::runtime_error("Error: Failed to open file: " + source_path);
-  }
-  std::string source((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-  return source;
 }
 
 } // namespace cle

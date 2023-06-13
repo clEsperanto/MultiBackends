@@ -12,8 +12,7 @@ namespace cle
 {
 
 using DevicePtr = std::shared_ptr<cle::Device>;
-using ParameterList =
-  std::vector<std::pair<std::string, std::variant<std::reference_wrapper<const Array>, const float, const int>>>;
+using ParameterList = std::vector<std::pair<std::string, std::variant<const Array *, const float, const int>>>;
 using ConstantList = std::vector<std::pair<std::string, int>>;
 using KernelInfo = std::pair<std::string, std::string>;
 using RangeArray = std::array<size_t, 3>;
