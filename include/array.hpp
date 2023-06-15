@@ -121,7 +121,7 @@ public:
   operator<<(std::ostream & out, const Array & array) -> std::ostream &
   {
     out << array.memType_ << " Array ([" << array.width_ << "," << array.height_ << "," << array.depth_
-        << "], dtype=" << array.bytesPerElements() << ")";
+        << "], dtype=" << array.dtype() << ")";
     return out;
   }
 
