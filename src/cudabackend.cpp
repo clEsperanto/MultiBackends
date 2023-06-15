@@ -290,10 +290,10 @@ CUDABackend::copyMemory(const Device::Pointer & device,
   {
     throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
   }
-  err = cudaMemcpy(*dst_data_ptr, src_data_ptr, size, cudaMemcpyDeviceToDevice);
+  err = cudaMemcpy(*dst_data_ptr, *src_data_ptr, size, cudaMemcpyDeviceToDevice);
   if (err != cudaSuccess)
   {
-    throw std::runtime_error("Error: Failed to write CUDA memory.");
+    throw std::runtime_error("Error: Failed to write CUDA memory " + std::to_string(err));
   }
 #else
   throw std::runtime_error("Error: CUDA backend is not enabled");
