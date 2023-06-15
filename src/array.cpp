@@ -81,14 +81,14 @@ Array::allocate() -> void
   {
     // backend_.allocateMemory(device(), nbElements() * bytesPerElements(), get());
     // initialized_ = true;
-    if (dim() > 1)
-    {
-      backend_.allocateMemory(device(), this->width(), this->height(), this->depth(), dType(), get());
-    }
-    else
-    {
-      backend_.allocateMemory(device(), nbElements() * bytesPerElements(), get());
-    }
+    // if (dim() > 1)
+    // {
+    //   backend_.allocateMemory(device(), this->width(), this->height(), this->depth(), dType(), get());
+    // }
+    // else
+    // {
+    backend_.allocateMemory(device(), nbElements() * bytesPerElements(), get());
+    // }
     initialized_ = true;
   }
   else
@@ -104,14 +104,15 @@ Array::write(const void * host_data) -> void
   {
     allocate();
   }
-  if (dim() > 1)
-  {
-    backend_.writeMemory(device(), get(), this->width(), this->height(), this->depth(), bytesPerElements(), host_data);
-  }
-  else
-  {
-    backend_.writeMemory(device(), get(), nbElements() * bytesPerElements(), host_data);
-  }
+  // if (dim() > 1)
+  // {
+  //   backend_.writeMemory(device(), get(), this->width(), this->height(), this->depth(), bytesPerElements(),
+  //   host_data);
+  // }
+  // else
+  // {
+  backend_.writeMemory(device(), get(), nbElements() * bytesPerElements(), host_data);
+  // }
 }
 
 auto
@@ -121,14 +122,14 @@ Array::read(void * host_data) const -> void
   {
     throw std::runtime_error("Error: Array is not initialized, it cannot be read");
   }
-  if (dim() > 1)
-  {
-    backend_.readMemory(device(), c_get(), width(), height(), depth(), bytesPerElements(), host_data);
-  }
-  else
-  {
-    backend_.readMemory(device(), c_get(), nbElements() * bytesPerElements(), host_data);
-  }
+  // if (dim() > 1)
+  // {
+  //   backend_.readMemory(device(), c_get(), width(), height(), depth(), bytesPerElements(), host_data);
+  // }
+  // else
+  // {
+  backend_.readMemory(device(), c_get(), nbElements() * bytesPerElements(), host_data);
+  // }
 }
 
 auto
@@ -147,14 +148,14 @@ Array::copy(const Array & dst) const -> void
   {
     std::cerr << "Error: Arrays dimensions do not match" << std::endl;
   }
-  if (dim() > 1)
-  {
-    backend_.copyMemory(device(), c_get(), width(), height(), depth(), bytesPerElements(), dst.get());
-  }
-  else
-  {
-    backend_.copyMemory(device(), c_get(), nbElements() * bytesPerElements(), dst.get());
-  }
+  // if (dim() > 1)
+  // {
+  //   backend_.copyMemory(device(), c_get(), width(), height(), depth(), bytesPerElements(), dst.get());
+  // }
+  // else
+  // {
+  backend_.copyMemory(device(), c_get(), nbElements() * bytesPerElements(), dst.get());
+  // }
 }
 
 // template <typename T>
