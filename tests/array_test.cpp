@@ -70,15 +70,6 @@ run_test()
     std::cout << data_out3[i] << " ";
   }
   std::cout << std::endl;
-
-  std::cout << "Fill up memory " << std::endl;
-  gpu_arr1.fill(1);
-  gpu_arr1.read(data_out2.data());
-  for (int i = 0; i < data_out2.size(); i++)
-  {
-    std::cout << data_out2[i] << " ";
-  }
-  std::cout << std::endl;
 }
 
 int
