@@ -145,8 +145,8 @@ OpenCLDevice::getInfo() const -> std::string
       break;
   }
   result << "\tCompute Units: " << compute_units << '\n';
-  result << "\tGlobal Memory Size: " << (global_mem_size / 1000000) << " MB\n";
-  result << "\tMaximum Object Size: " << (max_mem_size / 1000000) << " MB\n";
+  result << "\tGlobal Memory Size: " << (global_mem_size / (1000 * 1000)) << " MB\n";
+  result << "\tMaximum Object Size: " << (max_mem_size / (1000 * 1000)) << " MB\n";
   return result.str();
 }
 
