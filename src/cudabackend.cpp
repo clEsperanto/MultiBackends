@@ -74,16 +74,18 @@ CUDABackend::allocateMemory(const Device::Pointer & device, const size_t & size,
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
-  auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
-  if (err != cudaSuccess)
+  auto err = cuCtxSetCurrent(cuda_device->getCUDAContext());
+  if (err != CUDA_SUCCESS)
   {
-    throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
+    throw std::runtime_error("Error: Failed to get CUDA context before memory allocation.");
   }
-  err = cudaMalloc(data_ptr, size);
-  if (err != cudaSuccess)
+  CUdeviceptr mem;
+  err = cuMemAlloc(&mem, size);
+  if (err != CUDA_SUCCESS)
   {
     throw std::runtime_error("Error: Failed to allocate CUDA memory.");
   }
+  *data_ptr = reinterpret_cast<void *>(mem);
 #else
   throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif
@@ -122,13 +124,13 @@ CUDABackend::freeMemory(const Device::Pointer & device, const mType & mtype, voi
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
-  auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
-  if (err != cudaSuccess)
+  auto err = cuCtxSetCurrent(cuda_device->getCUDAContext());
+  if (err != CUDA_SUCCESS)
   {
     throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
   }
-  err = cudaFree(*data_ptr);
-  if (err != cudaSuccess)
+  err = cuMemFree(reinterpret_cast<CUdeviceptr>(*data_ptr));
+  if (err != CUDA_SUCCESS)
   {
     throw std::runtime_error("Error: Failed to free CUDA memory.");
   }
@@ -145,13 +147,14 @@ CUDABackend::writeMemory(const Device::Pointer & device,
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
-  auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
-  if (err != cudaSuccess)
+  auto err = cuCtxSetCurrent(cuda_device->getCUDAContext());
+  if (err != CUDA_SUCCESS)
   {
     throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
   }
-  err = cudaMemcpy(*data_ptr, host_ptr, size, cudaMemcpyHostToDevice);
-  if (err != cudaSuccess)
+  err = cuMemcpyHtoD(reinterpret_cast<CUdeviceptr>(*data_ptr), host_ptr, size);
+  // err = cudaMemcpy(*data_ptr, host_ptr, size, cudaMemcpyHostToDevice);
+  if (err != CUDA_SUCCESS)
   {
     throw std::runtime_error("Error: Failed to write CUDA memory.");
   }
@@ -216,13 +219,14 @@ CUDABackend::readMemory(const Device::Pointer & device,
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
-  auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
-  if (err != cudaSuccess)
+  auto err = cuCtxSetCurrent(cuda_device->getCUDAContext());
+  if (err != CUDA_SUCCESS)
   {
     throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
   }
-  err = cudaMemcpy(host_ptr, *data_ptr, size, cudaMemcpyDeviceToHost);
-  if (err != cudaSuccess)
+  err = cuMemcpyDtoH(host_ptr, reinterpret_cast<CUdeviceptr>(*data_ptr), size);
+  // err = cudaMemcpy(host_ptr, *data_ptr, size, cudaMemcpyDeviceToHost);
+  if (err != CUDA_SUCCESS)
   {
     throw std::runtime_error("Error: Failed to read CUDA memory.");
   }
@@ -285,13 +289,14 @@ CUDABackend::copyMemory(const Device::Pointer & device,
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
-  auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
-  if (err != cudaSuccess)
+  auto err = cuCtxSetCurrent(cuda_device->getCUDAContext());
+  if (err != CUDA_SUCCESS)
   {
     throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
   }
-  err = cudaMemcpy(*dst_data_ptr, *src_data_ptr, size, cudaMemcpyDeviceToDevice);
-  if (err != cudaSuccess)
+  err = cuMemcpyDtoD(reinterpret_cast<CUdeviceptr>(*dst_data_ptr), reinterpret_cast<CUdeviceptr>(*src_data_ptr), size);
+  // err = cudaMemcpy(*dst_data_ptr, *src_data_ptr, size, cudaMemcpyDeviceToDevice);
+  if (err != CUDA_SUCCESS)
   {
     throw std::runtime_error("Error: Failed to write CUDA memory " + std::to_string(err));
   }
