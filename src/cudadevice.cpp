@@ -113,24 +113,31 @@ CUDADevice::getCUDAStream() const -> const CUstream &
 auto
 CUDADevice::getName() const -> std::string
 {
-  cudaDeviceProp prop{};
-  cudaGetDeviceProperties(&prop, cudaDeviceIndex);
-  return prop.name;
+  char device_name[256];
+  cuDeviceGetName(device_name, sizeof(device_name), cudaDevice);
+  return std::string(device_name);
 }
 
 auto
 CUDADevice::getInfo() const -> std::string
 {
+  int    numMultiprocessors;
+  int    driverVersion;
+  int    driverMajor;
+  int    driverMinor;
+  size_t totalMemory;
+
+  cuDriverGetVersion(&driverVersion);
+  cuDeviceTotalMem(&totalMemory, cudaDevice);
+  cuDeviceGetAttribute(&numMultiprocessors, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, cudaDevice);
+  driverMajor = driverVersion / 1000;
+  driverMinor = (driverVersion % 1000) / 10;
+
   std::ostringstream result;
-  cudaDeviceProp     prop{};
-  cudaGetDeviceProperties(&prop, cudaDeviceIndex);
-
-  result << static_cast<char *>(prop.name) << " (" << prop.major << "." << prop.minor << ")\n";
-  result << "\tType: " << (prop.integrated != 0 ? "Integrated" : "Discrete") << '\n';
-  result << "\tCompute Units: " << prop.multiProcessorCount << '\n';
-  result << "\tGlobal Memory Size: " << (prop.totalGlobalMem / 1000000) << " MB\n";
-  // result << "\tMaximum Object Size: " << (prop.maxMemoryAllocationSize / 1000000) << " MB\n";
-
+  result << getName() << " (" << driverMajor << "." << driverMinor << ")\n";
+  result << "\tType: GPU\n";
+  result << "\tCompute Units: " << numMultiprocessors << '\n';
+  result << "\tGlobal Memory Size: " << (totalMemory / (1000 * 1000)) << " MB\n";
   return result.str();
 }
 
