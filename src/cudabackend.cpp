@@ -266,21 +266,7 @@ CUDABackend::setMemory(const Device::Pointer & device,
   }
 
 
-  switch (size)
-  {
-    case sizeof(int8_t):
-      // cuMemsetD8(reinterpret_cast<CUdeviceptr>(*data_ptr), (unsigned char)*value, size);
-      break;
-    case sizeof(int16_t):
-      // cuMemsetD16(reinterpret_cast<CUdeviceptr>(*data_ptr), *value, size);
-      break;
-    case sizeof(int32_t):
-      // cuMemsetD32(reinterpret_cast<CUdeviceptr>(*data_ptr), *value, size);
-      break;
-    default:
-      // Unsupported value type
-      break;
-  }
+  // TODO
 
   if (err != CUDA_SUCCESS)
   {
@@ -301,30 +287,7 @@ CUDABackend::setMemory(const Device::Pointer & device,
                        const void *            value) const -> void
 {
 #if CLE_CUDA
-  auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
-  auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
-  if (err != cudaSuccess)
-  {
-    throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
-  }
-  if (depth > 1)
-  {
-    cudaExtent     extent = make_cudaExtent(width * bytes, height, depth);
-    cudaPitchedPtr devPtr = make_cudaPitchedPtr(*data_ptr, width * bytes, width, height);
-    err = cudaMemset3D(devPtr, *static_cast<const int *>(value), extent);
-  }
-  else if (height > 1)
-  {
-    err = cudaMemset2D(*data_ptr, width * bytes, *static_cast<const int *>(value), width, height);
-  }
-  else
-  {
-    err = cudaMemset(*data_ptr, *static_cast<const int *>(value), width * bytes);
-  }
-  if (err != cudaSuccess)
-  {
-    throw std::runtime_error("Error: Failed to set CUDA memory.");
-  }
+  // TODO
 #else
   throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif
@@ -366,31 +329,11 @@ CUDABackend::buildKernel(const Device::Pointer & device,
                          void *                  kernel) const -> void
 {
 #if CLE_CUDA
-  auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
-  auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
-  if (err != cudaSuccess)
-  {
-    throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
-  }
-  CUresult    res;
-  CUmodule    module;
-  CUfunction  function;
-  std::string hash = std::to_string(std::hash<std::string>{}(kernel_source));
-  // loadProgramFromCache(device, hash, module);
-  // if (module == nullptr)
-  // {
-  res = cuModuleLoadDataEx(&module, kernel_source.c_str(), 0, 0, 0);
-  if (res != CUDA_SUCCESS)
-  {
-    throw std::runtime_error("Error: Failed to build program.");
-  }
-  //   saveProgramToCache(device, hash, module);
-  // }
-  res = cuModuleGetFunction(&function, module, kernel_name.c_str());
-  if (res != CUDA_SUCCESS)
-  {
-    throw std::runtime_error("Error: Failed to get kernel.");
-  }
+  auto       cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
+  CUfunction function = nullptr;
+
+  // TODO
+
   *(reinterpret_cast<CUfunction *>(kernel)) = function;
 #else
   throw std::runtime_error("Error: CUDA backend is not enabled");
@@ -405,7 +348,7 @@ CUDABackend::executeKernel(const Device::Pointer &       device,
                            const std::vector<void *> &   args,
                            const std::vector<size_t> &   sizes) const -> void
 {
-  // @StRigaud TODO: add cuda kernel execution
+  // TODO
 }
 
 auto
