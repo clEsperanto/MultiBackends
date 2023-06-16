@@ -49,14 +49,15 @@ Array::Array(const size_t &          width,
              const Device::Pointer & device_ptr)
   : Array(width, height, depth, data_type, mem_type, device_ptr)
 {
-  if (dim() > 1)
-  {
-    backend_.writeMemory(device(), get(), this->width(), this->height(), this->depth(), bytesPerElements(), host_data);
-  }
-  else
-  {
-    backend_.writeMemory(device(), get(), nbElements() * bytesPerElements(), host_data);
-  }
+  // if (dim() > 1)
+  // {
+  //   backend_.writeMemory(device(), get(), this->width(), this->height(), this->depth(), bytesPerElements(),
+  //   host_data);
+  // }
+  // else
+  // {
+  backend_.writeMemory(device(), get(), nbElements() * bytesPerElements(), host_data);
+  // }
 }
 
 Array::Array(const Array & arr)
