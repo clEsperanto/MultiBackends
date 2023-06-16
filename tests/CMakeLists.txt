@@ -39,6 +39,11 @@ add_dependencies(cuda_src_test ${LIBRARY_NAME})
 target_link_libraries(cuda_src_test PRIVATE ${LIBRARY_NAME})
 set_target_properties(cuda_src_test PROPERTIES FOLDER "Tests")
 
+add_executable(some_test some_test.cpp)
+add_dependencies(some_test ${LIBRARY_NAME})
+target_link_libraries(some_test PRIVATE ${LIBRARY_NAME})
+set_target_properties(some_test PROPERTIES FOLDER "Tests")
+
 
 add_test(NAME backend_test COMMAND backend_test)
 add_test(NAME array_test COMMAND array_test)
@@ -48,3 +53,4 @@ add_test(NAME defines_test COMMAND defines_test)
 add_test(NAME absolute_test COMMAND absolute_test)
 add_test(NAME gaussian_test COMMAND gaussian_test)
 add_test(NAME cuda_src_test COMMAND cuda_src_test)
+add_test(NAME some_test COMMAND some_test)
