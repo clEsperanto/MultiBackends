@@ -146,7 +146,7 @@ public:
 class CUDABackend : public Backend
 {
 public:
-  CUDABackend() = default;
+  CUDABackend();
   CUDABackend(const CUDABackend &) = default;
   CUDABackend(CUDABackend &&) = default;
   ~CUDABackend() override = default;

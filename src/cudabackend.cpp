@@ -4,13 +4,20 @@
 namespace cle
 {
 
+CUDABackend::CUDABackend()
+{
+#if CLE_CUDA
+  cuInit(0);
+#endif
+}
+
 auto
 CUDABackend::getDevices(const std::string & type) const -> std::vector<Device::Pointer>
 {
 #if CLE_CUDA
   int  deviceCount;
-  auto error = cudaGetDeviceCount(&deviceCount);
-  if (error != cudaSuccess)
+  auto error = cuDeviceGetCount(&deviceCount);
+  if (error != CUDA_SUCCESS)
   {
     throw std::runtime_error("Error: Failed to get CUDA device count.");
   }
@@ -100,20 +107,7 @@ CUDABackend::allocateMemory(const Device::Pointer & device,
                             void **                 data_ptr) const -> void
 {
 #if CLE_CUDA
-  auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
-  auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
-  if (err != cudaSuccess)
-  {
-    throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
-  }
-  cudaExtent     extent = make_cudaExtent(width * toBytes(dtype), height, depth);
-  cudaPitchedPtr devPtr = make_cudaPitchedPtr(nullptr, width * toBytes(dtype), width, height);
-  err = cudaMalloc3D(&devPtr, extent);
-  if (err != cudaSuccess)
-  {
-    throw std::runtime_error("Error: Failed to allocate CUDA memory.");
-  }
-  *data_ptr = devPtr.ptr;
+  // TODO
 #else
   throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif
@@ -153,7 +147,6 @@ CUDABackend::writeMemory(const Device::Pointer & device,
     throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
   }
   err = cuMemcpyHtoD(reinterpret_cast<CUdeviceptr>(*data_ptr), host_ptr, size);
-  // err = cudaMemcpy(*data_ptr, host_ptr, size, cudaMemcpyHostToDevice);
   if (err != CUDA_SUCCESS)
   {
     throw std::runtime_error("Error: Failed to write CUDA memory.");
@@ -173,39 +166,7 @@ CUDABackend::writeMemory(const Device::Pointer & device,
                          const void *            host_ptr) const -> void
 {
 #if CLE_CUDA
-  auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
-  auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
-  if (err != cudaSuccess)
-  {
-    throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
-  }
-
-  if (depth > 1)
-  {
-    cudaMemcpy3DParms copyParams = { nullptr };
-    copyParams.srcPtr.ptr = const_cast<void *>(host_ptr);
-    copyParams.srcPtr.pitch = width * bytes;
-    copyParams.srcPtr.xsize = width;
-    copyParams.srcPtr.ysize = height;
-    copyParams.dstPtr = make_cudaPitchedPtr(*data_ptr, width * bytes, width, height);
-    copyParams.extent = make_cudaExtent(width * bytes, height, depth);
-    copyParams.kind = cudaMemcpyHostToDevice;
-
-    cudaMemcpy3D(&copyParams);
-  }
-  else if (height > 1)
-  {
-    cudaMemcpy2D(*data_ptr, width * bytes, host_ptr, width * bytes, width, height, cudaMemcpyHostToDevice);
-  }
-  else
-  {
-    cudaMemcpy(*data_ptr, host_ptr, width * bytes, cudaMemcpyHostToDevice);
-  }
-
-  if (err != cudaSuccess)
-  {
-    throw std::runtime_error("Error: Failed to write CUDA memory.");
-  }
+  // TODO
 #else
   throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif
@@ -225,7 +186,6 @@ CUDABackend::readMemory(const Device::Pointer & device,
     throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
   }
   err = cuMemcpyDtoH(host_ptr, reinterpret_cast<CUdeviceptr>(*data_ptr), size);
-  // err = cudaMemcpy(host_ptr, *data_ptr, size, cudaMemcpyDeviceToHost);
   if (err != CUDA_SUCCESS)
   {
     throw std::runtime_error("Error: Failed to read CUDA memory.");
@@ -245,37 +205,7 @@ CUDABackend::readMemory(const Device::Pointer & device,
                         void *                  host_ptr) const -> void
 {
 #if CLE_CUDA
-  auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
-  auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
-  if (err != cudaSuccess)
-  {
-    throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
-  }
-  if (depth > 1)
-  {
-    cudaMemcpy3DParms copyParams = { nullptr };
-    copyParams.srcPtr = make_cudaPitchedPtr(const_cast<void *>(*data_ptr), width * bytes, width, height);
-    copyParams.srcPos = make_cudaPos(0, 0, 0);
-    copyParams.dstPtr.ptr = host_ptr;
-    copyParams.dstPtr.pitch = width * bytes;
-    copyParams.dstPtr.xsize = width;
-    copyParams.dstPtr.ysize = height;
-    copyParams.extent = make_cudaExtent(width * bytes, height, depth);
-    copyParams.kind = cudaMemcpyDeviceToHost;
-    cudaMemcpy3D(&copyParams);
-  }
-  else if (height > 1)
-  {
-    cudaMemcpy2D(host_ptr, width * bytes, *data_ptr, width * bytes, width, height, cudaMemcpyDeviceToHost);
-  }
-  else
-  {
-    cudaMemcpy(host_ptr, *data_ptr, width * bytes, cudaMemcpyDeviceToHost);
-  }
-  if (err != cudaSuccess)
-  {
-    throw std::runtime_error("Error: Failed to read CUDA memory.");
-  }
+  // TODO
 #else
   throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif
@@ -295,7 +225,6 @@ CUDABackend::copyMemory(const Device::Pointer & device,
     throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
   }
   err = cuMemcpyDtoD(reinterpret_cast<CUdeviceptr>(*dst_data_ptr), reinterpret_cast<CUdeviceptr>(*src_data_ptr), size);
-  // err = cudaMemcpy(*dst_data_ptr, *src_data_ptr, size, cudaMemcpyDeviceToDevice);
   if (err != CUDA_SUCCESS)
   {
     throw std::runtime_error("Error: Failed to write CUDA memory " + std::to_string(err));
@@ -315,38 +244,7 @@ CUDABackend::copyMemory(const Device::Pointer & device,
                         void **                 dst_data_ptr) const -> void
 {
 #if CLE_CUDA
-  auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
-  auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
-  if (err != cudaSuccess)
-  {
-    throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
-  }
-
-  if (depth > 1)
-  {
-    cudaMemcpy3DParms copyParams = { nullptr };
-    copyParams.srcPtr = make_cudaPitchedPtr(const_cast<void *>(*src_data_ptr), width * bytes, width, height);
-    copyParams.srcPos = make_cudaPos(0, 0, 0);
-    copyParams.dstPtr.ptr = *dst_data_ptr;
-    copyParams.dstPtr.pitch = width * bytes;
-    copyParams.dstPtr.xsize = width;
-    copyParams.dstPtr.ysize = height;
-    copyParams.extent = make_cudaExtent(width * bytes, height, depth);
-    copyParams.kind = cudaMemcpyDeviceToDevice;
-    cudaMemcpy3D(&copyParams);
-  }
-  else if (height > 1)
-  {
-    cudaMemcpy2D(*dst_data_ptr, width * bytes, *src_data_ptr, width * bytes, width, height, cudaMemcpyDeviceToDevice);
-  }
-  else
-  {
-    cudaMemcpy(*dst_data_ptr, *src_data_ptr, width * bytes, cudaMemcpyDeviceToDevice);
-  }
-  if (err != cudaSuccess)
-  {
-    throw std::runtime_error("Error: Failed to write CUDA memory.");
-  }
+  // TODO
 #else
   throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif
@@ -361,13 +259,30 @@ CUDABackend::setMemory(const Device::Pointer & device,
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
-  auto err = cudaSetDevice(cuda_device->getCUDADeviceIndex());
-  if (err != cudaSuccess)
+  auto err = cuCtxSetCurrent(cuda_device->getCUDAContext());
+  if (err != CUDA_SUCCESS)
   {
     throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
   }
-  err = cudaMemset(*data_ptr, *static_cast<const int *>(value), size);
-  if (err != cudaSuccess)
+
+
+  switch (size)
+  {
+    case sizeof(int8_t):
+      // cuMemsetD8(reinterpret_cast<CUdeviceptr>(*data_ptr), (unsigned char)*value, size);
+      break;
+    case sizeof(int16_t):
+      // cuMemsetD16(reinterpret_cast<CUdeviceptr>(*data_ptr), *value, size);
+      break;
+    case sizeof(int32_t):
+      // cuMemsetD32(reinterpret_cast<CUdeviceptr>(*data_ptr), *value, size);
+      break;
+    default:
+      // Unsupported value type
+      break;
+  }
+
+  if (err != CUDA_SUCCESS)
   {
     throw std::runtime_error("Error: Failed to set CUDA memory.");
   }
