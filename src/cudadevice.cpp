@@ -7,8 +7,9 @@ namespace cle
 
 CUDADevice::CUDADevice(int deviceIndex)
   : cudaDeviceIndex(deviceIndex)
-  , cudaStream(nullptr)
-{}
+{
+  initialize();
+}
 
 CUDADevice::~CUDADevice()
 {
@@ -32,14 +33,20 @@ CUDADevice::initialize() -> void
     std::cerr << "CUDA device already initialized" << std::endl;
     return;
   }
-  auto err = cudaSetDevice(cudaDeviceIndex);
-  if (err != cudaSuccess)
+  auto err = cuDeviceGet(&cudaDevice, 0);
+  if (err != CUDA_SUCCESS)
   {
-    std::cerr << "Failed to set CUDA device" << std::endl;
+    std::cerr << "Failed to get CUDA device" << std::endl;
     return;
   }
-  err = cudaStreamCreate(&cudaStream);
-  if (err != cudaSuccess)
+  err = cuCtxCreate(&cudaContext, 0, cudaDevice);
+  if (err != CUDA_SUCCESS)
+  {
+    std::cerr << "Failed to create CUDA context" << std::endl;
+    return;
+  }
+  err = cuStreamCreate(&cudaStream, CU_STREAM_DEFAULT);
+  if (err != CUDA_SUCCESS)
   {
     std::cerr << "Failed to create CUDA stream" << std::endl;
     return;
@@ -55,8 +62,10 @@ CUDADevice::finalize() -> void
     std::cerr << "CUDA device not initialized" << std::endl;
     return;
   }
-  cudaStreamSynchronize(cudaStream);
-  cudaStreamDestroy(cudaStream);
+  finish();
+  cuStreamDestroy(cudaStream);
+  cuCtxDestroy(cudaContext);
+  cuCtxSetCurrent(nullptr);
   initialized = false;
 }
 
@@ -68,8 +77,7 @@ CUDADevice::finish() -> void
     std::cerr << "CUDA device not initialized" << std::endl;
     return;
   }
-
-  cudaStreamSynchronize(cudaStream);
+  cuStreamSynchronize(cudaStream);
 }
 
 auto
@@ -85,7 +93,19 @@ CUDADevice::getCUDADeviceIndex() const -> int
 }
 
 auto
-CUDADevice::getCUDAStream() const -> cudaStream_t
+CUDADevice::getCUDADevice() const -> const CUdevice &
+{
+  return cudaDevice;
+}
+
+auto
+CUDADevice::getCUDAContext() const -> const CUcontext &
+{
+  return cudaContext;
+}
+
+auto
+CUDADevice::getCUDAStream() const -> const CUstream &
 {
   return cudaStream;
 }

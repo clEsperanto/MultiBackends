@@ -145,7 +145,11 @@ public:
   [[nodiscard]] auto
   getCUDADeviceIndex() const -> int;
   [[nodiscard]] auto
-  getCUDAStream() const -> cudaStream_t;
+  getCUDADevice() const -> const CUdevice &;
+  [[nodiscard]] auto
+  getCUDAContext() const -> const CUcontext &;
+  [[nodiscard]] auto
+  getCUDAStream() const -> const CUstream &;
   [[nodiscard]] auto
   getName() const -> std::string override;
   [[nodiscard]] auto
@@ -155,7 +159,9 @@ public:
 
 private:
   int                             cudaDeviceIndex;
-  cudaStream_t                    cudaStream;
+  CUdevice                        cudaDevice;
+  CUcontext                       cudaContext;
+  CUstream                        cudaStream;
   bool                            initialized = false;
   std::map<std::string, CUmodule> cache;
 };
