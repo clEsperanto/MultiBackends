@@ -11,7 +11,5 @@ extern "C" __global__ void myKernel(int *dA, int *dB, int *dC, int n) {
             c += dA[i * n + k] * dB[k + j * n];
         }
         dC[i * n + j] = c;
-
-        // printf("%d", n);
     }
 }

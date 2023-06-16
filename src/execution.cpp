@@ -288,13 +288,14 @@ execute(const Device::Pointer & device,
     if (std::holds_alternative<Array::Pointer>(param.second))
     {
       const auto & arr = std::get<Array::Pointer>(param.second);
-      args_ptr.push_back(*arr->get());
       switch (device->getType())
       {
         case Device::Type::CUDA:
+          args_ptr.push_back(arr->get());
           args_size.push_back(arr->nbElements() * arr->bytesPerElements()); // @StRigaud TODO: to be tested on CUDA side
           break;
         case Device::Type::OPENCL:
+          args_ptr.push_back(*arr->get());
           args_size.push_back(sizeof(cl_mem));
           break;
       }

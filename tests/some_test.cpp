@@ -23,7 +23,6 @@ run_test() -> bool
   CUmodule           cuModule;
   CUfunction         cuFunction;
   CUresult           err;
-  nvrtcResult        errN;
   nvrtcResult        compileResult;
   nvrtcProgram       prog;
   size_t             ptxSize;

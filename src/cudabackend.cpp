@@ -1,5 +1,6 @@
 #include "backend.hpp"
 #include "cle_preamble_cu.h"
+#include <cmath>
 
 namespace cle
 {
@@ -329,12 +330,44 @@ CUDABackend::buildKernel(const Device::Pointer & device,
                          void *                  kernel) const -> void
 {
 #if CLE_CUDA
-  auto       cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
-  CUfunction function = nullptr;
+  auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
+  auto err = cuCtxSetCurrent(cuda_device->getCUDAContext());
+  if (err != CUDA_SUCCESS)
+  {
+    throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
+  }
+  
+  nvrtcProgram prog;
+  auto res = nvrtcCreateProgram(&prog, kernel_source.c_str(), nullptr, 0, nullptr, nullptr);
+  if (res != NVRTC_SUCCESS)
+  {
+    throw std::runtime_error("Error in creating program.");
+  }
+  res = nvrtcCompileProgram(prog, 0, nullptr);
+  if (res != NVRTC_SUCCESS)
+  {
+    throw std::runtime_error("Error in Compiling program.");
+  }
+  size_t       ptxSize;
+  nvrtcGetPTXSize(prog, &ptxSize);
+  std::vector<char> ptx(ptxSize);
+  nvrtcGetPTX(prog, ptx.data());
 
-  // TODO
+  CUmodule     cuModule;
+  err = cuModuleLoadData(&cuModule, ptx.data());
+  if (err != CUDA_SUCCESS)
+  {
+    throw std::runtime_error("Error in loading module.");
+  }
 
-  *(reinterpret_cast<CUfunction *>(kernel)) = function;
+  CUfunction   cuFunction;
+  err = cuModuleGetFunction(&cuFunction, cuModule, kernel_name.c_str());
+  if (err != CUDA_SUCCESS)
+  {
+    throw std::runtime_error("Error in getting function.");
+  }
+
+  *(reinterpret_cast<CUfunction *>(kernel)) = cuFunction;
 #else
   throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif
@@ -349,6 +382,47 @@ CUDABackend::executeKernel(const Device::Pointer &       device,
                            const std::vector<size_t> &   sizes) const -> void
 {
   // TODO
+  auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
+  auto err = cuCtxSetCurrent(cuda_device->getCUDAContext());
+  if (err != CUDA_SUCCESS)
+  {
+    throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
+  }
+
+  CUfunction cuFunction;
+  CUresult   error;
+
+  try
+  {
+    buildKernel(device, kernel_source, kernel_name, &cuFunction);
+  }
+  catch (const std::exception & e)
+  {
+    throw std::runtime_error("Error: Failed to build kernel. \n\t > " + std::string(e.what()));
+  }
+
+  std::vector<void *> argsV(args.size());
+  argsV = args;
+
+  dim3 blockDims = (1, 1, 1);
+  dim3 gridDims = (8, 8, 8);
+
+  err = cuLaunchKernel(cuFunction,
+                         gridDims.x,
+                         gridDims.y,
+                         gridDims.z,
+                         blockDims.x,
+                         blockDims.y,
+                         blockDims.z,
+                         0,
+                         cuda_device->getCUDAStream(),
+                         argsV.data(),
+                         NULL);
+
+  if (err != CUDA_SUCCESS)
+  {
+    throw std::runtime_error("Error in launching kernel.");
+  }
 }
 
 auto
