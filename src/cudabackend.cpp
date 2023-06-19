@@ -336,9 +336,9 @@ CUDABackend::buildKernel(const Device::Pointer & device,
   {
     throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
   }
-  
+
   nvrtcProgram prog;
-  auto res = nvrtcCreateProgram(&prog, kernel_source.c_str(), nullptr, 0, nullptr, nullptr);
+  auto         res = nvrtcCreateProgram(&prog, kernel_source.c_str(), nullptr, 0, nullptr, nullptr);
   if (res != NVRTC_SUCCESS)
   {
     throw std::runtime_error("Error in creating program.");
@@ -348,19 +348,19 @@ CUDABackend::buildKernel(const Device::Pointer & device,
   {
     throw std::runtime_error("Error in Compiling program.");
   }
-  size_t       ptxSize;
+  size_t ptxSize;
   nvrtcGetPTXSize(prog, &ptxSize);
   std::vector<char> ptx(ptxSize);
   nvrtcGetPTX(prog, ptx.data());
 
-  CUmodule     cuModule;
+  CUmodule cuModule;
   err = cuModuleLoadData(&cuModule, ptx.data());
   if (err != CUDA_SUCCESS)
   {
     throw std::runtime_error("Error in loading module.");
   }
 
-  CUfunction   cuFunction;
+  CUfunction cuFunction;
   err = cuModuleGetFunction(&cuFunction, cuModule, kernel_name.c_str());
   if (err != CUDA_SUCCESS)
   {
@@ -381,6 +381,7 @@ CUDABackend::executeKernel(const Device::Pointer &       device,
                            const std::vector<void *> &   args,
                            const std::vector<size_t> &   sizes) const -> void
 {
+#if CLE_CUDA
   // TODO
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
   auto err = cuCtxSetCurrent(cuda_device->getCUDAContext());
@@ -408,21 +409,24 @@ CUDABackend::executeKernel(const Device::Pointer &       device,
   dim3 gridDims = (8, 8, 8);
 
   err = cuLaunchKernel(cuFunction,
-                         gridDims.x,
-                         gridDims.y,
-                         gridDims.z,
-                         blockDims.x,
-                         blockDims.y,
-                         blockDims.z,
-                         0,
-                         cuda_device->getCUDAStream(),
-                         argsV.data(),
-                         NULL);
+                       gridDims.x,
+                       gridDims.y,
+                       gridDims.z,
+                       blockDims.x,
+                       blockDims.y,
+                       blockDims.z,
+                       0,
+                       cuda_device->getCUDAStream(),
+                       argsV.data(),
+                       NULL);
 
   if (err != CUDA_SUCCESS)
   {
     throw std::runtime_error("Error in launching kernel.");
   }
+#else
+  throw std::runtime_error("Error: CUDA backend is not enabled");
+#endif
 }
 
 auto
