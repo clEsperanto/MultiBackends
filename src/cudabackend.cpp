@@ -413,7 +413,7 @@ CUDABackend::executeKernel(const Device::Pointer &       device,
                        0,
                        cuda_device->getCUDAStream(),
                        argsValues.data(),
-                       NULL);
+                       nullptr);
 
   if (err != CUDA_SUCCESS)
   {
