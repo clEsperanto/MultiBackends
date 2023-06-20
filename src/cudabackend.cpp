@@ -403,9 +403,17 @@ CUDABackend::executeKernel(const Device::Pointer &       device,
 
   std::vector<void *> argsValues(args.size());
   argsValues = args;
-  const size_t * dataPtr = global_size.data();
-  err = cuLaunchKernel(
-    cuFunction, dataPtr[0], dataPtr[1], dataPtr[2], 1, 1, 1, 0, cuda_device->getCUDAStream(), argsValues.data(), NULL);
+  err = cuLaunchKernel(cuFunction,
+                       global_size.data()[0],
+                       global_size.data()[1],
+                       global_size.data()[2],
+                       1,
+                       1,
+                       1,
+                       0,
+                       cuda_device->getCUDAStream(),
+                       argsValues.data(),
+                       NULL);
 
   if (err != CUDA_SUCCESS)
   {

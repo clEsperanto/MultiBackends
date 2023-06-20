@@ -96,11 +96,6 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
         defines << "\n#define POS_" << param.first << "_INSTANCE(pos0,pos1,pos2,pos3) make_" << pos_type << "" << pos;
         break;
       case 3:
-        ndim = "3";
-        pos_type = "int4";
-        pos = "(pos0, pos1, pos2, 0)";
-        defines << "\n#define POS_" << param.first << "_INSTANCE(pos0,pos1,pos2,pos3) make_" << pos_type << "" << pos;
-        break;
       default:
         ndim = "3";
         pos_type = "int4";
@@ -288,7 +283,6 @@ execute(const Device::Pointer & device,
       {
         case Device::Type::CUDA:
           args_ptr.push_back(arr->get());
-          args_size.push_back(arr->nbElements() * arr->bytesPerElements()); // @StRigaud TODO: to be tested on CUDA side
           break;
         case Device::Type::OPENCL:
           args_ptr.push_back(*arr->get());
