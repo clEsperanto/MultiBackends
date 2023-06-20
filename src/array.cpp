@@ -49,14 +49,15 @@ Array::Array(const size_t &          width,
              const Device::Pointer & device_ptr)
   : Array(width, height, depth, data_type, mem_type, device_ptr)
 {
-  // if (dim() > 1)
+  write(host_data);
+  // if (mtype() == mType::Image)
   // {
   //   backend_.writeMemory(device(), get(), this->width(), this->height(), this->depth(), bytesPerElements(),
   //   host_data);
   // }
   // else
   // {
-  backend_.writeMemory(device(), get(), nbElements() * bytesPerElements(), host_data);
+  //   backend_.writeMemory(device(), get(), nbElements() * bytesPerElements(), host_data);
   // }
 }
 
@@ -82,14 +83,14 @@ Array::allocate() -> void
   {
     // backend_.allocateMemory(device(), nbElements() * bytesPerElements(), get());
     // initialized_ = true;
-    // if (dim() > 1)
-    // {
-    //   backend_.allocateMemory(device(), this->width(), this->height(), this->depth(), dType(), get());
-    // }
-    // else
-    // {
-    backend_.allocateMemory(device(), nbElements() * bytesPerElements(), get());
-    // }
+    if (mtype() == mType::Image)
+    {
+      backend_.allocateMemory(device(), this->width(), this->height(), this->depth(), dType(), get());
+    }
+    else
+    {
+      backend_.allocateMemory(device(), nbElements() * bytesPerElements(), get());
+    }
     initialized_ = true;
   }
   else
@@ -105,15 +106,14 @@ Array::write(const void * host_data) -> void
   {
     allocate();
   }
-  // if (dim() > 1)
-  // {
-  //   backend_.writeMemory(device(), get(), this->width(), this->height(), this->depth(), bytesPerElements(),
-  //   host_data);
-  // }
-  // else
-  // {
-  backend_.writeMemory(device(), get(), nbElements() * bytesPerElements(), host_data);
-  // }
+  if (mtype() == mType::Image)
+  {
+    backend_.writeMemory(device(), get(), this->width(), this->height(), this->depth(), bytesPerElements(), host_data);
+  }
+  else
+  {
+    backend_.writeMemory(device(), get(), nbElements() * bytesPerElements(), host_data);
+  }
 }
 
 auto
@@ -123,14 +123,14 @@ Array::read(void * host_data) const -> void
   {
     throw std::runtime_error("Error: Array is not initialized, it cannot be read");
   }
-  // if (dim() > 1)
-  // {
-  //   backend_.readMemory(device(), c_get(), width(), height(), depth(), bytesPerElements(), host_data);
-  // }
-  // else
-  // {
-  backend_.readMemory(device(), c_get(), nbElements() * bytesPerElements(), host_data);
-  // }
+  if (mtype() == mType::Image)
+  {
+    backend_.readMemory(device(), c_get(), width(), height(), depth(), bytesPerElements(), host_data);
+  }
+  else
+  {
+    backend_.readMemory(device(), c_get(), nbElements() * bytesPerElements(), host_data);
+  }
 }
 
 auto
@@ -149,14 +149,28 @@ Array::copy(const Array & dst) const -> void
   {
     std::cerr << "Error: Arrays dimensions do not match" << std::endl;
   }
-  // if (dim() > 1)
-  // {
-  //   backend_.copyMemory(device(), c_get(), width(), height(), depth(), bytesPerElements(), dst.get());
-  // }
-  // else
-  // {
-  backend_.copyMemory(device(), c_get(), nbElements() * bytesPerElements(), dst.get());
-  // }
+
+  if (mtype() == mType::Buffer && dst.mtype() == mType::Buffer)
+  {
+    backend_.copyMemoryBufferToBuffer(device(), c_get(), nbElements() * bytesPerElements(), dst.get());
+  }
+  else if (mtype() == mType::Image && dst.mtype() == mType::Image)
+  {
+    backend_.copyMemoryImageToImage(device(), c_get(), width(), height(), depth(), toBytes(dtype()), dst.get());
+  }
+  else if (mtype() == mType::Buffer && dst.mtype() == mType::Image)
+  {
+    backend_.copyMemoryBufferToImage(
+      device(), c_get(), dst.width(), dst.height(), dst.depth(), toBytes(dst.dtype()), dst.get());
+  }
+  else if (mtype() == mType::Image && dst.mtype() == mType::Buffer)
+  {
+    backend_.copyMemoryImageToBuffer(device(), c_get(), width(), height(), depth(), toBytes(dtype()), dst.get());
+  }
+  else
+  {
+    std::cerr << "Error: copying Arrays from different memory types" << std::endl;
+  }
 }
 
 // template <typename T>
