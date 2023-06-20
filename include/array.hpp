@@ -76,18 +76,15 @@ public:
     {
       std::cerr << "Error: Arrays are not initialized_" << std::endl;
     }
-    if (dim() > 1)
+    if (mtype() == mType::Image)
     {
       backend_.setMemory(
         device(), get(), width(), height(), depth(), bytesPerElements(), static_cast<const void *>(&value));
     }
     else
     {
-      backend_.setMemory(
-        device(), get(), nbElements() * bytesPerElements(), static_cast<const void *>(&value), bytesPerElements());
+      backend_.setMemory(device(), get(), nbElements() * bytesPerElements(), &value, sizeof(T));
     }
-    // backend_.setMemory(device(), get(), nbElements() * bytesPerElements(), static_cast<const void *>(&value),
-    // sizeof(T));
   }
 
   [[nodiscard]] auto

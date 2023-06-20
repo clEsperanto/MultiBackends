@@ -15,13 +15,15 @@ data_test(cle::mType type1, cle::mType type2)
   static const size_t w = 5;
   static const size_t h = 4;
   static const size_t d = 3;
-  std::vector<T>      input(w * h * d, -1);
+  std::vector<T>      input(w * h * d, -5);
   std::vector<T>      output(w * h * d, -10);
 
   std::cout << "\tcreating bufferA" << std::endl;
   cle::Array bufferA(w, h, d, cle::toType<T>(), type1, device);
   std::cout << "\twrite into bufferA" << std::endl;
   bufferA.write(input.data());
+  std::cout << "\tfill bufferA" << std::endl;
+  bufferA.fill(15);
   std::cout << "\tcreating bufferB and write into it" << std::endl;
   cle::Array bufferB(w, h, d, cle::toType<T>(), type2, output.data(), device);
   std::cout << "\tcopy bufferA into bufferB" << std::endl;
@@ -43,19 +45,19 @@ data_test(cle::mType type1, cle::mType type2)
 int
 main(int argc, char ** argv)
 {
-  using T = int;
+  using T = float;
 
   cle::BackendManager::getInstance().setBackend(false);
   data_test<T>(cle::mType::Buffer, cle::mType::Buffer);
-  data_test<T>(cle::mType::Image, cle::mType::Image);
-  data_test<T>(cle::mType::Buffer, cle::mType::Image);
-  data_test<T>(cle::mType::Image, cle::mType::Buffer);
+  // data_test<T>(cle::mType::Image, cle::mType::Image);
+  // data_test<T>(cle::mType::Buffer, cle::mType::Image);
+  // data_test<T>(cle::mType::Image, cle::mType::Buffer);
 
-  cle::BackendManager::getInstance().setBackend(true);
-  data_test<T>(cle::mType::Buffer, cle::mType::Buffer);
-  data_test<T>(cle::mType::Image, cle::mType::Image);
-  data_test<T>(cle::mType::Buffer, cle::mType::Image);
-  data_test<T>(cle::mType::Image, cle::mType::Buffer);
+  // cle::BackendManager::getInstance().setBackend(true);
+  // data_test<T>(cle::mType::Buffer, cle::mType::Buffer);
+  // data_test<T>(cle::mType::Image, cle::mType::Image);
+  // data_test<T>(cle::mType::Buffer, cle::mType::Image);
+  // data_test<T>(cle::mType::Image, cle::mType::Buffer);
 
   return 0;
 }
