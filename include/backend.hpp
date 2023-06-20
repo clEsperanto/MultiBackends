@@ -76,18 +76,34 @@ public:
              const size_t &          bytes,
              void *                  host_ptr) const -> void = 0;
   virtual auto
-  copyMemory(const Device::Pointer & device,
-             const void **           src_data_ptr,
-             const size_t &          size,
-             void **                 dst_data_ptr) const -> void = 0;
+  copyMemoryBufferToBuffer(const Device::Pointer & device,
+                 const void **           src_data_ptr,
+                 const size_t &          size,
+                 void **                 dst_data_ptr) const -> void = 0;
   virtual auto
-  copyMemory(const Device::Pointer & device,
-             const void **           src_data_ptr,
-             const size_t &          width,
-             const size_t &          height,
-             const size_t &          depth,
-             const size_t &          bytes,
-             void **                 dst_data_ptr) const -> void = 0;
+  copyMemoryImageToBuffer(const Device::Pointer & device,
+                 const void **           src_data_ptr,
+                 const size_t &          width,
+                 const size_t &          height,
+                 const size_t &          depth,
+                 const size_t &          bytes,
+                 void **                 dst_data_ptr) const -> void = 0;
+  virtual auto
+  copyMemoryBufferToImage(const Device::Pointer & device,
+                 const void **           src_data_ptr,
+                 const size_t &          width,
+                 const size_t &          height,
+                 const size_t &          depth,
+                 const size_t &          bytes,
+                 void **                 dst_data_ptr) const -> void = 0;
+  virtual auto
+  copyMemoryImageToImage(const Device::Pointer & device,
+                 const void **           src_data_ptr,
+                 const size_t &          width,
+                 const size_t &          height,
+                 const size_t &          depth,
+                 const size_t &          bytes,
+                 void **                 dst_data_ptr) const -> void = 0;
   virtual auto
   setMemory(const Device::Pointer & device,
             void **                 data_ptr,
@@ -199,18 +215,34 @@ public:
              void *                  host_ptr) const -> void override;
 
   auto
-  copyMemory(const Device::Pointer & device,
-             const void **           src_data_ptr,
-             const size_t &          size,
-             void **                 dst_data_ptr) const -> void override;
+  copyMemoryBufferToBuffer(const Device::Pointer & device,
+                 const void **           src_data_ptr,
+                 const size_t &          size,
+                 void **                 dst_data_ptr) const -> void override;
   auto
-  copyMemory(const Device::Pointer & device,
-             const void **           src_data_ptr,
-             const size_t &          width,
-             const size_t &          height,
-             const size_t &          depth,
-             const size_t &          bytes,
-             void **                 dst_data_ptr) const -> void override;
+  copyMemoryImageToBuffer(const Device::Pointer & device,
+                 const void **           src_data_ptr,
+                 const size_t &          width,
+                 const size_t &          height,
+                 const size_t &          depth,
+                 const size_t &          bytes,
+                 void **                 dst_data_ptr) const -> void override;
+  auto
+  copyMemoryBufferToImage(const Device::Pointer & device,
+                 const void **           src_data_ptr,
+                 const size_t &          width,
+                 const size_t &          height,
+                 const size_t &          depth,
+                 const size_t &          bytes,
+                 void **                 dst_data_ptr) const -> void override;
+  auto
+  copyMemoryImageToImage(const Device::Pointer & device,
+                 const void **           src_data_ptr,
+                 const size_t &          width,
+                 const size_t &          height,
+                 const size_t &          depth,
+                 const size_t &          bytes,
+                 void **                 dst_data_ptr) const -> void override;
   auto
   setMemory(const Device::Pointer & device,
             void **                 data_ptr,
@@ -300,18 +332,34 @@ public:
              const size_t &          bytes,
              void *                  host_ptr) const -> void override;
   auto
-  copyMemory(const Device::Pointer & device,
-             const void **           src_data_ptr,
-             const size_t &          size,
-             void **                 dst_data_ptr) const -> void override;
+  copyMemoryBufferToBuffer(const Device::Pointer & device,
+                 const void **           src_data_ptr,
+                 const size_t &          size,
+                 void **                 dst_data_ptr) const -> void override;
   auto
-  copyMemory(const Device::Pointer & device,
-             const void **           src_data_ptr,
-             const size_t &          width,
-             const size_t &          height,
-             const size_t &          depth,
-             const size_t &          bytes,
-             void **                 dst_data_ptr) const -> void override;
+  copyMemoryImageToBuffer(const Device::Pointer & device,
+                 const void **           src_data_ptr,
+                 const size_t &          width,
+                 const size_t &          height,
+                 const size_t &          depth,
+                 const size_t &          bytes,
+                 void **                 dst_data_ptr) const -> void override;
+  auto
+  copyMemoryBufferToImage(const Device::Pointer & device,
+                 const void **           src_data_ptr,
+                 const size_t &          width,
+                 const size_t &          height,
+                 const size_t &          depth,
+                 const size_t &          bytes,
+                 void **                 dst_data_ptr) const -> void override;
+  auto
+  copyMemoryImageToImage(const Device::Pointer & device,
+                 const void **           src_data_ptr,
+                 const size_t &          width,
+                 const size_t &          height,
+                 const size_t &          depth,
+                 const size_t &          bytes,
+                 void **                 dst_data_ptr) const -> void override;
   auto
   setMemory(const Device::Pointer & device,
             void **                 data_ptr,
