@@ -403,13 +403,14 @@ CUDABackend::executeKernel(const Device::Pointer &       device,
 
   std::vector<void *> argsValues(args.size());
   argsValues = args;
+  std::array<size_t, 3> block_size = toBlockDim(global_size);
   err = cuLaunchKernel(cuFunction,
                        global_size.data()[0],
                        global_size.data()[1],
                        global_size.data()[2],
-                       1,
-                       1,
-                       1,
+                       block_size.data()[0],
+                       block_size.data()[1],
+                       block_size.data()[2],
                        0,
                        cuda_device->getCUDAStream(),
                        argsValues.data(),
@@ -428,6 +429,21 @@ auto
 CUDABackend::getPreamble() const -> std::string
 {
   return kernel::preamble_cu; // @StRigaud TODO: add cuda preamble from header file
+}
+
+auto
+CUDABackend::toBlockDim(const std::array<size_t, 3> & global_size) const -> std::array<size_t, 3>
+{
+  // In general, we add the gridDim.x (gridDim.y & gridDim.z) to the problem size, subtract one and divide by the
+  // gridDim.x (gridDim.y & gridDim.z). However, since we're taking the global_size, which represents the gridDim which,
+  // in itself, is the shape of the array that represents the problem size, we get the following formulas:
+  std::array<size_t, 3> block_size = { (global_size.data()[0] + global_size.data()[0] - 1) / global_size.data()[0],
+                                       (global_size.data()[1] + global_size.data()[1] - 1) / global_size.data()[1],
+                                       (global_size.data()[2] + global_size.data()[2] - 1) / global_size.data()[2] };
+
+  // One can notice that the blockDim (block_size) will always be set to 1.
+
+  return block_size;
 }
 
 } // namespace cle
