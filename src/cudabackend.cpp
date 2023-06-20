@@ -1,6 +1,6 @@
 #include "backend.hpp"
 #include "cle_preamble_cu.h"
-#include <cmath>
+#include <array>
 
 namespace cle
 {
@@ -392,7 +392,6 @@ CUDABackend::executeKernel(const Device::Pointer &       device,
 
   CUfunction cuFunction;
   CUresult   error;
-
   try
   {
     buildKernel(device, kernel_source, kernel_name, &cuFunction);
@@ -402,23 +401,11 @@ CUDABackend::executeKernel(const Device::Pointer &       device,
     throw std::runtime_error("Error: Failed to build kernel. \n\t > " + std::string(e.what()));
   }
 
-  std::vector<void *> argsV(args.size());
-  argsV = args;
-
-  dim3 blockDims = (1, 1, 1);
-  dim3 gridDims = (8, 8, 8);
-
-  err = cuLaunchKernel(cuFunction,
-                       gridDims.x,
-                       gridDims.y,
-                       gridDims.z,
-                       blockDims.x,
-                       blockDims.y,
-                       blockDims.z,
-                       0,
-                       cuda_device->getCUDAStream(),
-                       argsV.data(),
-                       NULL);
+  std::vector<void *> argsValues(args.size());
+  argsValues = args;
+  const size_t * dataPtr = global_size.data();
+  err = cuLaunchKernel(
+    cuFunction, dataPtr[0], dataPtr[1], dataPtr[2], 1, 1, 1, 0, cuda_device->getCUDAStream(), argsValues.data(), NULL);
 
   if (err != CUDA_SUCCESS)
   {
