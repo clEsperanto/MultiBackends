@@ -29,15 +29,6 @@ Array::Array(const size_t &          width,
 {
   device_ = device_ptr;
   allocate();
-  // if (dim() > 1)
-  // {
-  //   backend_.allocateMemory(device(), this->width(), this->height(), this->depth(), dType(), get());
-  // }
-  // else
-  // {
-  //   backend_.allocateMemory(device(), nbElements() * bytesPerElements(), get());
-  // }
-  // initialized_ = true;
 }
 
 Array::Array(const size_t &          width,
@@ -50,15 +41,6 @@ Array::Array(const size_t &          width,
   : Array(width, height, depth, data_type, mem_type, device_ptr)
 {
   write(host_data);
-  // if (mtype() == mType::Image)
-  // {
-  //   backend_.writeMemory(device(), get(), this->width(), this->height(), this->depth(), bytesPerElements(),
-  //   host_data);
-  // }
-  // else
-  // {
-  //   backend_.writeMemory(device(), get(), nbElements() * bytesPerElements(), host_data);
-  // }
 }
 
 Array::Array(const Array & arr)
@@ -81,11 +63,9 @@ Array::allocate() -> void
 {
   if (!initialized())
   {
-    // backend_.allocateMemory(device(), nbElements() * bytesPerElements(), get());
-    // initialized_ = true;
     if (mtype() == mType::Image)
     {
-      backend_.allocateMemory(device(), this->width(), this->height(), this->depth(), dType(), get());
+      backend_.allocateMemory(device(), this->width(), this->height(), this->depth(), dtype(), get());
     }
     else
     {

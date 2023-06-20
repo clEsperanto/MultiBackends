@@ -141,7 +141,7 @@ CUDABackend::allocateMemory(const Device::Pointer & device,
       break;
     default:
       format = CU_AD_FORMAT_FLOAT;
-      std::cerr << "WARNING: Unsupported data type for 'Image'. Default type 'float' is used." << std::endl;
+      std::cerr << "Warning: Unsupported data type for 'image', default type 'float' will be used." << std::endl;
       break;
   }
   if (depth > 1)
