@@ -1,5 +1,6 @@
 #include "backend.hpp"
 #include "cle_preamble_cu.h"
+#include <array>
 
 namespace cle
 {
@@ -329,12 +330,44 @@ CUDABackend::buildKernel(const Device::Pointer & device,
                          void *                  kernel) const -> void
 {
 #if CLE_CUDA
-  auto       cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
-  CUfunction function = nullptr;
+  auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
+  auto err = cuCtxSetCurrent(cuda_device->getCUDAContext());
+  if (err != CUDA_SUCCESS)
+  {
+    throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
+  }
 
-  // TODO
+  nvrtcProgram prog;
+  auto         res = nvrtcCreateProgram(&prog, kernel_source.c_str(), nullptr, 0, nullptr, nullptr);
+  if (res != NVRTC_SUCCESS)
+  {
+    throw std::runtime_error("Error in creating program.");
+  }
+  res = nvrtcCompileProgram(prog, 0, nullptr);
+  if (res != NVRTC_SUCCESS)
+  {
+    throw std::runtime_error("Error in Compiling program.");
+  }
+  size_t ptxSize;
+  nvrtcGetPTXSize(prog, &ptxSize);
+  std::vector<char> ptx(ptxSize);
+  nvrtcGetPTX(prog, ptx.data());
 
-  *(reinterpret_cast<CUfunction *>(kernel)) = function;
+  CUmodule cuModule;
+  err = cuModuleLoadData(&cuModule, ptx.data());
+  if (err != CUDA_SUCCESS)
+  {
+    throw std::runtime_error("Error in loading module.");
+  }
+
+  CUfunction cuFunction;
+  err = cuModuleGetFunction(&cuFunction, cuModule, kernel_name.c_str());
+  if (err != CUDA_SUCCESS)
+  {
+    throw std::runtime_error("Error in getting function.");
+  }
+
+  *(reinterpret_cast<CUfunction *>(kernel)) = cuFunction;
 #else
   throw std::runtime_error("Error: CUDA backend is not enabled");
 #endif
@@ -348,13 +381,69 @@ CUDABackend::executeKernel(const Device::Pointer &       device,
                            const std::vector<void *> &   args,
                            const std::vector<size_t> &   sizes) const -> void
 {
+#if CLE_CUDA
   // TODO
+  auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
+  auto err = cuCtxSetCurrent(cuda_device->getCUDAContext());
+  if (err != CUDA_SUCCESS)
+  {
+    throw std::runtime_error("Error: Failed to set CUDA device before memory allocation.");
+  }
+
+  CUfunction cuFunction;
+  CUresult   error;
+  try
+  {
+    buildKernel(device, kernel_source, kernel_name, &cuFunction);
+  }
+  catch (const std::exception & e)
+  {
+    throw std::runtime_error("Error: Failed to build kernel. \n\t > " + std::string(e.what()));
+  }
+
+  std::vector<void *> argsValues(args.size());
+  argsValues = args;
+  std::array<size_t, 3> block_size = toBlockDim(global_size);
+  err = cuLaunchKernel(cuFunction,
+                       global_size.data()[0],
+                       global_size.data()[1],
+                       global_size.data()[2],
+                       block_size.data()[0],
+                       block_size.data()[1],
+                       block_size.data()[2],
+                       0,
+                       cuda_device->getCUDAStream(),
+                       argsValues.data(),
+                       nullptr);
+
+  if (err != CUDA_SUCCESS)
+  {
+    throw std::runtime_error("Error in launching kernel.");
+  }
+#else
+  throw std::runtime_error("Error: CUDA backend is not enabled");
+#endif
 }
 
 auto
 CUDABackend::getPreamble() const -> std::string
 {
   return kernel::preamble_cu; // @StRigaud TODO: add cuda preamble from header file
+}
+
+auto
+CUDABackend::toBlockDim(const std::array<size_t, 3> & global_size) const -> std::array<size_t, 3>
+{
+  // In general, we add the gridDim.x (gridDim.y & gridDim.z) to the problem size, subtract one and divide by the
+  // gridDim.x (gridDim.y & gridDim.z). However, since we're taking the global_size, which represents the gridDim which,
+  // in itself, is the shape of the array that represents the problem size, we get the following formulas:
+  std::array<size_t, 3> block_size = { (global_size.data()[0] + global_size.data()[0] - 1) / global_size.data()[0],
+                                       (global_size.data()[1] + global_size.data()[1] - 1) / global_size.data()[1],
+                                       (global_size.data()[2] + global_size.data()[2] - 1) / global_size.data()[2] };
+
+  // One can notice that the blockDim (block_size) will always be set to 1.
+
+  return block_size;
 }
 
 } // namespace cle

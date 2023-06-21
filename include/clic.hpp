@@ -16,6 +16,7 @@
 #  include <cuda.h>
 #  include <cuda_runtime.h>
 #  include <cuda_runtime_api.h>
+#  include <nvrtc.h>
 #endif
 
 #endif // __INCLUDE_CLIC_HPP

@@ -243,6 +243,8 @@ public:
                 const std::vector<size_t> &   sizes) const -> void override;
   [[nodiscard]] auto
   getPreamble() const -> std::string override;
+  auto
+  toBlockDim(const std::array<size_t, 3> & global_size) const -> std::array<size_t, 3>;
 };
 
 class OpenCLBackend : public Backend

@@ -32,4 +32,10 @@ main(int argc, char const * argv[]) -> int
   {
     return 0;
   }
+
+  cle::BackendManager::getInstance().setBackend(true);
+  if (!run_absolute_test())
+  {
+    return 0;
+  }
 }
