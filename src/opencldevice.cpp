@@ -8,7 +8,9 @@ namespace cle
 OpenCLDevice::OpenCLDevice(const cl_platform_id & platform, const cl_device_id & device)
   : clDevice(device)
   , clPlatform(platform)
-{}
+{
+  initialize();
+}
 
 OpenCLDevice::~OpenCLDevice()
 {
@@ -29,7 +31,7 @@ OpenCLDevice::initialize() -> void
 {
   if (isInitialized())
   {
-    std::cerr << "OpenCL device already initialized" << std::endl;
+    // std::cerr << "OpenCL device already initialized" << std::endl;
     return;
   }
   cl_int err = CL_SUCCESS;
