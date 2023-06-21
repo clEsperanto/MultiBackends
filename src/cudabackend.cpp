@@ -551,8 +551,8 @@ auto
 CUDABackend::setMemory(const Device::Pointer & device,
                        void **                 data_ptr,
                        const size_t &          size,
-                       const void *            value,
-                       const size_t &          value_size) const -> void
+                       const float &           value,
+                       const dType &           dtype) const -> void
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
@@ -562,9 +562,34 @@ CUDABackend::setMemory(const Device::Pointer & device,
     throw std::runtime_error("Error (cuda): Failed to get context from device (" + std::to_string(err) + ").");
   }
 
-
-  // TODO
-
+  auto cast_value = castTo(value, dtype);
+  switch (sizeof(cast_value))
+  {
+    case sizeof(uint32_t): {
+      std::cout << "uint32_t" << std::endl;
+      err = cuMemsetD32(reinterpret_cast<CUdeviceptr>(*data_ptr),
+                        *(reinterpret_cast<uint32_t *>(&cast_value)),
+                        static_cast<uint32_t>(size / sizeof(uint32_t)));
+      break;
+    }
+    case sizeof(uint16_t): {
+      std::cout << "uint16_t" << std::endl;
+      err = cuMemsetD16(reinterpret_cast<CUdeviceptr>(*data_ptr),
+                        *(reinterpret_cast<uint16_t *>(&cast_value)),
+                        static_cast<uint16_t>(size / sizeof(uint16_t)));
+      break;
+    }
+    case sizeof(uint8_t): {
+      std::cout << "uint8_t" << std::endl;
+      err = cuMemsetD8(reinterpret_cast<CUdeviceptr>(*data_ptr),
+                       *(reinterpret_cast<uint8_t *>(&cast_value)),
+                       static_cast<uint8_t>(size / sizeof(uint8_t)));
+      break;
+    }
+    default:
+      std::cerr << "Warning: Unsupported value size for setMemory" << std::endl;
+      break;
+  }
   if (err != CUDA_SUCCESS)
   {
     throw std::runtime_error("Error (cuda): Failed to set memory with error code " + std::to_string(err));
@@ -580,8 +605,8 @@ CUDABackend::setMemory(const Device::Pointer & device,
                        const size_t &          width,
                        const size_t &          height,
                        const size_t &          depth,
-                       const size_t &          bytes,
-                       const void *            value) const -> void
+                       const float &           value,
+                       const dType &           dtype) const -> void
 {
 #if CLE_CUDA
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
@@ -591,8 +616,7 @@ CUDABackend::setMemory(const Device::Pointer & device,
     throw std::runtime_error("Error (cuda): Failed to get context from device (" + std::to_string(err) + ").");
   }
 
-
-  // TODO
+  // no existing memset for images ...
 
   if (err != CUDA_SUCCESS)
   {

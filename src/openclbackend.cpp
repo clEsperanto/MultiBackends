@@ -137,10 +137,6 @@ OpenCLBackend::allocateMemory(const Device::Pointer & device,
                               void **                 data_ptr) const -> void
 {
 #if CLE_OPENCL
-
-  std::cout << dtype << std::endl;
-
-
   auto            opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   cl_image_format image_format = { 0 };
   image_format.image_channel_order = CL_INTENSITY;
@@ -471,15 +467,16 @@ auto
 OpenCLBackend::setMemory(const Device::Pointer & device,
                          void **                 data_ptr,
                          const size_t &          size,
-                         const void *            value,
-                         const size_t &          value_size) const -> void
+                         const float &           value,
+                         const dType &           dtype) const -> void
 {
 #if CLE_OPENCL
-  auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-  auto err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
+  auto       opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+  const auto cast_value = castTo(value, dtype);
+  auto       err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
                                  *static_cast<cl_mem *>(*data_ptr),
-                                 value,
-                                 value_size,
+                                 &cast_value,
+                                 sizeof(cast_value),
                                  0,
                                  size,
                                  0,
@@ -500,20 +497,20 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
                          const size_t &          width,
                          const size_t &          height,
                          const size_t &          depth,
-                         const size_t &          bytes,
-                         const void *            value) const -> void
+                         const float &           value,
+                         const dType &           dtype) const -> void
 {
 #if CLE_OPENCL
-  auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-  auto err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
-                                 *static_cast<cl_mem *>(*data_ptr),
-                                 value,
-                                 bytes,
-                                 0,
-                                 width * height * depth * bytes,
-                                 0,
-                                 nullptr,
-                                 nullptr);
+  auto       opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+  const auto cast_value = castTo(value, dtype);
+  auto       err = clEnqueueFillImage(opencl_device->getCLCommandQueue(),
+                                *static_cast<cl_mem *>(*data_ptr),
+                                &cast_value,
+                                std::array<size_t, 3>{ 0, 0, 0 }.data(),
+                                std::array<size_t, 3>{ width, height, depth }.data(),
+                                0,
+                                nullptr,
+                                nullptr);
   if (err != CL_SUCCESS)
   {
     throw std::runtime_error("Error (ocl): Failed to set memory (image) with error code " + std::to_string(err) + ".");
@@ -528,8 +525,7 @@ OpenCLBackend::loadProgramFromCache(const Device::Pointer & device, const std::s
   -> void
 {
 #if CLE_OPENCL
-  auto opencl_device = std::dynamic_pointer_cast<OpenCLDevice>(device);
-
+  auto       opencl_device = std::dynamic_pointer_cast<OpenCLDevice>(device);
   cl_program prog = nullptr;
   auto       ite = opencl_device->getCache().find(hash);
   if (ite != opencl_device->getCache().end())
@@ -546,7 +542,6 @@ auto
 OpenCLBackend::saveProgramToCache(const Device::Pointer & device, const std::string & hash, void * program) const
   -> void
 {
-
 #if CLE_OPENCL
   auto opencl_device = std::dynamic_pointer_cast<OpenCLDevice>(device);
   opencl_device->getCache().emplace_hint(opencl_device->getCache().end(), hash, *static_cast<cl_program *>(program));

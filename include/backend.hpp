@@ -108,16 +108,16 @@ public:
   setMemory(const Device::Pointer & device,
             void **                 data_ptr,
             const size_t &          size,
-            const void *            value,
-            const size_t &          value_size) const -> void = 0;
+            const float &           value,
+            const dType &           dtype) const -> void = 0;
   virtual auto
   setMemory(const Device::Pointer & device,
             void **                 data_ptr,
             const size_t &          width,
             const size_t &          height,
             const size_t &          depth,
-            const size_t &          bytes,
-            const void *            value) const -> void = 0;
+            const float &           value,
+            const dType &           dtype) const -> void = 0;
 
   virtual auto
   buildKernel(const Device::Pointer & device,
@@ -247,16 +247,16 @@ public:
   setMemory(const Device::Pointer & device,
             void **                 data_ptr,
             const size_t &          size,
-            const void *            value,
-            const size_t &          value_size) const -> void override;
+            const float &           value,
+            const dType &           dtype) const -> void override;
   auto
   setMemory(const Device::Pointer & device,
             void **                 data_ptr,
             const size_t &          width,
             const size_t &          height,
             const size_t &          depth,
-            const size_t &          bytes,
-            const void *            value) const -> void override;
+            const float &           value,
+            const dType &           dtype) const -> void override;
   auto
   loadProgramFromCache(const Device::Pointer & device, const std::string & hash, void * program) const -> void override;
   auto
@@ -364,16 +364,16 @@ public:
   setMemory(const Device::Pointer & device,
             void **                 data_ptr,
             const size_t &          size,
-            const void *            value,
-            const size_t &          value_size) const -> void override;
+            const float &           value,
+            const dType &           dtype) const -> void override;
   auto
   setMemory(const Device::Pointer & device,
             void **                 data_ptr,
             const size_t &          width,
             const size_t &          height,
             const size_t &          depth,
-            const size_t &          bytes,
-            const void *            value) const -> void override;
+            const float &           value,
+            const dType &           dtype) const -> void override;
   auto
   loadProgramFromCache(const Device::Pointer & device, const std::string & hash, void * program) const -> void override;
   auto
