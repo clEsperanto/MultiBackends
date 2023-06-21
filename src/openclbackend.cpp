@@ -10,18 +10,16 @@ auto
 OpenCLBackend::getDevices(const std::string & type) const -> std::vector<Device::Pointer>
 {
 #if CLE_OPENCL
-
-  std::vector<Device::Pointer> devices; // set device type
+  std::vector<Device::Pointer> devices;
 
   cl_uint platformCount = 0;
-  clGetPlatformIDs(0, nullptr, &platformCount); // get number of platforms
+  clGetPlatformIDs(0, nullptr, &platformCount);
   if (platformCount == 0)
   {
-    throw std::runtime_error("Error: Failed to find OpenCL platform.");
+    throw std::runtime_error("Error (ocl): Failed to find platforms.");
   }
-
   std::vector<cl_platform_id> platformIds(platformCount);
-  clGetPlatformIDs(platformCount, platformIds.data(), nullptr); // get platform ids
+  clGetPlatformIDs(platformCount, platformIds.data(), nullptr);
 
   cl_device_type deviceType;
   if (type == "cpu")
@@ -38,25 +36,21 @@ OpenCLBackend::getDevices(const std::string & type) const -> std::vector<Device:
   }
   else
   {
-    std::cerr << "Warning: Unknown device type '" << type << "' provided." << std::endl;
-    std::cerr << "\tdefault: fetching 'all' devices type." << std::endl;
+    std::cerr << "Warning: Unknown device type '" << type << "' provided. Default: fetching 'all' type." << std::endl;
     deviceType = CL_DEVICE_TYPE_ALL;
   }
 
-  for (auto && platform_id : platformIds) // for each platform
+  for (auto && platform_id : platformIds)
   {
     cl_uint deviceCount = 0;
-    clGetDeviceIDs(platform_id, deviceType, 0, nullptr, &deviceCount); // get number of devices
-
+    clGetDeviceIDs(platform_id, deviceType, 0, nullptr, &deviceCount);
     if (deviceCount == 0)
     {
       continue;
     }
-
     std::vector<cl_device_id> deviceIds(deviceCount);
-    clGetDeviceIDs(platform_id, deviceType, deviceCount, deviceIds.data(), nullptr); // get device ids
-
-    for (auto && device_id : deviceIds)                                              // for each device
+    clGetDeviceIDs(platform_id, deviceType, deviceCount, deviceIds.data(), nullptr);
+    for (auto && device_id : deviceIds)
     {
       devices.emplace_back(std::make_shared<OpenCLDevice>(platform_id, device_id));
     }
@@ -64,12 +58,12 @@ OpenCLBackend::getDevices(const std::string & type) const -> std::vector<Device:
 
   if (devices.empty())
   {
-    throw std::runtime_error("Error: Failed to find OpenCL device.");
+    throw std::runtime_error("Error (ocl): Failed to find devices.");
   }
 
   return devices;
 #else
-  throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+  throw std::runtime_error("Error: OpenCL is not enabled");
 #endif
 }
 
@@ -91,7 +85,7 @@ OpenCLBackend::getDevice(const std::string & name, const std::string & type) con
   }
   return nullptr;
 #else
-  throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+  throw std::runtime_error("Error: OpenCL is not enabled");
 #endif
 }
 
@@ -107,7 +101,7 @@ OpenCLBackend::getDevicesList(const std::string & type) const -> std::vector<std
   }
   return deviceList;
 #else
-  throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+  throw std::runtime_error("Error: OpenCL is not enabled");
 #endif
 }
 
@@ -126,11 +120,11 @@ OpenCLBackend::allocateMemory(const Device::Pointer & device, const size_t & siz
   auto   mem = clCreateBuffer(opencl_device->getCLContext(), CL_MEM_READ_WRITE, size, nullptr, &err);
   if (err != CL_SUCCESS)
   {
-    throw std::runtime_error("Error: Failed to allocate OpenCL memory.");
+    throw std::runtime_error("Error (ocl): Failed to allocate memory (buffer) with error code " + std::to_string(err));
   }
   *data_ptr = static_cast<void *>(new cl_mem(mem));
 #else
-  throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+  throw std::runtime_error("Error: OpenCL is not enabled");
 #endif
 }
 
@@ -143,71 +137,68 @@ OpenCLBackend::allocateMemory(const Device::Pointer & device,
                               void **                 data_ptr) const -> void
 {
 #if CLE_OPENCL
-  allocateMemory(device, width * height * depth * toBytes(dtype), data_ptr);
+  auto            opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+  cl_image_format image_format = { 0 };
+  image_format.image_channel_order = CL_INTENSITY;
+  cl_image_desc image_description = { 0 };
+  image_description.image_type = CL_MEM_OBJECT_IMAGE1D;
+  image_description.image_width = width;
+  image_description.image_height = height;
+  image_description.image_depth = depth;
 
-  // auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-
-  // cl_image_format image_format = { 0 };
-  // image_format.image_channel_order = CL_INTENSITY;
-  // cl_image_desc image_desc = { 0 };
-  // image_desc.image_width = width;
-  // image_desc.image_height = height;
-  // image_desc.image_depth = depth;
-  // image_desc.image_row_pitch = 0;
-  // image_desc.image_slice_pitch = 0;
-  // image_desc.num_mip_levels = 0;
-  // image_desc.num_samples = 0;
-  // image_desc.buffer = nullptr;
-  // switch (dtype)
-  // {
-  //   case dType::Float:
-  //     image_format.image_channel_data_type = CL_FLOAT;
-  //     break;
-  //   case dType::Int32:
-  //     image_format.image_channel_data_type = CL_SIGNED_INT32;
-  //     break;
-  //   case dType::UInt32:
-  //     image_format.image_channel_data_type = CL_UNSIGNED_INT32;
-  //     break;
-  //   case dType::Int8:
-  //     image_format.image_channel_data_type = CL_SIGNED_INT8;
-  //     break;
-  //   case dType::UInt8:
-  //     image_format.image_channel_data_type = CL_UNSIGNED_INT8;
-  //     break;
-  //   case dType::Int16:
-  //     image_format.image_channel_data_type = CL_SIGNED_INT16;
-  //     break;
-  //   case dType::UInt16:
-  //     image_format.image_channel_data_type = CL_UNSIGNED_INT16;
-  //     break;
-  //   default:
-  //     image_format.image_channel_data_type = CL_FLOAT;
-  //     std::cerr << "WARNING: Unsupported data type for Image. Default type float is used." << std::endl;
-  //     break;
-  // }
-  // if (depth > 1)
-  // {
-  //   image_desc.image_type = CL_MEM_OBJECT_IMAGE3D;
-  // }
-  // else if (height > 1)
-  // {
-  //   image_desc.image_type = CL_MEM_OBJECT_IMAGE2D;
-  // }
-  // else
-  // {
-  //   image_desc.image_type = CL_MEM_OBJECT_IMAGE1D;
-  // }
-  // cl_int err;
-  // auto   image =
-  //   clCreateImage(opencl_device->getCLContext(), CL_MEM_READ_WRITE, &image_format, &image_desc, nullptr, &err);
-  // if (err != CL_SUCCESS)
-  // {
-  //   throw std::runtime_error("Error: Failed to allocate OpenCL memory.");
-  // }
-  // *data_ptr = static_cast<void *>(new cl_mem(image));
+  switch (dtype)
+  {
+    case dType::Float: {
+      image_format.image_channel_data_type = CL_FLOAT;
+      break;
+    }
+    case dType::Int32: {
+      image_format.image_channel_data_type = CL_SIGNED_INT32;
+      break;
+    }
+    case dType::UInt32: {
+      image_format.image_channel_data_type = CL_UNSIGNED_INT32;
+      break;
+    }
+    case dType::Int8: {
+      image_format.image_channel_data_type = CL_SIGNED_INT8;
+      break;
+    }
+    case dType::UInt8: {
+      image_format.image_channel_data_type = CL_UNSIGNED_INT8;
+      break;
+    }
+    case dType::Int16: {
+      image_format.image_channel_data_type = CL_SIGNED_INT16;
+      break;
+    }
+    case dType::UInt16: {
+      image_format.image_channel_data_type = CL_UNSIGNED_INT16;
+      break;
+    }
+    default:
+      image_format.image_channel_data_type = CL_FLOAT;
+      std::cerr << "Warning: Unsupported data type for 'image', default type 'float' will be used." << std::endl;
+      break;
+  }
+  if (height > 1)
+  {
+    image_description.image_type = CL_MEM_OBJECT_IMAGE2D;
+  }
+  if (depth > 1)
+  {
+    image_description.image_type = CL_MEM_OBJECT_IMAGE3D;
+  }
+  cl_int err;
+  auto   image =
+    clCreateImage(opencl_device->getCLContext(), CL_MEM_READ_WRITE, &image_format, &image_description, nullptr, &err);
+  if (err != CL_SUCCESS)
+  {
+    throw std::runtime_error("Error (ocl): Failed to allocate memory (image) with error code " + std::to_string(err));
+  }
+  *data_ptr = static_cast<void *>(new cl_mem(image));
 #else
-  throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+  throw std::runtime_error("Error: OpenCL is not enabled");
 #endif
 }
 
@@ -219,10 +210,10 @@ OpenCLBackend::freeMemory(const Device::Pointer & device, const mType & mtype, v
   auto   err = clReleaseMemObject(*cl_mem_ptr);
   if (err != CL_SUCCESS)
   {
-    throw std::runtime_error("Error: Failed to free OpenCL memory.");
+    throw std::runtime_error("Error (ocl): Failed to free memory with error code " + std::to_string(err));
   }
 #else
-  throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+  throw std::runtime_error("Error: OpenCL is not enabled");
 #endif
 }
 
@@ -245,10 +236,10 @@ OpenCLBackend::writeMemory(const Device::Pointer & device,
                                   nullptr);
   if (err != CL_SUCCESS)
   {
-    throw std::runtime_error("Error: Failed to write OpenCL memory.");
+    throw std::runtime_error("Error (ocl): Failed to write memory (buffer) with error code " + std::to_string(err));
   }
 #else
-  throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+  throw std::runtime_error("Error: OpenCL is not enabled");
 #endif
 }
 
@@ -264,27 +255,26 @@ OpenCLBackend::writeMemory(const Device::Pointer & device,
 #if CLE_OPENCL
   auto                        opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   const std::array<size_t, 3> origin = { 0, 0, 0 };
-  const std::array<size_t, 3> region = { width * bytes, height, depth };
-  auto                        err = clEnqueueWriteBufferRect(opencl_device->getCLCommandQueue(),
-                                      *static_cast<cl_mem *>(*data_ptr),
-                                      CL_TRUE,
-                                      origin.data(),
-                                      origin.data(),
-                                      region.data(),
-                                      0,
-                                      0,
-                                      0,
-                                      0,
-                                      host_ptr,
-                                      0,
-                                      nullptr,
-                                      nullptr);
+  const std::array<size_t, 3> region = { width, height, depth };
+  const size_t                rowPitch = (height > 1) ? width * bytes : 0;
+  const size_t                slicePitch = (depth > 1) ? rowPitch * height : 0;
+  auto                        err = clEnqueueWriteImage(opencl_device->getCLCommandQueue(),
+                                 *static_cast<cl_mem *>(*data_ptr),
+                                 CL_TRUE,
+                                 origin.data(),
+                                 region.data(),
+                                 rowPitch,
+                                 slicePitch,
+                                 host_ptr,
+                                 0,
+                                 nullptr,
+                                 nullptr);
   if (err != CL_SUCCESS)
   {
-    throw std::runtime_error("Error: Failed to write OpenCL memory.");
+    throw std::runtime_error("Error (ocl): Failed to write memory (image) with error code " + std::to_string(err));
   }
 #else
-  throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+  throw std::runtime_error("Error: OpenCL is not enabled");
 #endif
 }
 
@@ -307,10 +297,10 @@ OpenCLBackend::readMemory(const Device::Pointer & device,
                                  nullptr);
   if (err != CL_SUCCESS)
   {
-    throw std::runtime_error("Error: Failed to read OpenCL memory.");
+    throw std::runtime_error("Error (ocl): Failed to read memory (buffer) with error code " + std::to_string(err));
   }
 #else
-  throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+  throw std::runtime_error("Error: OpenCL is not enabled");
 #endif
 }
 
@@ -326,35 +316,34 @@ OpenCLBackend::readMemory(const Device::Pointer & device,
 #if CLE_OPENCL
   auto                        opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   const std::array<size_t, 3> origin = { 0, 0, 0 };
-  const std::array<size_t, 3> region = { width * bytes, height, depth };
-  auto                        err = clEnqueueReadBufferRect(opencl_device->getCLCommandQueue(),
-                                     *static_cast<const cl_mem *>(*data_ptr),
-                                     CL_TRUE,
-                                     origin.data(),
-                                     origin.data(),
-                                     region.data(),
-                                     0,
-                                     0,
-                                     0,
-                                     0,
-                                     host_ptr,
-                                     0,
-                                     nullptr,
-                                     nullptr);
+  const std::array<size_t, 3> region = { width, height, depth };
+  const size_t                rowPitch = (height > 1) ? width * bytes : 0;
+  const size_t                slicePitch = (depth > 1) ? rowPitch * height : 0;
+  auto                        err = clEnqueueReadImage(opencl_device->getCLCommandQueue(),
+                                *static_cast<const cl_mem *>(*data_ptr),
+                                CL_TRUE,
+                                origin.data(),
+                                region.data(),
+                                rowPitch,
+                                slicePitch,
+                                host_ptr,
+                                0,
+                                nullptr,
+                                nullptr);
   if (err != CL_SUCCESS)
   {
-    throw std::runtime_error("Error: Failed to read OpenCL memory.");
+    throw std::runtime_error("Error (ocl): Failed to read memory (image) with error code " + std::to_string(err));
   }
 #else
-  throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+  throw std::runtime_error("Error: OpenCL is not enabled");
 #endif
 }
 
 auto
-OpenCLBackend::copyMemory(const Device::Pointer & device,
-                          const void **           src_data_ptr,
-                          const size_t &          size,
-                          void **                 dst_data_ptr) const -> void
+OpenCLBackend::copyMemoryBufferToBuffer(const Device::Pointer & device,
+                                        const void **           src_data_ptr,
+                                        const size_t &          size,
+                                        void **                 dst_data_ptr) const -> void
 {
 #if CLE_OPENCL
   auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
@@ -369,45 +358,108 @@ OpenCLBackend::copyMemory(const Device::Pointer & device,
                                  nullptr);
   if (err != CL_SUCCESS)
   {
-    throw std::runtime_error("Error: Failed to write OpenCL memory.");
+    throw std::runtime_error("Error (ocl): Failed to copy memory (buffer->buffer) with error code " +
+                             std::to_string(err));
   }
 #else
-  throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+  throw std::runtime_error("Error: OpenCL is not enabled");
 #endif
 }
 
 auto
-OpenCLBackend::copyMemory(const Device::Pointer & device,
-                          const void **           src_data_ptr,
-                          const size_t &          width,
-                          const size_t &          height,
-                          const size_t &          depth,
-                          const size_t &          bytes,
-                          void **                 dst_data_ptr) const -> void
+OpenCLBackend::copyMemoryBufferToImage(const Device::Pointer & device,
+                                       const void **           src_data_ptr,
+                                       const size_t &          width,
+                                       const size_t &          height,
+                                       const size_t &          depth,
+                                       const size_t &          bytes,
+                                       void **                 dst_data_ptr) const -> void
 {
 #if CLE_OPENCL
   auto                        opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   const std::array<size_t, 3> origin = { 0, 0, 0 };
-  const std::array<size_t, 3> region = { width * bytes, height, depth };
-  auto                        err = clEnqueueCopyBufferRect(opencl_device->getCLCommandQueue(),
-                                     *static_cast<const cl_mem *>(*src_data_ptr),
-                                     *static_cast<cl_mem *>(*dst_data_ptr),
-                                     origin.data(),
-                                     origin.data(),
-                                     region.data(),
-                                     0,
-                                     0,
-                                     0,
-                                     0,
-                                     0,
-                                     nullptr,
-                                     nullptr);
+  const std::array<size_t, 3> region = { width, height, depth };
+  auto                        err = clEnqueueCopyBufferToImage(opencl_device->getCLCommandQueue(),
+                                        *static_cast<const cl_mem *>(*src_data_ptr),
+                                        *static_cast<cl_mem *>(*dst_data_ptr),
+                                        0,
+                                        origin.data(),
+                                        region.data(),
+                                        0,
+                                        nullptr,
+                                        nullptr);
   if (err != CL_SUCCESS)
   {
-    throw std::runtime_error("Error: Failed to write OpenCL memory.");
+    throw std::runtime_error("Error (ocl): Failed to copy memory (buffer->image) with error code " +
+                             std::to_string(err));
   }
 #else
-  throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+  throw std::runtime_error("Error: OpenCL is not enabled");
+#endif
+}
+
+auto
+OpenCLBackend::copyMemoryImageToBuffer(const Device::Pointer & device,
+                                       const void **           src_data_ptr,
+                                       const size_t &          width,
+                                       const size_t &          height,
+                                       const size_t &          depth,
+                                       const size_t &          bytes,
+                                       void **                 dst_data_ptr) const -> void
+{
+#if CLE_OPENCL
+  auto                        opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+  const std::array<size_t, 3> origin = { 0, 0, 0 };
+  const std::array<size_t, 3> region = { width, height, depth };
+  auto                        err = clEnqueueCopyImageToBuffer(opencl_device->getCLCommandQueue(),
+                                        *static_cast<const cl_mem *>(*src_data_ptr),
+                                        *static_cast<cl_mem *>(*dst_data_ptr),
+                                        origin.data(),
+                                        region.data(),
+                                        0,
+                                        0,
+                                        nullptr,
+                                        nullptr);
+
+  if (err != CL_SUCCESS)
+  {
+    throw std::runtime_error("Error (ocl): Failed to copy memory (image->buffer) with error code " +
+                             std::to_string(err));
+  }
+#else
+  throw std::runtime_error("Error: OpenCL is not enabled");
+#endif
+}
+
+auto
+OpenCLBackend::copyMemoryImageToImage(const Device::Pointer & device,
+                                      const void **           src_data_ptr,
+                                      const size_t &          width,
+                                      const size_t &          height,
+                                      const size_t &          depth,
+                                      const size_t &          bytes,
+                                      void **                 dst_data_ptr) const -> void
+{
+#if CLE_OPENCL
+  auto                        opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+  const std::array<size_t, 3> origin = { 0, 0, 0 };
+  const std::array<size_t, 3> region = { width, height, depth };
+  auto                        err = clEnqueueCopyImage(opencl_device->getCLCommandQueue(),
+                                *static_cast<const cl_mem *>(*src_data_ptr),
+                                *static_cast<cl_mem *>(*dst_data_ptr),
+                                origin.data(),
+                                origin.data(),
+                                region.data(),
+                                0,
+                                nullptr,
+                                nullptr);
+  if (err != CL_SUCCESS)
+  {
+    throw std::runtime_error("Error (ocl): Failed to copy memory (image->image) with error code " +
+                             std::to_string(err));
+  }
+#else
+  throw std::runtime_error("Error: OpenCL is not enabled");
 #endif
 }
 
@@ -415,15 +467,16 @@ auto
 OpenCLBackend::setMemory(const Device::Pointer & device,
                          void **                 data_ptr,
                          const size_t &          size,
-                         const void *            value,
-                         const size_t &          value_size) const -> void
+                         const float &           value,
+                         const dType &           dtype) const -> void
 {
 #if CLE_OPENCL
-  auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-  auto err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
+  auto       opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+  const auto cast_value = castTo(value, dtype);
+  auto       err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
                                  *static_cast<cl_mem *>(*data_ptr),
-                                 value,
-                                 value_size,
+                                 &cast_value,
+                                 sizeof(cast_value),
                                  0,
                                  size,
                                  0,
@@ -431,10 +484,10 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
                                  nullptr);
   if (err != CL_SUCCESS)
   {
-    throw std::runtime_error("Error: Failed to set OpenCL memory with error code " + std::to_string(err) + ".");
+    throw std::runtime_error("Error (ocl): Failed to set memory (buffer) with error code " + std::to_string(err) + ".");
   }
 #else
-  throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+  throw std::runtime_error("Error: OpenCL is not enabled");
 #endif
 }
 
@@ -444,26 +497,26 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
                          const size_t &          width,
                          const size_t &          height,
                          const size_t &          depth,
-                         const size_t &          bytes,
-                         const void *            value) const -> void
+                         const float &           value,
+                         const dType &           dtype) const -> void
 {
 #if CLE_OPENCL
-  auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-  auto err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
-                                 *static_cast<cl_mem *>(*data_ptr),
-                                 value,
-                                 bytes,
-                                 0,
-                                 width * height * depth * bytes,
-                                 0,
-                                 nullptr,
-                                 nullptr);
+  auto       opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+  const auto cast_value = castTo(value, dtype);
+  auto       err = clEnqueueFillImage(opencl_device->getCLCommandQueue(),
+                                *static_cast<cl_mem *>(*data_ptr),
+                                &cast_value,
+                                std::array<size_t, 3>{ 0, 0, 0 }.data(),
+                                std::array<size_t, 3>{ width, height, depth }.data(),
+                                0,
+                                nullptr,
+                                nullptr);
   if (err != CL_SUCCESS)
   {
-    throw std::runtime_error("Error: Failed to set OpenCL memory.");
+    throw std::runtime_error("Error (ocl): Failed to set memory (image) with error code " + std::to_string(err) + ".");
   }
 #else
-  throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+  throw std::runtime_error("Error: OpenCL is not enabled");
 #endif
 }
 
@@ -472,8 +525,7 @@ OpenCLBackend::loadProgramFromCache(const Device::Pointer & device, const std::s
   -> void
 {
 #if CLE_OPENCL
-  auto opencl_device = std::dynamic_pointer_cast<OpenCLDevice>(device);
-
+  auto       opencl_device = std::dynamic_pointer_cast<OpenCLDevice>(device);
   cl_program prog = nullptr;
   auto       ite = opencl_device->getCache().find(hash);
   if (ite != opencl_device->getCache().end())
@@ -482,7 +534,7 @@ OpenCLBackend::loadProgramFromCache(const Device::Pointer & device, const std::s
   }
   *static_cast<cl_program *>(program) = prog;
 #else
-  throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+  throw std::runtime_error("Error: OpenCL is not enabled");
 #endif
 }
 
@@ -490,12 +542,11 @@ auto
 OpenCLBackend::saveProgramToCache(const Device::Pointer & device, const std::string & hash, void * program) const
   -> void
 {
-
 #if CLE_OPENCL
   auto opencl_device = std::dynamic_pointer_cast<OpenCLDevice>(device);
   opencl_device->getCache().emplace_hint(opencl_device->getCache().end(), hash, *static_cast<cl_program *>(program));
 #else
-  throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+  throw std::runtime_error("Error: OpenCL is not enabled");
 #endif
 }
 
@@ -517,11 +568,8 @@ OpenCLBackend::buildKernel(const Device::Pointer & device,
   prog = clCreateProgramWithSource(opencl_device->getCLContext(), 1, &source, nullptr, &err);
   if (err != CL_SUCCESS)
   {
-    size_t                 len;
-    std::array<char, 2048> buffer;
-    clGetProgramBuildInfo(prog, opencl_device->getCLDevice(), CL_PROGRAM_BUILD_LOG, buffer.size(), buffer.data(), &len);
-    std::cerr << buffer.data() << std::endl;
-    throw std::runtime_error("Error: Failed to create program from source.");
+    throw std::runtime_error("Error (ocl): Failed to create program from source with error code " +
+                             std::to_string(err));
   }
   cl_int buildStatus = clBuildProgram(prog, 0, nullptr, nullptr, nullptr, nullptr);
   if (buildStatus != CL_SUCCESS)
@@ -530,19 +578,19 @@ OpenCLBackend::buildKernel(const Device::Pointer & device,
     std::array<char, 2048> buffer;
     clGetProgramBuildInfo(prog, opencl_device->getCLDevice(), CL_PROGRAM_BUILD_LOG, 0, nullptr, &len);
     clGetProgramBuildInfo(prog, opencl_device->getCLDevice(), CL_PROGRAM_BUILD_LOG, buffer.size(), buffer.data(), &len);
-    std::cerr << buffer.data() << std::endl;
-    throw std::runtime_error("Error: Failed to build program executable.");
+    std::cerr << "Build log: " << buffer.data() << std::endl;
+    throw std::runtime_error("Error (ocl): Failed to build program with error code " + std::to_string(err));
   }
   // // saveProgramToCache(device, hash, prog);
   // // }
   auto ocl_kernel = clCreateKernel(prog, kernel_name.c_str(), &err);
   if (err != CL_SUCCESS)
   {
-    throw std::runtime_error("Error: Failed to create kernel (" + std::to_string(err) + ").)");
+    throw std::runtime_error("Error: Failed to create kernel with error code " + std::to_string(err));
   }
   *reinterpret_cast<cl_kernel *>(kernel) = ocl_kernel;
 #else
-  throw std::runtime_error("OpenCLBackend::getDevices: OpenCL is not enabled");
+  throw std::runtime_error("Error: OpenCL is not enabled");
 #endif
 }
 
@@ -554,8 +602,8 @@ OpenCLBackend::executeKernel(const Device::Pointer &       device,
                              const std::vector<void *> &   args,
                              const std::vector<size_t> &   sizes) const -> void
 {
-  auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-  // build kernel from source
+#if CLE_OPENCL
+  auto      opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   cl_kernel ocl_kernel;
   try
   {
@@ -563,30 +611,31 @@ OpenCLBackend::executeKernel(const Device::Pointer &       device,
   }
   catch (const std::exception & e)
   {
-    throw std::runtime_error("Error: Failed to build kernel. \n\t > " + std::string(e.what()));
+    throw std::runtime_error("Error (ocl): Failed to build kernel. \n\t > " + std::string(e.what()));
   }
-  // set kernel arguments
   for (size_t i = 0; i < args.size(); i++)
   {
     auto err = clSetKernelArg(ocl_kernel, i, sizes[i], args[i]);
     if (err != CL_SUCCESS)
     {
-      throw std::runtime_error("Error: Failed to set kernel arguments (" + std::to_string(err) + ").)");
+      throw std::runtime_error("Error (ocl): Failed to set kernel arguments (" + std::to_string(err) + ").)");
     }
   }
-  // execute kernel
   auto err = clEnqueueNDRangeKernel(
     opencl_device->getCLCommandQueue(), ocl_kernel, 3, nullptr, global_size.data(), nullptr, 0, nullptr, nullptr);
   if (err != CL_SUCCESS)
   {
-    throw std::runtime_error("Error: Failed to enqueue kernel (" + std::to_string(err) + ").)");
+    throw std::runtime_error("Error (ocl): Failed to launch kernel (" + std::to_string(err) + ").)");
   }
+#else
+  throw std::runtime_error("Error: OpenCL is not enabled");
+#endif
 }
 
 auto
 OpenCLBackend::getPreamble() const -> std::string
 {
-  return kernel::preamble_cl; // @StRigaud TODO: add OpenCL preamble from header file
+  return kernel::preamble_cl;
 }
 
 } // namespace cle

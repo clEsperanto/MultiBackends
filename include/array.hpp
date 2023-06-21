@@ -68,27 +68,22 @@ public:
   auto
   copy(const Array & dst) const -> void;
 
-  template <typename T>
-  auto
-  fill(const T & value) const -> void
-  {
-    if (!initialized())
-    {
-      std::cerr << "Error: Arrays are not initialized_" << std::endl;
-    }
-    if (dim() > 1)
-    {
-      backend_.setMemory(
-        device(), get(), width(), height(), depth(), bytesPerElements(), static_cast<const void *>(&value));
-    }
-    else
-    {
-      backend_.setMemory(
-        device(), get(), nbElements() * bytesPerElements(), static_cast<const void *>(&value), bytesPerElements());
-    }
-    // backend_.setMemory(device(), get(), nbElements() * bytesPerElements(), static_cast<const void *>(&value),
-    // sizeof(T));
-  }
+  // auto
+  // fill(const float & value) const -> void
+  // {
+  //   if (!initialized())
+  //   {
+  //     std::cerr << "Error: Arrays are not initialized_" << std::endl;
+  //   }
+  //   if (mtype() == mType::Image)
+  //   {
+  //     backend_.setMemory(device(), get(), width(), height(), depth(), value, dtype());
+  //   }
+  //   else
+  //   {
+  //     backend_.setMemory(device(), get(), nbElements() * bytesPerElements(), value, dtype());
+  //   }
+  // }
 
   [[nodiscard]] auto
   nbElements() const -> size_t;
