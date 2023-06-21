@@ -403,7 +403,7 @@ public:
   getInstance() -> BackendManager &;
 
   auto
-  setBackend(bool useCUDA) -> void;
+  setBackend(bool useCUDA = false) -> void;
 
   [[nodiscard]] auto
   getBackend() const -> const Backend &;
