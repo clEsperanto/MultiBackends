@@ -55,8 +55,6 @@ static auto
 cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_list) -> std::string
 {
   // @CherifMZ TODO: write cuda Defines to transform ocl Kernel into compatible cuda kernel
-  // See
-  // https://github.com/clEsperanto/pyclesperanto_prototype/blob/master/pyclesperanto_prototype/_tier0/_cuda_execute.py
 
   std::ostringstream defines;
 
@@ -69,7 +67,7 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
     defines << "\n";
   }
 
-  std::string size_params = "int global_size_0_size, int global_size_1_size, int global_size_2_size, ";
+  std::string size_params = "";
   for (const auto & param : parameter_list)
   {
     if (std::holds_alternative<const float>(param.second) || std::holds_alternative<const int>(param.second))
@@ -89,40 +87,33 @@ cudaDefines(const ParameterList & parameter_list, const ConstantList & constant_
         ndim = "1";
         pos_type = "int";
         pos = "(pos0)";
+        defines << "\n#define POS_" << param.first << "_INSTANCE(pos0,pos1,pos2,pos3) " << pos;
         break;
       case 2:
         ndim = "2";
         pos_type = "int2";
         pos = "(pos0, pos1)";
+        defines << "\n#define POS_" << param.first << "_INSTANCE(pos0,pos1,pos2,pos3) make_" << pos_type << "" << pos;
         break;
       case 3:
-        ndim = "3";
-        pos_type = "int4";
-        pos = "(pos0, pos1, pos2, 0)";
-        break;
       default:
         ndim = "3";
         pos_type = "int4";
         pos = "(pos0, pos1, pos2, 0)";
+        defines << "\n#define POS_" << param.first << "_INSTANCE(pos0,pos1,pos2,pos3) make_" << pos_type << "" << pos;
         break;
     }
-
-    std::string width = "image_" + param.first + "_width";
-    std::string height = "image_" + param.first + "_height";
-    std::string depth = "image_" + param.first + "_depth";
-    size_params = size_params + "int " + width + ", int " + height + ", int " + depth + ", ";
-
-    defines << "\n";
-    defines << "\n#define IMAGE_SIZE_" << param.first << "_WIDTH " << width;
-    defines << "\n#define IMAGE_SIZE_" << param.first << "_HEIGHT " << height;
-    defines << "\n#define IMAGE_SIZE_" << param.first << "_DEPTH " << depth;
-    defines << "\n";
 
     defines << "\n";
     defines << "\n#define CONVERT_" << param.first << "_PIXEL_TYPE clij_convert_" << arr->dtype() << "_sat";
     defines << "\n#define IMAGE_" << param.first << "_PIXEL_TYPE " << arr->dtype() << "";
     defines << "\n#define POS_" << param.first << "_TYPE " << pos_type;
-    defines << "\n#define POS_" << param.first << "_INSTANCE(pos0,pos1,pos2,pos3) make_" << pos_type << "" << pos;
+    defines << "\n";
+
+    defines << "\n";
+    defines << "\n#define IMAGE_SIZE_" << param.first << "_WIDTH " << std::to_string(arr->width());
+    defines << "\n#define IMAGE_SIZE_" << param.first << "_HEIGHT " << std::to_string(arr->height());
+    defines << "\n#define IMAGE_SIZE_" << param.first << "_DEPTH " << std::to_string(arr->depth());
     defines << "\n";
 
     defines << "\n";
@@ -288,13 +279,13 @@ execute(const Device::Pointer & device,
     if (std::holds_alternative<Array::Pointer>(param.second))
     {
       const auto & arr = std::get<Array::Pointer>(param.second);
-      args_ptr.push_back(*arr->get());
       switch (device->getType())
       {
         case Device::Type::CUDA:
-          args_size.push_back(arr->nbElements() * arr->bytesPerElements()); // @StRigaud TODO: to be tested on CUDA side
+          args_ptr.push_back(arr->get());
           break;
         case Device::Type::OPENCL:
+          args_ptr.push_back(*arr->get());
           args_size.push_back(sizeof(cl_mem));
           break;
       }
