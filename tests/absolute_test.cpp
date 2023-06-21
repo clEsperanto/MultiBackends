@@ -36,7 +36,7 @@ main(int argc, char const * argv[]) -> int
 
   cle::BackendManager::getInstance().setBackend(false);
   assert(run_absolute<T>(cle::mType::Buffer) == 0);
-  // assert(run_absolute<T>(cle::mType::Image) == 0);
+  assert(run_absolute<T>(cle::mType::Image) == 0);
 
   cle::BackendManager::getInstance().setBackend(true);
   assert(run_absolute<T>(cle::mType::Buffer) == 0);
