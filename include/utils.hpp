@@ -154,6 +154,36 @@ toBytes(const dType & dtype) -> size_t
   }
 }
 
+template <typename T>
+inline auto
+castTo(const T & value, const dType & dtype) ->
+  typename std::common_type<float, uint8_t, uint16_t, uint32_t, uint64_t, int8_t, int16_t, int32_t, int64_t>::type
+{
+  switch (dtype)
+  {
+    case dType::Float:
+      return static_cast<float>(value);
+    case dType::Int32:
+      return static_cast<int32_t>(value);
+    case dType::UInt32:
+      return static_cast<uint32_t>(value);
+    case dType::Int8:
+      return static_cast<int8_t>(value);
+    case dType::UInt8:
+      return static_cast<uint8_t>(value);
+    case dType::Int16:
+      return static_cast<int16_t>(value);
+    case dType::UInt16:
+      return static_cast<uint16_t>(value);
+    case dType::Int64:
+      return static_cast<int64_t>(value);
+    case dType::UInt64:
+      return static_cast<uint64_t>(value);
+    default:
+      throw std::invalid_argument("Invalid Array::Type value");
+  }
+}
+
 inline auto
 sigma2radius(const float & sigma) -> int
 {
