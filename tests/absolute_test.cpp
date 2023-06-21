@@ -4,38 +4,41 @@
 #include "tier1.hpp"
 #include "utils.hpp"
 
-auto
-run_absolute_test() -> bool
-{
-  auto device = cle::BackendManager::getInstance().getBackend().getDevice("TX", "all");
-  device->initialize();
+#include <assert.h>
 
-  std::vector<float> valid_data = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-  std::vector<float> input_data = { -1, -2, -3, -4, -5, -6, -7, -8, -9, -1, -2, -3, -4, -5, -6, -7, -8, -9 };
-  cle::Array         gpu_input(3, 3, 2, cle::dType::Float, cle::mType::Buffer, input_data.data(), device);
-  cle::Array         gpu_output(3, 3, 2, cle::dType::Float, cle::mType::Buffer, device);
-  gpu_input.copy(gpu_output);
+template <class T>
+auto
+run_absolute(cle::mType type) -> bool
+{
+  std::cout << cle::BackendManager::getInstance().getBackend().getType() << " test (" << type << ")" << std::endl;
+  auto device = cle::BackendManager::getInstance().getBackend().getDevice("TX", "all");
+
+  static const size_t w = 5;
+  static const size_t h = 4;
+  static const size_t d = 3;
+  std::vector<T>      input(w * h * d, -5);
+  std::vector<T>      output(w * h * d, -5);
+  std::vector<T>      valid(w * h * d, 5);
+
+  cle::Array gpu_input(w, h, d, cle::toType<T>(), type, input.data(), device);
+  cle::Array gpu_output(gpu_input);
 
   cle::tier1::absolute_func(gpu_input, gpu_output, device);
 
-  std::vector<float> output_data(input_data.size());
-  gpu_output.read(output_data.data());
-
-  return std::equal(output_data.begin(), output_data.end(), valid_data.begin());
+  gpu_output.read(output.data());
+  return std::equal(output.begin(), output.end(), valid.begin()) ? 0 : 1;
 }
 
 auto
 main(int argc, char const * argv[]) -> int
 {
+  using T = float;
+
   cle::BackendManager::getInstance().setBackend(false);
-  if (!run_absolute_test())
-  {
-    return 0;
-  }
+  assert(run_absolute<T>(cle::mType::Buffer) == 0);
+  // assert(run_absolute<T>(cle::mType::Image) == 0);
 
   cle::BackendManager::getInstance().setBackend(true);
-  if (!run_absolute_test())
-  {
-    return 0;
-  }
+  assert(run_absolute<T>(cle::mType::Buffer) == 0);
+  // assert(run_absolute<T>(cle::mType::Image) == 0);
 }
