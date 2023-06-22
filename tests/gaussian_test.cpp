@@ -60,5 +60,4 @@ main(int argc, char const * argv[]) -> int
 
   cle::BackendManager::getInstance().setBackend(true);
   assert(run_gaussian_blur<T>(cle::mType::Buffer) == 0);
-  // assert(run_gaussian_blur<T>(cle::mType::Image) == 0);
 }
