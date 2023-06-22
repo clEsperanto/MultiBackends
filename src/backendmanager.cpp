@@ -13,7 +13,7 @@ BackendManager::getInstance() -> BackendManager &
 auto
 BackendManager::setBackend(bool useCUDA) -> void
 {
-  if (useCUDA)
+  if (useCUDA && CLE_CUDA)
   {
     this->backend = std::make_unique<CUDABackend>();
   }
