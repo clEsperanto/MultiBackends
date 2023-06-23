@@ -60,6 +60,11 @@ public:
   ~Array();
 
   auto
+  operator=(const Array & arr) -> Array &;
+  auto
+  operator=(Array && arr) noexcept -> Array &;
+
+  auto
   allocate() -> void;
   auto
   write(const void * host_data) -> void;
