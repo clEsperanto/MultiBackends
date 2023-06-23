@@ -7,7 +7,7 @@ namespace cle::tier1
 {
 
 auto
-absolute_func(const Array & src, const Array & dst, const Device::Pointer & device) -> void
+absolute_func(const Device::Pointer & device, const Array & src, const Array & dst) -> void
 {
   const KernelInfo    kernel = { "absolute", kernel::absolute };
   const ConstantList  constants = {};
@@ -17,12 +17,12 @@ absolute_func(const Array & src, const Array & dst, const Device::Pointer & devi
 }
 
 auto
-execute_separable_func(const Array &                src,
+execute_separable_func(const Device::Pointer &      device,
+                       const KernelInfo &           kernel,
+                       const Array &                src,
                        const Array &                dst,
                        const std::array<float, 3> & sigma,
-                       const std::array<int, 3> &   radius,
-                       const KernelInfo &           kernel,
-                       const Device::Pointer &      device) -> void
+                       const std::array<int, 3> &   radius) -> void
 {
   const ConstantList constants = {};
   const RangeArray   global_range = { dst.width(), dst.height(), dst.depth() };
@@ -66,20 +66,22 @@ execute_separable_func(const Array &                src,
 }
 
 auto
-gaussian_blur_func(const Array &           src,
+gaussian_blur_func(const Device::Pointer & device,
+                   const Array &           src,
                    const Array &           dst,
                    const float &           sigma_x,
                    const float &           sigma_y,
-                   const float &           sigma_z,
-                   const Device::Pointer & device) -> void
+                   const float &           sigma_z) -> void
 {
   const KernelInfo kernel = { "gaussian_blur_separable", kernel::gaussian_blur_separable };
-  execute_separable_func(src,
+  execute_separable_func(device,
+                         kernel,
+                         src,
                          dst,
                          { sigma_x, sigma_y, sigma_z },
-                         { sigma2radius(sigma_x), sigma2radius(sigma_y), sigma2radius(sigma_z) },
-                         kernel,
-                         device);
+                         { sigma2radius(sigma_x), sigma2radius(sigma_y), sigma2radius(sigma_z) }
+
+  );
 }
 
 } // namespace cle::tier1
