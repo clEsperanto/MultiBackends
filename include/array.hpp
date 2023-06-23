@@ -60,6 +60,43 @@ public:
   ~Array();
 
   auto
+  operator=(const Array & arr) -> Array &
+  {
+    if (this == &arr)
+    {
+      return *this;
+    }
+    this->width_ = arr.width_;
+    this->height_ = arr.height_;
+    this->depth_ = arr.depth_;
+    this->dataType_ = arr.dataType_;
+    this->memType_ = arr.memType_;
+    this->device_ = arr.device_;
+    this->initialized_ = arr.initialized_;
+    allocate();
+    arr.copy(*this);
+    return *this;
+  }
+
+  auto
+  operator=(const Array && arr) -> Array &
+  {
+    if (this == &arr)
+    {
+      return *this;
+    }
+    this->width_ = std::move(arr.width_);
+    this->height_ = std::move(arr.height_);
+    this->depth_ = std::move(arr.depth_);
+    this->dataType_ = std::move(arr.dataType_);
+    this->memType_ = std::move(arr.memType_);
+    this->device_ = std::move(arr.device_);
+    this->initialized_ = std::move(arr.initialized_);
+    this->data_ = std::move(arr.data_);
+    return *this;
+  }
+
+  auto
   allocate() -> void;
   auto
   write(const void * host_data) -> void;
@@ -96,6 +133,13 @@ public:
   get() const -> void **;
   [[nodiscard]] auto
   c_get() const -> const void **;
+
+  auto
+  get_count() const -> size_t
+  {
+    // return the count number of the shared_ptr data_
+    return data_.use_count();
+  }
 
   friend auto
   operator<<(std::ostream & out, const Array & array) -> std::ostream &
