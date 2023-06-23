@@ -28,11 +28,11 @@ absolute_func(const Device::Pointer & device, const Array & src, const Array & d
 
 auto
 add_images_weighted_func(const Device::Pointer & device,
+                         const Array &           src0,
                          const Array &           src1,
-                         const Array &           src2,
                          const Array &           dst,
-                         const float &           factor1,
-                         const float &           factor2) -> void;
+                         const float &           factor0,
+                         const float &           factor1) -> void;
 
 } // namespace cle::tier1
 
