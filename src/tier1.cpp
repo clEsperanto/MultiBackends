@@ -1,6 +1,7 @@
 #include "tier1.hpp"
 
 #include "cle_absolute.h"
+#include "cle_add_images_weighted.h"
 #include "cle_gaussian_blur_separable.h"
 
 namespace cle::tier1
@@ -13,6 +14,23 @@ absolute_func(const Device::Pointer & device, const Array & src, const Array & d
   const ConstantList  constants = {};
   const ParameterList parameters = { { "src", src.ptr() }, { "dst", dst.ptr() } };
   const RangeArray    global_range = { dst.width(), dst.height(), dst.depth() };
+  execute(device, kernel, parameters, constants, global_range);
+}
+
+auto
+add_images_weighted_func(const Device::Pointer & device,
+                         const Array &           src1,
+                         const Array &           src2,
+                         const Array &           dst,
+                         const float &           factor1,
+                         const float &           factor2) -> void
+{
+  const KernelInfo    kernel = { "add_images_weighted", kernel::add_images_weighted };
+  const ConstantList  constants = {};
+  const ParameterList parameters = {
+    { "src1", src1.ptr() }, { "src2", src2.ptr() }, { "dst", dst.ptr() }, { "factor1", factor1 }, { "factor2", factor2 }
+  };
+  const RangeArray global_range = { dst.width(), dst.height(), dst.depth() };
   execute(device, kernel, parameters, constants, global_range);
 }
 

@@ -2,9 +2,8 @@
 #define __INCLUDE_TIER1_HPP
 
 #include "array.hpp"
-#include "backend.hpp"
+#include "device.hpp"
 #include "execution.hpp"
-
 
 namespace cle::tier1
 {
@@ -26,6 +25,14 @@ gaussian_blur_func(const Device::Pointer & device,
 
 auto
 absolute_func(const Device::Pointer & device, const Array & src, const Array & dst) -> void;
+
+auto
+add_images_weighted_func(const Device::Pointer & device,
+                         const Array &           src1,
+                         const Array &           src2,
+                         const Array &           dst,
+                         const float &           factor1,
+                         const float &           factor2) -> void;
 
 } // namespace cle::tier1
 
