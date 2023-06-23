@@ -471,17 +471,130 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
                          const dType &           dtype) const -> void
 {
 #if CLE_OPENCL
-  auto       opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-  const auto cast_value = castTo(value, dtype);
-  auto       err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
-                                 *static_cast<cl_mem *>(*data_ptr),
-                                 &cast_value,
-                                 sizeof(cast_value),
-                                 0,
-                                 size,
-                                 0,
-                                 nullptr,
-                                 nullptr);
+  auto   opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+  cl_int err;
+  switch (dtype)
+  {
+    case dType::Float: {
+      err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
+                                *static_cast<cl_mem *>(*data_ptr),
+                                &value,
+                                sizeof(value),
+                                0,
+                                size,
+                                0,
+                                nullptr,
+                                nullptr);
+      break;
+    }
+    case dType::Int32: {
+      auto cval = static_cast<int32_t>(value);
+      err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
+                                *static_cast<cl_mem *>(*data_ptr),
+                                &cval,
+                                sizeof(cval),
+                                0,
+                                size,
+                                0,
+                                nullptr,
+                                nullptr);
+      break;
+    }
+    case dType::UInt32: {
+      auto cval = static_cast<uint32_t>(value);
+      err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
+                                *static_cast<cl_mem *>(*data_ptr),
+                                &cval,
+                                sizeof(cval),
+                                0,
+                                size,
+                                0,
+                                nullptr,
+                                nullptr);
+      break;
+    }
+    case dType::Int8: {
+      auto cval = static_cast<int8_t>(value);
+      err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
+                                *static_cast<cl_mem *>(*data_ptr),
+                                &cval,
+                                sizeof(cval),
+                                0,
+                                size,
+                                0,
+                                nullptr,
+                                nullptr);
+      break;
+    }
+    case dType::UInt8: {
+      auto cval = static_cast<uint8_t>(value);
+      err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
+                                *static_cast<cl_mem *>(*data_ptr),
+                                &cval,
+                                sizeof(cval),
+                                0,
+                                size,
+                                0,
+                                nullptr,
+                                nullptr);
+      break;
+    }
+    case dType::Int16: {
+      auto cval = static_cast<int16_t>(value);
+      err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
+                                *static_cast<cl_mem *>(*data_ptr),
+                                &cval,
+                                sizeof(cval),
+                                0,
+                                size,
+                                0,
+                                nullptr,
+                                nullptr);
+      break;
+    }
+    case dType::UInt16: {
+      auto cval = static_cast<uint16_t>(value);
+      err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
+                                *static_cast<cl_mem *>(*data_ptr),
+                                &cval,
+                                sizeof(cval),
+                                0,
+                                size,
+                                0,
+                                nullptr,
+                                nullptr);
+      break;
+    }
+    case dType::Int64: {
+      auto cval = static_cast<int64_t>(value);
+      err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
+                                *static_cast<cl_mem *>(*data_ptr),
+                                &cval,
+                                sizeof(cval),
+                                0,
+                                size,
+                                0,
+                                nullptr,
+                                nullptr);
+      break;
+    }
+    case dType::UInt64: {
+      auto cval = static_cast<uint64_t>(value);
+      err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
+                                *static_cast<cl_mem *>(*data_ptr),
+                                &cval,
+                                sizeof(cval),
+                                0,
+                                size,
+                                0,
+                                nullptr,
+                                nullptr);
+      break;
+    }
+    default:
+      throw std::invalid_argument("Invalid Array::Type value");
+  }
+
   if (err != CL_SUCCESS)
   {
     throw std::runtime_error("Error (ocl): Failed to set memory (buffer) with error code " + std::to_string(err) + ".");
@@ -501,16 +614,55 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
                          const dType &           dtype) const -> void
 {
 #if CLE_OPENCL
-  auto       opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
-  const auto cast_value = castTo(value, dtype);
-  auto       err = clEnqueueFillImage(opencl_device->getCLCommandQueue(),
-                                *static_cast<cl_mem *>(*data_ptr),
-                                &cast_value,
-                                std::array<size_t, 3>{ 0, 0, 0 }.data(),
-                                std::array<size_t, 3>{ width, height, depth }.data(),
-                                0,
-                                nullptr,
-                                nullptr);
+  auto                  opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
+  std::array<size_t, 3> origin{ 0, 0, 0 };
+  std::array<size_t, 3> region{ width, height, depth };
+  cl_int                err;
+  switch (dtype)
+  {
+    case dType::Float: {
+      auto cval = static_cast<cl_float>(value);
+      err = clEnqueueFillImage(opencl_device->getCLCommandQueue(),
+                               *static_cast<cl_mem *>(*data_ptr),
+                               &cval,
+                               origin.data(),
+                               region.data(),
+                               0,
+                               nullptr,
+                               nullptr);
+      break;
+    }
+    case dType::Int32:
+    case dType::Int16:
+    case dType::Int8: {
+      auto cval = static_cast<cl_int>(value);
+      err = clEnqueueFillImage(opencl_device->getCLCommandQueue(),
+                               *static_cast<cl_mem *>(*data_ptr),
+                               &cval,
+                               origin.data(),
+                               region.data(),
+                               0,
+                               nullptr,
+                               nullptr);
+      break;
+    }
+    case dType::UInt32:
+    case dType::UInt16:
+    case dType::UInt8: {
+      auto cval = static_cast<cl_uint>(value);
+      err = clEnqueueFillImage(opencl_device->getCLCommandQueue(),
+                               *static_cast<cl_mem *>(*data_ptr),
+                               &cval,
+                               origin.data(),
+                               region.data(),
+                               0,
+                               nullptr,
+                               nullptr);
+      break;
+    }
+    default:
+      throw std::invalid_argument("Invalid Array::Type value");
+  }
   if (err != CL_SUCCESS)
   {
     throw std::runtime_error("Error (ocl): Failed to set memory (image) with error code " + std::to_string(err) + ".");

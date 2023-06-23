@@ -562,33 +562,57 @@ CUDABackend::setMemory(const Device::Pointer & device,
   {
     throw std::runtime_error("Error (cuda): Failed to get context from device (" + std::to_string(err) + ").");
   }
-
-  auto cast_value = castTo(value, dtype);
-  switch (sizeof(cast_value))
+  const auto count = size / toBytes(dtype);
+  const auto dev_ptr = reinterpret_cast<CUdeviceptr>(*data_ptr);
+  switch (dtype)
   {
-    case sizeof(uint32_t): {
-      std::cout << "uint32_t" << std::endl;
-      err = cuMemsetD32(reinterpret_cast<CUdeviceptr>(*data_ptr),
-                        *(reinterpret_cast<uint32_t *>(&cast_value)),
-                        static_cast<uint32_t>(size / sizeof(uint32_t)));
+    case dType::Float: {
+      auto cval = static_cast<float>(value);
+      err = cuMemsetD32(dev_ptr, *(reinterpret_cast<uint32_t *>(&cval)), count);
       break;
     }
-    case sizeof(uint16_t): {
-      std::cout << "uint16_t" << std::endl;
-      err = cuMemsetD16(reinterpret_cast<CUdeviceptr>(*data_ptr),
-                        *(reinterpret_cast<uint16_t *>(&cast_value)),
-                        static_cast<uint16_t>(size / sizeof(uint16_t)));
+    case dType::Int64: {
+      std::vector<int64_t> host_buffer(count, static_cast<int64_t>(value));
+      writeMemory(device, data_ptr, size, host_buffer.data());
       break;
     }
-    case sizeof(uint8_t): {
-      std::cout << "uint8_t" << std::endl;
-      err = cuMemsetD8(reinterpret_cast<CUdeviceptr>(*data_ptr),
-                       *(reinterpret_cast<uint8_t *>(&cast_value)),
-                       static_cast<uint8_t>(size / sizeof(uint8_t)));
+    case dType::UInt64: {
+      std::vector<uint64_t> host_buffer(count, static_cast<uint64_t>(value));
+      writeMemory(device, data_ptr, size, host_buffer.data());
+      break;
+    }
+    case dType::Int32: {
+      auto cval = static_cast<int32_t>(value);
+      err = cuMemsetD32(dev_ptr, *(reinterpret_cast<uint32_t *>(&cval)), count);
+      break;
+    }
+    case dType::UInt32: {
+      auto cval = static_cast<uint32_t>(value);
+      err = cuMemsetD32(dev_ptr, *(reinterpret_cast<uint32_t *>(&cval)), count);
+      break;
+    }
+    case dType::Int16: {
+      auto cval = static_cast<int16_t>(value);
+      err = cuMemsetD16(dev_ptr, *(reinterpret_cast<uint16_t *>(&cval)), count);
+      break;
+    }
+    case dType::UInt16: {
+      auto cval = static_cast<uint16_t>(value);
+      err = cuMemsetD16(dev_ptr, *(reinterpret_cast<uint16_t *>(&cval)), count);
+      break;
+    }
+    case dType::Int8: {
+      auto cval = static_cast<int8_t>(value);
+      err = cuMemsetD8(dev_ptr, *(reinterpret_cast<uint8_t *>(&cval)), count);
+      break;
+    }
+    case dType::UInt8: {
+      auto cval = static_cast<uint8_t>(value);
+      err = cuMemsetD8(dev_ptr, *(reinterpret_cast<uint8_t *>(&cval)), count);
       break;
     }
     default:
-      std::cerr << "Warning: Unsupported value size for setMemory" << std::endl;
+      std::cerr << "Warning: Unsupported value size for cuda setMemory" << std::endl;
       break;
   }
   if (err != CUDA_SUCCESS)
@@ -617,7 +641,55 @@ CUDABackend::setMemory(const Device::Pointer & device,
     throw std::runtime_error("Error (cuda): Failed to get context from device (" + std::to_string(err) + ").");
   }
 
-  // no existing memset for images ...
+  switch (dtype)
+  {
+    case dType::Float: {
+      using T = float;
+      std::vector<T> host_buffer(width * height * depth, static_cast<T>(value));
+      writeMemory(device, data_ptr, width, height, depth, toBytes(dtype), host_buffer.data());
+      break;
+    }
+    case dType::Int32: {
+      using T = int32_t;
+      std::vector<T> host_buffer(width * height * depth, static_cast<T>(value));
+      writeMemory(device, data_ptr, width, height, depth, toBytes(dtype), host_buffer.data());
+      break;
+    }
+    case dType::UInt32: {
+      using T = uint32_t;
+      std::vector<T> host_buffer(width * height * depth, static_cast<T>(value));
+      writeMemory(device, data_ptr, width, height, depth, toBytes(dtype), host_buffer.data());
+      break;
+    }
+    case dType::Int16: {
+      using T = int16_t;
+      std::vector<T> host_buffer(width * height * depth, static_cast<T>(value));
+      writeMemory(device, data_ptr, width, height, depth, toBytes(dtype), host_buffer.data());
+      break;
+    }
+    case dType::UInt16: {
+      using T = uint16_t;
+      std::vector<T> host_buffer(width * height * depth, static_cast<T>(value));
+      writeMemory(device, data_ptr, width, height, depth, toBytes(dtype), host_buffer.data());
+      break;
+    }
+    case dType::Int8: {
+      using T = int8_t;
+      std::vector<T> host_buffer(width * height * depth, static_cast<T>(value));
+      writeMemory(device, data_ptr, width, height, depth, toBytes(dtype), host_buffer.data());
+      break;
+    }
+    case dType::UInt8: {
+      using T = uint8_t;
+      std::vector<T> host_buffer(width * height * depth, static_cast<T>(value));
+      writeMemory(device, data_ptr, width, height, depth, toBytes(dtype), host_buffer.data());
+      break;
+    }
+    default:
+      std::cerr << "Warning: Unsupported value size for cuda setMemory" << std::endl;
+      break;
+  }
+
 
   if (err != CUDA_SUCCESS)
   {
