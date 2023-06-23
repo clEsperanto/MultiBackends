@@ -19,16 +19,16 @@ absolute_func(const Device::Pointer & device, const Array & src, const Array & d
 
 auto
 add_images_weighted_func(const Device::Pointer & device,
+                         const Array &           src0,
                          const Array &           src1,
-                         const Array &           src2,
                          const Array &           dst,
-                         const float &           factor1,
-                         const float &           factor2) -> void
+                         const float &           factor0,
+                         const float &           factor1) -> void
 {
   const KernelInfo    kernel = { "add_images_weighted", kernel::add_images_weighted };
   const ConstantList  constants = {};
   const ParameterList parameters = {
-    { "src1", src1.ptr() }, { "src2", src2.ptr() }, { "dst", dst.ptr() }, { "factor1", factor1 }, { "factor2", factor2 }
+    { "src0", src0.ptr() }, { "src1", src1.ptr() }, { "dst", dst.ptr() }, { "factor0", factor0 }, { "factor1", factor1 }
   };
   const RangeArray global_range = { dst.width(), dst.height(), dst.depth() };
   execute(device, kernel, parameters, constants, global_range);
