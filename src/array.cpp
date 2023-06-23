@@ -63,6 +63,43 @@ Array::~Array()
 }
 
 auto
+Array::operator=(const Array & arr) -> Array &
+{
+  if (this == &arr)
+  {
+    return *this;
+  }
+  this->width_ = arr.width_;
+  this->height_ = arr.height_;
+  this->depth_ = arr.depth_;
+  this->dataType_ = arr.dataType_;
+  this->memType_ = arr.memType_;
+  this->device_ = arr.device_;
+  this->initialized_ = arr.initialized_;
+  allocate();
+  arr.copy(*this);
+  return *this;
+}
+
+auto
+Array::operator=(Array && arr) noexcept -> Array &
+{
+  if (this == &arr)
+  {
+    return *this;
+  }
+  this->width_ = std::move(arr.width_);
+  this->height_ = std::move(arr.height_);
+  this->depth_ = std::move(arr.depth_);
+  this->dataType_ = std::move(arr.dataType_);
+  this->memType_ = std::move(arr.memType_);
+  this->device_ = std::move(arr.device_);
+  this->initialized_ = std::move(arr.initialized_);
+  this->data_ = std::move(arr.data_);
+  return *this;
+}
+
+auto
 Array::allocate() -> void
 {
   if (!initialized())
