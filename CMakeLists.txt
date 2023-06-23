@@ -38,25 +38,53 @@ endif()
 set(CMAKE_DEBUG_POSTFIX "_d")
 set(CMAKE_RELEASE_POSTFIX "")
 
+# find GPU Framework (OpenCL, CUDA)
+set(CLE_OPENCL false)
+set(CLE_CUDA false)
+find_package(OpenCL)
+if (OpenCL_FOUND)
+    set(CLE_OPENCL true)
+    message(STATUS "OpenCL found : ${CLE_OPENCL}")
+endif()
+find_package(CUDAToolkit)
+if (CUDAToolkit_FOUND)
+    set(CLE_CUDA true)
+    message(STATUS "CUDA found : ${CLE_CUDA}")
+endif()
+if (NOT OpenCL_FOUND AND NOT CUDAToolkit_FOUND)
+    message(FATAL_ERROR "No GPU framework found (OpenCL, CUDA). Please install one of them.")
+endif()
+
+# add the variables to the compile definitions for the source code
+add_compile_definitions(
+    $<$<BOOL:${CLE_CUDA}>:CLE_CUDA>
+    $<$<BOOL:${CLE_OPENCL}>:CLE_OPENCL>
+)
+
+# manage configuration files
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/clic.hpp.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/include/clic.hpp"
+    NO_SOURCE_PERMISSIONS @ONLY
+)
+
 # managed third party libraries
 add_subdirectory(thirdparty)
 
 # list project source files
 file(GLOB_RECURSE SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 file(GLOB_RECURSE HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp")
+file(GLOB_RECURSE HEADERS_BIN "${CMAKE_CURRENT_BINARY_DIR}/include/*.hpp")
 set(INCLUDE_DIR_LIST ${CMAKE_CURRENT_SOURCE_DIR}/include)
+list(APPEND INCLUDE_DIR_LIST ${CMAKE_CURRENT_BINARY_DIR}/include)
 
-# find GPU Framework (OpenCL, CUDA)
-find_package(OpenCL)
-find_package(CUDAToolkit)
-if (NOT OpenCL_FOUND AND NOT CUDAToolkit_FOUND)
-    message(FATAL_ERROR "No GPU framework found (OpenCL, CUDA). Please install one of them.")
-endif()
+message(STATUS "INCLUDE_DIR_LIST: ${INCLUDE_DIR_LIST}")
 
 # target library definition
 add_library(${LIBRARY_NAME} ${SOURCES} ${HEADERS})
 target_include_directories(${LIBRARY_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     $<BUILD_INTERFACE:${KERNELS_HEADER_DIR}>
     $<INSTALL_INTERFACE:include>
 )
@@ -65,26 +93,16 @@ set_target_properties(${LIBRARY_NAME} PROPERTIES VERSION ${PROJECT_VERSION}) # s
 add_dependencies(${LIBRARY_NAME} generate_kernels)
 
 # link GPU framework to the target
-set(CLE_OPENCL OFF)
-set(CLE_CUDA OFF)
 if (OpenCL_FOUND)
-    set(CLE_OPENCL ON)
     target_include_directories(${LIBRARY_NAME} PUBLIC ${OpenCL_INCLUDE_DIRS})
     target_link_libraries(${LIBRARY_NAME} PUBLIC ${OpenCL_LIBRARIES})
 endif()
 if (CUDAToolkit_FOUND)
-    set(CLE_CUDA ON)
     set_target_properties(${LIBRARY_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
     set_target_properties(${LIBRARY_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
     target_include_directories(${LIBRARY_NAME} PUBLIC ${CUDA_INCLUDE_DIRS})
     target_link_libraries(${LIBRARY_NAME} PUBLIC CUDA::cudart CUDA::cuda_driver CUDA::nvrtc CUDA::OpenCL) 
 endif()
-
-# add the variables to the compile definitions for the source code
-add_compile_definitions(
-    $<$<BOOL:${CLE_CUDA}>:CLE_CUDA>
-    $<$<BOOL:${CLE_OPENCL}>:CLE_OPENCL>
-)
 
 # enable testing
 include(CTest)
