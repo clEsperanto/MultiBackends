@@ -9,7 +9,7 @@ namespace cle
 auto
 OpenCLBackend::getDevices(const std::string & type) const -> std::vector<Device::Pointer>
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   std::vector<Device::Pointer> devices;
 
   cl_uint platformCount = 0;
@@ -70,7 +70,7 @@ OpenCLBackend::getDevices(const std::string & type) const -> std::vector<Device:
 auto
 OpenCLBackend::getDevice(const std::string & name, const std::string & type) const -> Device::Pointer
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   auto devices = getDevices(type);
   auto ite = std::find_if(devices.begin(), devices.end(), [&name](const Device::Pointer & dev) {
     return dev->getName().find(name) != std::string::npos;
@@ -92,7 +92,7 @@ OpenCLBackend::getDevice(const std::string & name, const std::string & type) con
 auto
 OpenCLBackend::getDevicesList(const std::string & type) const -> std::vector<std::string>
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   auto                     devices = getDevices(type);
   std::vector<std::string> deviceList;
   for (auto && device : devices)
@@ -114,7 +114,7 @@ OpenCLBackend::getType() const -> Backend::Type
 auto
 OpenCLBackend::allocateMemory(const Device::Pointer & device, const size_t & size, void ** data_ptr) const -> void
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   cl_int err;
   auto   opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   auto   mem = clCreateBuffer(opencl_device->getCLContext(), CL_MEM_READ_WRITE, size, nullptr, &err);
@@ -136,7 +136,7 @@ OpenCLBackend::allocateMemory(const Device::Pointer & device,
                               const dType &           dtype,
                               void **                 data_ptr) const -> void
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   auto            opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   cl_image_format image_format = { 0 };
   image_format.image_channel_order = CL_INTENSITY;
@@ -205,7 +205,7 @@ OpenCLBackend::allocateMemory(const Device::Pointer & device,
 auto
 OpenCLBackend::freeMemory(const Device::Pointer & device, const mType & mtype, void ** data_ptr) const -> void
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   auto * cl_mem_ptr = static_cast<cl_mem *>(*data_ptr);
   auto   err = clReleaseMemObject(*cl_mem_ptr);
   if (err != CL_SUCCESS)
@@ -223,7 +223,7 @@ OpenCLBackend::writeMemory(const Device::Pointer & device,
                            const size_t &          size,
                            const void *            host_ptr) const -> void
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   auto err = clEnqueueWriteBuffer(opencl_device->getCLCommandQueue(),
                                   *static_cast<cl_mem *>(*data_ptr),
@@ -252,7 +252,7 @@ OpenCLBackend::writeMemory(const Device::Pointer & device,
                            const size_t &          bytes,
                            const void *            host_ptr) const -> void
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   auto                        opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   const std::array<size_t, 3> origin = { 0, 0, 0 };
   const std::array<size_t, 3> region = { width, height, depth };
@@ -284,7 +284,7 @@ OpenCLBackend::readMemory(const Device::Pointer & device,
                           const size_t &          size,
                           void *                  host_ptr) const -> void
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   auto err = clEnqueueReadBuffer(opencl_device->getCLCommandQueue(),
                                  *static_cast<const cl_mem *>(*data_ptr),
@@ -313,7 +313,7 @@ OpenCLBackend::readMemory(const Device::Pointer & device,
                           const size_t &          bytes,
                           void *                  host_ptr) const -> void
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   auto                        opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   const std::array<size_t, 3> origin = { 0, 0, 0 };
   const std::array<size_t, 3> region = { width, height, depth };
@@ -345,7 +345,7 @@ OpenCLBackend::copyMemoryBufferToBuffer(const Device::Pointer & device,
                                         const size_t &          size,
                                         void **                 dst_data_ptr) const -> void
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   auto opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   auto err = clEnqueueCopyBuffer(opencl_device->getCLCommandQueue(),
                                  *static_cast<const cl_mem *>(*src_data_ptr),
@@ -375,7 +375,7 @@ OpenCLBackend::copyMemoryBufferToImage(const Device::Pointer & device,
                                        const size_t &          bytes,
                                        void **                 dst_data_ptr) const -> void
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   auto                        opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   const std::array<size_t, 3> origin = { 0, 0, 0 };
   const std::array<size_t, 3> region = { width, height, depth };
@@ -407,7 +407,7 @@ OpenCLBackend::copyMemoryImageToBuffer(const Device::Pointer & device,
                                        const size_t &          bytes,
                                        void **                 dst_data_ptr) const -> void
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   auto                        opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   const std::array<size_t, 3> origin = { 0, 0, 0 };
   const std::array<size_t, 3> region = { width, height, depth };
@@ -440,7 +440,7 @@ OpenCLBackend::copyMemoryImageToImage(const Device::Pointer & device,
                                       const size_t &          bytes,
                                       void **                 dst_data_ptr) const -> void
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   auto                        opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   const std::array<size_t, 3> origin = { 0, 0, 0 };
   const std::array<size_t, 3> region = { width, height, depth };
@@ -470,7 +470,7 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
                          const float &           value,
                          const dType &           dtype) const -> void
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   auto   opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   cl_int err;
   switch (dtype)
@@ -613,7 +613,7 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
                          const float &           value,
                          const dType &           dtype) const -> void
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   auto                  opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   std::array<size_t, 3> origin{ 0, 0, 0 };
   std::array<size_t, 3> region{ width, height, depth };
@@ -676,7 +676,7 @@ auto
 OpenCLBackend::loadProgramFromCache(const Device::Pointer & device, const std::string & hash, void * program) const
   -> void
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   auto       opencl_device = std::dynamic_pointer_cast<OpenCLDevice>(device);
   cl_program prog = nullptr;
   auto       ite = opencl_device->getCache().find(hash);
@@ -694,7 +694,7 @@ auto
 OpenCLBackend::saveProgramToCache(const Device::Pointer & device, const std::string & hash, void * program) const
   -> void
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   auto opencl_device = std::dynamic_pointer_cast<OpenCLDevice>(device);
   opencl_device->getCache().emplace_hint(opencl_device->getCache().end(), hash, *static_cast<cl_program *>(program));
 #else
@@ -708,7 +708,7 @@ OpenCLBackend::buildKernel(const Device::Pointer & device,
                            const std::string &     kernel_name,
                            void *                  kernel) const -> void
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   cl_int     err;
   auto       opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   cl_program prog = nullptr;
@@ -754,7 +754,7 @@ OpenCLBackend::executeKernel(const Device::Pointer &       device,
                              const std::vector<void *> &   args,
                              const std::vector<size_t> &   sizes) const -> void
 {
-#if CLE_OPENCL
+#if USE_OPENCL
   auto      opencl_device = std::dynamic_pointer_cast<const OpenCLDevice>(device);
   cl_kernel ocl_kernel;
   try
