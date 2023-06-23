@@ -43,11 +43,15 @@ Array::Array(const size_t &          width,
   write(host_data);
 }
 
-Array::Array(const Array & arr)
+Array::Array(const Array & arr, const bool & deep_cpy)
   : Array(arr.width(), arr.height(), arr.depth(), arr.dtype(), arr.mtype())
 {
   device_ = arr.device();
   allocate();
+  if (deep_cpy && arr.initialized())
+  {
+    arr.copy(*this);
+  }
 }
 
 Array::~Array()
@@ -153,24 +157,22 @@ Array::copy(const Array & dst) const -> void
   }
 }
 
-// template <typename T>
-// auto
-// Array::fill(const T & value) const -> void
-// {
-//   if (!initialized())
-//   {
-//     std::cerr << "Error: Arrays are not initialized_" << std::endl;
-//   }
-//   if (dim() > 1)
-//   {
-//     backend_.setMemory(device(), get(), width(), height(), depth(), bytesPerElements(), (const void *)&value);
-//   }
-//   else
-//   {
-//     backend_.setMemory(device(), get(), nbElements() * bytesPerElements(), (const void *)&value, bytesPerElements());
-//   }
-//   // backend_.setMemory(device(), get(), nbElements() * bytesPerElements(), (const void *)&value, sizeof(T));
-// }
+auto
+Array::fill(const float & value) const -> void
+{
+  if (!initialized())
+  {
+    std::cerr << "Error: Arrays are not initialized_" << std::endl;
+  }
+  if (mtype() == mType::Image)
+  {
+    backend_.setMemory(device(), get(), width(), height(), depth(), value, dtype());
+  }
+  else
+  {
+    backend_.setMemory(device(), get(), nbElements() * bytesPerElements(), value, dtype());
+  }
+}
 
 auto
 Array::nbElements() const -> size_t

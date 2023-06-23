@@ -42,7 +42,7 @@ run_gaussian_blur(const cle::mType & type) -> bool
   cle::Array gpu_input(w, h, d, cle::toType<T>(), type, input.data(), device);
   cle::Array gpu_output(w, h, d, cle::toType<T>(), type, device);
 
-  cle::tier1::gaussian_blur_func(gpu_input, gpu_output, 1, 1, 1, device);
+  cle::tier1::gaussian_blur_func(device, gpu_input, gpu_output, 1, 1, 1);
 
   gpu_output.read(output.data());
 

@@ -18,7 +18,25 @@ create(const size_t & width, const size_t & height, const size_t & depth, const 
 static auto
 create_like(const Array & arr) -> Array
 {
-  return Array{ arr.width(), arr.height(), arr.depth(), arr.dtype(), arr.mtype(), arr.device() };
+  return Array{ arr };
+}
+
+static auto
+create_2d_xy(const Array & arr) -> Array
+{
+  return Array{ arr.width(), arr.height(), 1, arr.dtype(), mType::Buffer, arr.device() };
+}
+
+static auto
+create_2d_zy(const Array & arr) -> Array
+{
+  return Array{ arr.depth(), arr.height(), 1, arr.dtype(), mType::Buffer, arr.device() };
+}
+
+static auto
+create_2d_xz(const Array & arr) -> Array
+{
+  return Array{ arr.width(), arr.depth(), 1, arr.dtype(), mType::Buffer, arr.device() };
 }
 
 template <typename T>

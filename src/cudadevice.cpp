@@ -3,7 +3,7 @@
 namespace cle
 {
 
-#if CLE_CUDA
+#if USE_CUDA
 
 CUDADevice::CUDADevice(int deviceIndex)
   : cudaDeviceIndex(deviceIndex)
@@ -147,6 +147,6 @@ CUDADevice::getCache() -> std::map<std::string, CUmodule> &
   return this->cache;
 }
 
-#endif // CLE_CUDA
+#endif // USE_CUDA
 
 } // namespace cle

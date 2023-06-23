@@ -56,7 +56,7 @@ public:
         const mType &           mem_type,
         const void *            host_data,
         const Device::Pointer & device_ptr);
-  Array(const Array & arr);
+  Array(const Array & arr, const bool & deep_cpy = false);
   ~Array();
 
   auto
@@ -67,23 +67,8 @@ public:
   read(void * host_data) const -> void;
   auto
   copy(const Array & dst) const -> void;
-
-  // auto
-  // fill(const float & value) const -> void
-  // {
-  //   if (!initialized())
-  //   {
-  //     std::cerr << "Error: Arrays are not initialized_" << std::endl;
-  //   }
-  //   if (mtype() == mType::Image)
-  //   {
-  //     backend_.setMemory(device(), get(), width(), height(), depth(), value, dtype());
-  //   }
-  //   else
-  //   {
-  //     backend_.setMemory(device(), get(), nbElements() * bytesPerElements(), value, dtype());
-  //   }
-  // }
+  auto
+  fill(const float & value) const -> void;
 
   [[nodiscard]] auto
   nbElements() const -> size_t;

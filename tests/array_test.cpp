@@ -16,22 +16,24 @@ run_array(cle::mType type1, cle::mType type2)
   static const size_t h = 4;
   static const size_t d = 3;
   std::vector<T>      input(w * h * d, -5);
+  std::vector<T>      valid(input.size(), 12);
   std::vector<T>      output(input.size(), -10);
 
   cle::Array bufferA(w, h, d, cle::toType<T>(), type1, device);
   cle::Array bufferB(w, h, d, cle::toType<T>(), type2, output.data(), device);
   bufferA.write(input.data());
+  bufferA.fill(12);
   bufferA.copy(bufferB);
-  bufferB.read(output.data());
+  cle::Array bufferC(bufferB, true);
+  bufferC.read(output.data());
 
-  return std::equal(input.begin(), input.end(), output.begin()) ? 0 : 1;
+  return std::equal(valid.begin(), valid.end(), output.begin()) ? 0 : 1;
 }
 
 int
 main(int argc, char ** argv)
 {
-  using T = short;
-
+  using T = float;
   cle::BackendManager::getInstance().setBackend(false);
   assert(run_array<T>(cle::mType::Buffer, cle::mType::Buffer) == 0);
   assert(run_array<T>(cle::mType::Image, cle::mType::Image) == 0);

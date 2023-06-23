@@ -1,7 +1,11 @@
-#ifndef __INCLUDE_CLIC_HPP
-#define __INCLUDE_CLIC_HPP
+#ifndef __CLIC_HPP
+#define __CLIC_HPP
 
-#if CLE_OPENCL
+#define USE_OPENCL @CLE_OPENCL@
+#define USE_CUDA @CLE_CUDA@
+
+
+#if USE_OPENCL
 #  ifndef CL_TARGET_OPENCL_VERSION
 #    define CL_TARGET_OPENCL_VERSION 120
 #  endif
@@ -12,11 +16,11 @@
 #  endif
 #endif
 
-#if CLE_CUDA
+#if USE_CUDA
 #  include <cuda.h>
 #  include <cuda_runtime.h>
 #  include <cuda_runtime_api.h>
 #  include <nvrtc.h>
 #endif
 
-#endif // __INCLUDE_CLIC_HPP
+#endif // __CLIC_HPP

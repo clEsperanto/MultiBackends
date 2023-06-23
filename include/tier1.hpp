@@ -10,21 +10,22 @@ namespace cle::tier1
 {
 
 auto
-execute_separable_func(const Array &           src,
+execute_separable_func(const Device::Pointer & device,
+                       const KernelInfo &      kernel,
+                       const Array &           src,
                        const Array &           dst,
                        const float &           sigma,
-                       const int &             radius,
-                       const Device::Pointer & device) -> void;
+                       const int &             radius) -> void;
 auto
-gaussian_blur_func(const Array &           src,
+gaussian_blur_func(const Device::Pointer & device,
+                   const Array &           src,
                    const Array &           dst,
                    const float &           sigma_x,
                    const float &           sigma_y,
-                   const float &           sigma_z,
-                   const Device::Pointer & device) -> void;
+                   const float &           sigma_z) -> void;
 
 auto
-absolute_func(const Array & src, const Array & dst, const Device::Pointer & device) -> void;
+absolute_func(const Device::Pointer & device, const Array & src, const Array & dst) -> void;
 
 } // namespace cle::tier1
 

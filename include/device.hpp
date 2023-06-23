@@ -69,7 +69,7 @@ public:
   }
 };
 
-#if CLE_OPENCL
+#if USE_OPENCL
 class OpenCLDevice : public Device
 {
 public:
@@ -116,9 +116,9 @@ private:
   std::map<std::string, cl_program> cache;
   bool                              initialized = false;
 };
-#endif // CLE_OPENCL
+#endif // USE_OPENCL
 
-#if CLE_CUDA
+#if USE_CUDA
 class CUDADevice : public Device
 {
 public:
@@ -165,7 +165,7 @@ private:
   bool                            initialized = false;
   std::map<std::string, CUmodule> cache;
 };
-#endif // CLE_CUDA
+#endif // USE_CUDA
 
 } // namespace cle
 

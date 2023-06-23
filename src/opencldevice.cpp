@@ -3,7 +3,7 @@
 namespace cle
 {
 
-#if CLE_OPENCL
+#if USE_OPENCL
 
 OpenCLDevice::OpenCLDevice(const cl_platform_id & platform, const cl_device_id & device)
   : clDevice(device)
@@ -158,6 +158,6 @@ OpenCLDevice::getCache() -> std::map<std::string, cl_program> &
   return this->cache;
 }
 
-#endif // CLE_OPENCL
+#endif // USE_OPENCL
 
 } // namespace cle
