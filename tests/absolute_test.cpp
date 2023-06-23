@@ -23,7 +23,7 @@ run_absolute(cle::mType type) -> bool
   cle::Array gpu_input(w, h, d, cle::toType<T>(), type, input.data(), device);
   cle::Array gpu_output(gpu_input);
 
-  cle::tier1::absolute_func(gpu_input, gpu_output, device);
+  cle::tier1::absolute_func(device, gpu_input, gpu_output);
 
   gpu_output.read(output.data());
   return std::equal(output.begin(), output.end(), valid.begin()) ? 0 : 1;
