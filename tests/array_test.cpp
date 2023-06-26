@@ -28,9 +28,7 @@ run_array(cle::mType type1, cle::mType type2)
 
   cle::Array bufferD = bufferC;
 
-  std::optional<cle::Array> bufferE(bufferD);
-
-  bufferE.value().read(output.data());
+  bufferD.read(output.data());
 
   return std::equal(valid.begin(), valid.end(), output.begin()) ? 0 : 1;
 }
