@@ -43,12 +43,10 @@ Array::Array(const size_t &          width,
   write(host_data);
 }
 
-Array::Array(const Array & arr, const bool & deep_cpy)
-  : Array(arr.width(), arr.height(), arr.depth(), arr.dtype(), arr.mtype())
+Array::Array(const Array & arr)
+  : Array(arr.width(), arr.height(), arr.depth(), arr.dtype(), arr.mtype(), arr.device())
 {
-  device_ = arr.device();
-  allocate();
-  if (deep_cpy && arr.initialized())
+  if (arr.initialized())
   {
     arr.copy(*this);
   }
@@ -75,9 +73,14 @@ Array::operator=(const Array & arr) -> Array &
   this->dataType_ = arr.dataType_;
   this->memType_ = arr.memType_;
   this->device_ = arr.device_;
-  this->initialized_ = arr.initialized_;
-  allocate();
-  arr.copy(*this);
+  if (!initialized())
+  {
+    allocate();
+  }
+  if (arr.initialized())
+  {
+    arr.copy(*this);
+  }
   return *this;
 }
 
@@ -88,36 +91,51 @@ Array::operator=(Array && arr) noexcept -> Array &
   {
     return *this;
   }
-  this->width_ = std::move(arr.width_);
-  this->height_ = std::move(arr.height_);
-  this->depth_ = std::move(arr.depth_);
-  this->dataType_ = std::move(arr.dataType_);
-  this->memType_ = std::move(arr.memType_);
-  this->device_ = std::move(arr.device_);
-  this->initialized_ = std::move(arr.initialized_);
+  this->width_ = arr.width_;
+  this->height_ = arr.height_;
+  this->depth_ = arr.depth_;
+  this->dataType_ = arr.dataType_;
+  this->memType_ = arr.memType_;
+  this->initialized_ = arr.initialized_;
+
   this->data_ = std::move(arr.data_);
+  this->device_ = std::move(arr.device_);
+
+  arr.reset();
+
   return *this;
+}
+
+auto
+Array::reset() -> void
+{
+  this->width_ = 1;
+  this->height_ = 1;
+  this->depth_ = 1;
+  this->dataType_ = dType::Float;
+  this->memType_ = mType::Buffer;
+  this->initialized_ = false;
+  this->data_.reset();
+  this->device_.reset();
 }
 
 auto
 Array::allocate() -> void
 {
-  if (!initialized())
+  if (initialized())
   {
-    if (mtype() == mType::Image)
-    {
-      backend_.allocateMemory(device(), this->width(), this->height(), this->depth(), dtype(), get());
-    }
-    else
-    {
-      backend_.allocateMemory(device(), nbElements() * bytesPerElements(), get());
-    }
-    initialized_ = true;
+    std::cerr << "Warning: Array is already initialized" << std::endl;
+    return;
+  }
+  if (mtype() == mType::Image)
+  {
+    backend_.allocateMemory(device(), this->width(), this->height(), this->depth(), dtype(), get());
   }
   else
   {
-    std::cerr << "Warning: Array is already initialized_" << std::endl;
+    backend_.allocateMemory(device(), nbElements() * bytesPerElements(), get());
   }
+  initialized_ = true;
 }
 
 auto
