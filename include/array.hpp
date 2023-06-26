@@ -56,7 +56,7 @@ public:
         const mType &           mem_type,
         const void *            host_data,
         const Device::Pointer & device_ptr);
-  Array(const Array & arr, const bool & deep_cpy = false);
+  Array(const Array & arr);
   ~Array();
 
   auto
@@ -74,6 +74,8 @@ public:
   copy(const Array & dst) const -> void;
   auto
   fill(const float & value) const -> void;
+  auto
+  reset() -> void;
 
   [[nodiscard]] auto
   nbElements() const -> size_t;

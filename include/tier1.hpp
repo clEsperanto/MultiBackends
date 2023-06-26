@@ -24,7 +24,7 @@ gaussian_blur_func(const Device::Pointer & device,
                    const float &           sigma_z) -> void;
 
 auto
-absolute_func(const Device::Pointer & device, const Array & src, const Array & dst) -> void;
+absolute_func(const Device::Pointer & device, const Array & src, Array & dst) -> void;
 
 auto
 add_images_weighted_func(const Device::Pointer & device,

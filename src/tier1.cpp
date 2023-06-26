@@ -8,12 +8,12 @@ namespace cle::tier1
 {
 
 auto
-absolute_func(const Device::Pointer & device, const Array & src, const Array & dst) -> void
+absolute_func(const Device::Pointer & device, const Array & src, Array & dst) -> void
 {
   const KernelInfo    kernel = { "absolute", kernel::absolute };
   const ConstantList  constants = {};
   const ParameterList parameters = { { "src", src.ptr() }, { "dst", dst.ptr() } };
-  const RangeArray    global_range = { dst.width(), dst.height(), dst.depth() };
+  const RangeArray    global_range = { src.width(), src.height(), src.depth() };
   execute(device, kernel, parameters, constants, global_range);
 }
 
@@ -97,9 +97,7 @@ gaussian_blur_func(const Device::Pointer & device,
                          src,
                          dst,
                          { sigma_x, sigma_y, sigma_z },
-                         { sigma2radius(sigma_x), sigma2radius(sigma_y), sigma2radius(sigma_z) }
-
-  );
+                         { sigma2radius(sigma_x), sigma2radius(sigma_y), sigma2radius(sigma_z) });
 }
 
 } // namespace cle::tier1
