@@ -24,8 +24,13 @@ run_array(cle::mType type1, cle::mType type2)
   bufferA.write(input.data());
   bufferA.fill(12);
   bufferA.copy(bufferB);
-  cle::Array bufferC(bufferB, true);
-  bufferC.read(output.data());
+  cle::Array bufferC(bufferB);
+
+  cle::Array bufferD = bufferC;
+
+  std::optional<cle::Array> bufferE(bufferD);
+
+  bufferE.value().read(output.data());
 
   return std::equal(valid.begin(), valid.end(), output.begin()) ? 0 : 1;
 }
