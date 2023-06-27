@@ -11,8 +11,8 @@ namespace cle::tier2
 
 auto
 difference_of_gaussian_func(const Device::Pointer & device,
-                            const Array &           src,
-                            const Array &           dst,
+                            const Array::Pointer &  src,
+                            const Array::Pointer &  dst,
                             const float &           sigma1_x,
                             const float &           sigma1_y,
                             const float &           sigma1_z,
