@@ -20,12 +20,12 @@ run_absolute(cle::mType type) -> bool
   std::vector<T>      output(w * h * d, -5);
   std::vector<T>      valid(w * h * d, 5);
 
-  cle::Array gpu_input(w, h, d, cle::toType<T>(), type, input.data(), device);
-  cle::Array gpu_output(gpu_input);
+  auto gpu_input = cle::Array::create(w, h, d, cle::toType<T>(), type, input.data(), device);
+  auto gpu_output = cle::Array::create(gpu_input);
 
   cle::tier1::absolute_func(device, gpu_input, gpu_output);
 
-  gpu_output.read(output.data());
+  gpu_output->read(output.data());
   return std::equal(output.begin(), output.end(), valid.begin()) ? 0 : 1;
 }
 
