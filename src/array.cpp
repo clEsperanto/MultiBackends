@@ -3,53 +3,24 @@
 namespace cle
 {
 
-Array::Array(const size_t & width,
-             const size_t & height,
-             const size_t & depth,
-             const dType &  data_type,
-             const mType &  mem_type)
+Array::Array(const size_t &          width,
+             const size_t &          height,
+             const size_t &          depth,
+             const dType &           data_type,
+             const mType &           mem_type,
+             const Device::Pointer & device_ptr)
   : width_(width)
   , height_(height)
   , depth_(depth)
   , dataType_(data_type)
   , memType_(mem_type)
+  , device_(device_ptr)
+  , data_(std::make_shared<void *>(nullptr))
+  , initialized_(false)
 {
   width_ = (width_ > 1) ? width_ : 1;
   height_ = (height_ > 1) ? height_ : 1;
   depth_ = (depth_ > 1) ? depth_ : 1;
-}
-
-Array::Array(const size_t &          width,
-             const size_t &          height,
-             const size_t &          depth,
-             const dType &           data_type,
-             const mType &           mem_type,
-             const Device::Pointer & device_ptr)
-  : Array(width, height, depth, data_type, mem_type)
-{
-  device_ = device_ptr;
-  allocate();
-}
-
-Array::Array(const size_t &          width,
-             const size_t &          height,
-             const size_t &          depth,
-             const dType &           data_type,
-             const mType &           mem_type,
-             const void *            host_data,
-             const Device::Pointer & device_ptr)
-  : Array(width, height, depth, data_type, mem_type, device_ptr)
-{
-  write(host_data);
-}
-
-Array::Array(const Array & arr)
-  : Array(arr.width(), arr.height(), arr.depth(), arr.dtype(), arr.mtype(), arr.device())
-{
-  if (arr.initialized())
-  {
-    arr.copy(*this);
-  }
 }
 
 Array::~Array()
@@ -61,62 +32,46 @@ Array::~Array()
 }
 
 auto
-Array::operator=(const Array & arr) -> Array &
+Array::create(const size_t &          width,
+              const size_t &          height,
+              const size_t &          depth,
+              const dType &           data_type,
+              const mType &           mem_type,
+              const Device::Pointer & device_ptr) -> Array::Pointer
 {
-  if (this == &arr)
-  {
-    return *this;
-  }
-  this->width_ = arr.width_;
-  this->height_ = arr.height_;
-  this->depth_ = arr.depth_;
-  this->dataType_ = arr.dataType_;
-  this->memType_ = arr.memType_;
-  this->device_ = arr.device_;
-  if (!initialized())
-  {
-    allocate();
-  }
-  if (arr.initialized())
-  {
-    arr.copy(*this);
-  }
-  return *this;
+  auto ptr = std::shared_ptr<Array>(new Array(width, height, depth, data_type, mem_type, device_ptr));
+  ptr->allocate();
+  return ptr;
 }
 
 auto
-Array::operator=(Array && arr) noexcept -> Array &
+Array::create(const size_t &          width,
+              const size_t &          height,
+              const size_t &          depth,
+              const dType &           data_type,
+              const mType &           mem_type,
+              const void *            host_data,
+              const Device::Pointer & device_ptr) -> Array::Pointer
 {
-  if (this == &arr)
-  {
-    return *this;
-  }
-  this->width_ = arr.width_;
-  this->height_ = arr.height_;
-  this->depth_ = arr.depth_;
-  this->dataType_ = arr.dataType_;
-  this->memType_ = arr.memType_;
-  this->initialized_ = arr.initialized_;
-
-  this->data_ = std::move(arr.data_);
-  this->device_ = std::move(arr.device_);
-
-  arr.reset();
-
-  return *this;
+  auto ptr = create(width, height, depth, data_type, mem_type, device_ptr);
+  ptr->write(host_data);
+  return ptr;
 }
 
 auto
-Array::reset() -> void
+Array::create(Array::Pointer array) -> Array::Pointer
 {
-  this->width_ = 1;
-  this->height_ = 1;
-  this->depth_ = 1;
-  this->dataType_ = dType::Float;
-  this->memType_ = mType::Buffer;
-  this->initialized_ = false;
-  this->data_.reset();
-  this->device_.reset();
+  auto ptr = create(array->width(), array->height(), array->depth(), array->dtype(), array->mtype(), array->device());
+  array->copy(ptr);
+  return ptr;
+}
+
+auto
+operator<<(std::ostream & out, const Array::Pointer & array) -> std::ostream &
+{
+  out << "Array ([" << array->width() << "," << array->height() << "," << array->depth()
+      << "], dtype=" << array->dtype() << ", mtype=" << array->mtype() << ")";
+  return out;
 }
 
 auto
@@ -173,38 +128,37 @@ Array::read(void * host_data) const -> void
 }
 
 auto
-Array::copy(const Array & dst) const -> void
+Array::copy(const Array::Pointer & dst) const -> void
 {
-  if (!initialized() || !dst.initialized())
+  if (!initialized() || !dst->initialized())
   {
     std::cerr << "Error: Arrays are not initialized_" << std::endl;
   }
-  if (device() != dst.device())
+  if (device() != dst->device())
   {
     std::cerr << "Error: copying Arrays from different devices" << std::endl;
   }
-  if (width() != dst.width() || height() != dst.height() || depth() != dst.depth() ||
-      bytesPerElements() != dst.bytesPerElements())
+  if (width() != dst->width() || height() != dst->height() || depth() != dst->depth() ||
+      bytesPerElements() != dst->bytesPerElements())
   {
     std::cerr << "Error: Arrays dimensions do not match" << std::endl;
   }
-
-  if (mtype() == mType::Buffer && dst.mtype() == mType::Buffer)
+  if (mtype() == mType::Buffer && dst->mtype() == mType::Buffer)
   {
-    backend_.copyMemoryBufferToBuffer(device(), c_get(), nbElements() * bytesPerElements(), dst.get());
+    backend_.copyMemoryBufferToBuffer(device(), c_get(), nbElements() * bytesPerElements(), dst->get());
   }
-  else if (mtype() == mType::Image && dst.mtype() == mType::Image)
+  else if (mtype() == mType::Image && dst->mtype() == mType::Image)
   {
-    backend_.copyMemoryImageToImage(device(), c_get(), width(), height(), depth(), toBytes(dtype()), dst.get());
+    backend_.copyMemoryImageToImage(device(), c_get(), width(), height(), depth(), toBytes(dtype()), dst->get());
   }
-  else if (mtype() == mType::Buffer && dst.mtype() == mType::Image)
+  else if (mtype() == mType::Buffer && dst->mtype() == mType::Image)
   {
     backend_.copyMemoryBufferToImage(
-      device(), c_get(), dst.width(), dst.height(), dst.depth(), toBytes(dst.dtype()), dst.get());
+      device(), c_get(), dst->width(), dst->height(), dst->depth(), toBytes(dst->dtype()), dst->get());
   }
-  else if (mtype() == mType::Image && dst.mtype() == mType::Buffer)
+  else if (mtype() == mType::Image && dst->mtype() == mType::Buffer)
   {
-    backend_.copyMemoryImageToBuffer(device(), c_get(), width(), height(), depth(), toBytes(dtype()), dst.get());
+    backend_.copyMemoryImageToBuffer(device(), c_get(), width(), height(), depth(), toBytes(dtype()), dst->get());
   }
   else
   {
@@ -279,6 +233,16 @@ Array::initialized() const -> bool
 {
   return initialized_;
 }
+auto
+Array::get() const -> void **
+{
+  return data_.get();
+}
+auto
+Array::c_get() const -> const void **
+{
+  return (const void **)data_.get();
+}
 
 auto
 Array::shortType() const -> std::string
@@ -306,18 +270,6 @@ Array::shortType() const -> std::string
     default:
       throw std::invalid_argument("Invalid Array::Type value");
   }
-}
-
-auto
-Array::get() const -> void **
-{
-  return data_.get();
-}
-
-auto
-Array::c_get() const -> const void **
-{
-  return (const void **)data_.get();
 }
 
 } // namespace cle

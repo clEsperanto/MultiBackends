@@ -11,58 +11,31 @@
 namespace cle
 {
 
-// @StRigaud TODO:
-// - enable cl_image and cudaArray
-// - enable backend management of cl_image and cudaArray
-// - add memory type enum and friend operator (buffer, image)
-// - add tests corresponding to cl_image and cudaArray managment
-class Array
+class Array : public std::enable_shared_from_this<Array>
 {
 public:
-  using Pointer = const Array *;
+  using Pointer = std::shared_ptr<Array>;
 
-  [[nodiscard]] inline auto
-  ptr() const -> Pointer
-  {
-    // @StRigaud: possible safety issue, using shared_ptr is pain ...
-    // class Array : public std::enable_shared_from_this<Array> {
-    // public:
-    //     using Pointer = std::shared_ptr<const Array>;
-    //     static auto create() -> Pointer {
-    //         return std::make_shared<Array>();
-    //     }
-    //}
-    // Array::Pointer arr = Array::create();
-    // Array::Pointer arr_ptr = arr->ptr();
-    return this;
-  }
+  static auto
+  create(const size_t &          width,
+         const size_t &          height,
+         const size_t &          depth,
+         const dType &           data_type,
+         const mType &           mem_type,
+         const Device::Pointer & device_ptr) -> Array::Pointer;
+  static auto
+  create(const size_t &          width,
+         const size_t &          height,
+         const size_t &          depth,
+         const dType &           data_type,
+         const mType &           mem_type,
+         const void *            host_data,
+         const Device::Pointer & device_ptr) -> Array::Pointer;
+  static auto
+  create(Array::Pointer array) -> Array::Pointer;
 
-  Array() = default;
-  Array(const size_t & width,
-        const size_t & height,
-        const size_t & depth,
-        const dType &  data_type,
-        const mType &  mem_type);
-  Array(const size_t &          width,
-        const size_t &          height,
-        const size_t &          depth,
-        const dType &           data_type,
-        const mType &           mem_type,
-        const Device::Pointer & device_ptr);
-  Array(const size_t &          width,
-        const size_t &          height,
-        const size_t &          depth,
-        const dType &           data_type,
-        const mType &           mem_type,
-        const void *            host_data,
-        const Device::Pointer & device_ptr);
-  Array(const Array & arr);
-  ~Array();
-
-  auto
-  operator=(const Array & arr) -> Array &;
-  auto
-  operator=(Array && arr) noexcept -> Array &;
+  friend auto
+  operator<<(std::ostream & out, const Array::Pointer & array) -> std::ostream &;
 
   auto
   allocate() -> void;
@@ -71,11 +44,9 @@ public:
   auto
   read(void * host_data) const -> void;
   auto
-  copy(const Array & dst) const -> void;
+  copy(const Array::Pointer & dst) const -> void;
   auto
   fill(const float & value) const -> void;
-  auto
-  reset() -> void;
 
   [[nodiscard]] auto
   nbElements() const -> size_t;
@@ -104,16 +75,21 @@ public:
   [[nodiscard]] auto
   c_get() const -> const void **;
 
-  friend auto
-  operator<<(std::ostream & out, const Array & array) -> std::ostream &
-  {
-    out << array.memType_ << " Array ([" << array.width_ << "," << array.height_ << "," << array.depth_
-        << "], dtype=" << array.dtype() << ")";
-    return out;
-  }
+  ~Array();
 
 private:
   using MemoryPointer = std::shared_ptr<void *>;
+
+  Array() = default;
+  Array(const Array &) = default;
+  Array(const size_t &          width,
+        const size_t &          height,
+        const size_t &          depth,
+        const dType &           data_type,
+        const mType &           mem_type,
+        const Device::Pointer & device_ptr);
+  auto
+  operator=(const Array & arr) -> Array & = delete;
 
   mType           memType_ = mType::Buffer;
   dType           dataType_ = dType::Float;
@@ -127,5 +103,6 @@ private:
 };
 
 } // namespace cle
+
 
 #endif // __INCLUDE_ARRAY_HPP
