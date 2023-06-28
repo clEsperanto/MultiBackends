@@ -9,8 +9,8 @@ namespace cle
 
 enum class mType
 {
-  Buffer,
-  Image
+  BUFFER,
+  IMAGE
 };
 
 enum class dType
