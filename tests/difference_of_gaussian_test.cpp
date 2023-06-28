@@ -40,9 +40,7 @@ run_gaussian_blur(const cle::mType & type) -> bool
   //           static_cast<T>(0.2915041744709014892578125F) };
 
   auto gpu_input = cle::Array::create(w, h, d, cle::toType<T>(), type, input.data(), device);
-  auto gpu_output = cle::Array::create(w, h, d, cle::toType<T>(), type, device);
-  cle::tier2::difference_of_gaussian_func(device, gpu_input, gpu_output, 1, 1, 1, 2, 2, 2);
-
+  auto gpu_output = cle::tier2::difference_of_gaussian_func(device, gpu_input, nullptr, 1, 1, 1, 2, 2, 2);
   gpu_output->read(output.data());
 
   return std::equal(output.begin(), output.end(), valid.begin()) ? 0 : 1;
