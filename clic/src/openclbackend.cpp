@@ -148,31 +148,31 @@ OpenCLBackend::allocateMemory(const Device::Pointer & device,
 
   switch (dtype)
   {
-    case dType::Float: {
+    case dType::FLOAT: {
       image_format.image_channel_data_type = CL_FLOAT;
       break;
     }
-    case dType::Int32: {
+    case dType::INT32: {
       image_format.image_channel_data_type = CL_SIGNED_INT32;
       break;
     }
-    case dType::UInt32: {
+    case dType::UINT32: {
       image_format.image_channel_data_type = CL_UNSIGNED_INT32;
       break;
     }
-    case dType::Int8: {
+    case dType::INT8: {
       image_format.image_channel_data_type = CL_SIGNED_INT8;
       break;
     }
-    case dType::UInt8: {
+    case dType::UINT8: {
       image_format.image_channel_data_type = CL_UNSIGNED_INT8;
       break;
     }
-    case dType::Int16: {
+    case dType::INT16: {
       image_format.image_channel_data_type = CL_SIGNED_INT16;
       break;
     }
-    case dType::UInt16: {
+    case dType::UINT16: {
       image_format.image_channel_data_type = CL_UNSIGNED_INT16;
       break;
     }
@@ -475,7 +475,7 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
   cl_int err;
   switch (dtype)
   {
-    case dType::Float: {
+    case dType::FLOAT: {
       err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
                                 *static_cast<cl_mem *>(*data_ptr),
                                 &value,
@@ -487,7 +487,7 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
                                 nullptr);
       break;
     }
-    case dType::Int32: {
+    case dType::INT32: {
       auto cval = static_cast<int32_t>(value);
       err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
                                 *static_cast<cl_mem *>(*data_ptr),
@@ -500,7 +500,7 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
                                 nullptr);
       break;
     }
-    case dType::UInt32: {
+    case dType::UINT32: {
       auto cval = static_cast<uint32_t>(value);
       err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
                                 *static_cast<cl_mem *>(*data_ptr),
@@ -513,7 +513,7 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
                                 nullptr);
       break;
     }
-    case dType::Int8: {
+    case dType::INT8: {
       auto cval = static_cast<int8_t>(value);
       err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
                                 *static_cast<cl_mem *>(*data_ptr),
@@ -526,7 +526,7 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
                                 nullptr);
       break;
     }
-    case dType::UInt8: {
+    case dType::UINT8: {
       auto cval = static_cast<uint8_t>(value);
       err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
                                 *static_cast<cl_mem *>(*data_ptr),
@@ -539,7 +539,7 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
                                 nullptr);
       break;
     }
-    case dType::Int16: {
+    case dType::INT16: {
       auto cval = static_cast<int16_t>(value);
       err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
                                 *static_cast<cl_mem *>(*data_ptr),
@@ -552,7 +552,7 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
                                 nullptr);
       break;
     }
-    case dType::UInt16: {
+    case dType::UINT16: {
       auto cval = static_cast<uint16_t>(value);
       err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
                                 *static_cast<cl_mem *>(*data_ptr),
@@ -565,7 +565,7 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
                                 nullptr);
       break;
     }
-    case dType::Int64: {
+    case dType::INT64: {
       auto cval = static_cast<int64_t>(value);
       err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
                                 *static_cast<cl_mem *>(*data_ptr),
@@ -578,7 +578,7 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
                                 nullptr);
       break;
     }
-    case dType::UInt64: {
+    case dType::UINT64: {
       auto cval = static_cast<uint64_t>(value);
       err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
                                 *static_cast<cl_mem *>(*data_ptr),
@@ -620,7 +620,7 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
   cl_int                err;
   switch (dtype)
   {
-    case dType::Float: {
+    case dType::FLOAT: {
       auto cval = static_cast<cl_float>(value);
       err = clEnqueueFillImage(opencl_device->getCLCommandQueue(),
                                *static_cast<cl_mem *>(*data_ptr),
@@ -632,9 +632,9 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
                                nullptr);
       break;
     }
-    case dType::Int32:
-    case dType::Int16:
-    case dType::Int8: {
+    case dType::INT32:
+    case dType::INT16:
+    case dType::INT8: {
       auto cval = static_cast<cl_int>(value);
       err = clEnqueueFillImage(opencl_device->getCLCommandQueue(),
                                *static_cast<cl_mem *>(*data_ptr),
@@ -646,9 +646,9 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
                                nullptr);
       break;
     }
-    case dType::UInt32:
-    case dType::UInt16:
-    case dType::UInt8: {
+    case dType::UINT32:
+    case dType::UINT16:
+    case dType::UINT8: {
       auto cval = static_cast<cl_uint>(value);
       err = clEnqueueFillImage(opencl_device->getCLCommandQueue(),
                                *static_cast<cl_mem *>(*data_ptr),

@@ -91,8 +91,8 @@ private:
   auto
   operator=(const Array & arr) -> Array & = delete;
 
-  mType           memType_ = mType::Buffer;
-  dType           dataType_ = dType::Float;
+  mType           memType_ = mType::BUFFER;
+  dType           dataType_ = dType::FLOAT;
   size_t          width_ = 1;
   size_t          height_ = 1;
   size_t          depth_ = 1;

@@ -15,15 +15,15 @@ enum class mType
 
 enum class dType
 {
-  Float,
-  Int32,
-  UInt32,
-  Int8,
-  UInt8,
-  Int16,
-  UInt16,
-  Int64,
-  UInt64
+  FLOAT,
+  INT32,
+  UINT32,
+  INT8,
+  UINT8,
+  INT16,
+  UINT16,
+  INT64,
+  UINT64
 };
 
 inline auto
@@ -31,31 +31,31 @@ operator<<(std::ostream & out, const dType & dtype) -> std::ostream &
 {
   switch (dtype)
   {
-    case dType::Float:
+    case dType::FLOAT:
       out << "float";
       break;
-    case dType::Int32:
+    case dType::INT32:
       out << "int";
       break;
-    case dType::UInt32:
+    case dType::UINT32:
       out << "uint";
       break;
-    case dType::Int8:
+    case dType::INT8:
       out << "char";
       break;
-    case dType::UInt8:
+    case dType::UINT8:
       out << "uchar";
       break;
-    case dType::Int16:
+    case dType::INT16:
       out << "short";
       break;
-    case dType::UInt16:
+    case dType::UINT16:
       out << "ushort";
       break;
-    case dType::Int64:
+    case dType::INT64:
       out << "long";
       break;
-    case dType::UInt64:
+    case dType::UINT64:
       out << "ulong";
       break;
     default:
@@ -70,10 +70,10 @@ operator<<(std::ostream & out, const mType & mtype) -> std::ostream &
 {
   switch (mtype)
   {
-    case mType::Buffer:
+    case mType::BUFFER:
       out << "Buffer";
       break;
-    case mType::Image:
+    case mType::IMAGE:
       out << "Image";
       break;
   }
@@ -86,39 +86,39 @@ toType() -> dType
 {
   if constexpr (std::is_same_v<T, float>)
   {
-    return dType::Float;
+    return dType::FLOAT;
   }
   else if constexpr (std::is_same_v<T, int32_t>)
   {
-    return dType::Int32;
+    return dType::INT32;
   }
   else if constexpr (std::is_same_v<T, uint32_t>)
   {
-    return dType::UInt32;
+    return dType::UINT32;
   }
   else if constexpr (std::is_same_v<T, int16_t>)
   {
-    return dType::Int16;
+    return dType::INT16;
   }
   else if constexpr (std::is_same_v<T, uint16_t>)
   {
-    return dType::UInt16;
+    return dType::UINT16;
   }
   else if constexpr (std::is_same_v<T, int8_t>)
   {
-    return dType::Int8;
+    return dType::INT8;
   }
   else if constexpr (std::is_same_v<T, uint8_t>)
   {
-    return dType::UInt8;
+    return dType::UINT8;
   }
   else if constexpr (std::is_same_v<T, int64_t>)
   {
-    return dType::Int64;
+    return dType::INT64;
   }
   else if constexpr (std::is_same_v<T, uint64_t>)
   {
-    return dType::UInt64;
+    return dType::UINT64;
   }
   else
   {
@@ -131,23 +131,23 @@ toBytes(const dType & dtype) -> size_t
 {
   switch (dtype)
   {
-    case dType::Float:
+    case dType::FLOAT:
       return sizeof(float);
-    case dType::Int32:
+    case dType::INT32:
       return sizeof(int32_t);
-    case dType::UInt32:
+    case dType::UINT32:
       return sizeof(uint32_t);
-    case dType::Int8:
+    case dType::INT8:
       return sizeof(int8_t);
-    case dType::UInt8:
+    case dType::UINT8:
       return sizeof(uint8_t);
-    case dType::Int16:
+    case dType::INT16:
       return sizeof(int16_t);
-    case dType::UInt16:
+    case dType::UINT16:
       return sizeof(uint16_t);
-    case dType::Int64:
+    case dType::INT64:
       return sizeof(int64_t);
-    case dType::UInt64:
+    case dType::UINT64:
       return sizeof(uint64_t);
     default:
       throw std::invalid_argument("Invalid Array::Type value");
@@ -161,23 +161,23 @@ castTo(const T & value, const dType & dtype) ->
 {
   switch (dtype)
   {
-    case dType::Float:
+    case dType::FLOAT:
       return static_cast<float>(value);
-    case dType::Int32:
+    case dType::INT32:
       return static_cast<int32_t>(value);
-    case dType::UInt32:
+    case dType::UINT32:
       return static_cast<uint32_t>(value);
-    case dType::Int8:
+    case dType::INT8:
       return static_cast<int8_t>(value);
-    case dType::UInt8:
+    case dType::UINT8:
       return static_cast<uint8_t>(value);
-    case dType::Int16:
+    case dType::INT16:
       return static_cast<int16_t>(value);
-    case dType::UInt16:
+    case dType::UINT16:
       return static_cast<uint16_t>(value);
-    case dType::Int64:
+    case dType::INT64:
       return static_cast<int64_t>(value);
-    case dType::UInt64:
+    case dType::UINT64:
       return static_cast<uint64_t>(value);
     default:
       throw std::invalid_argument("Invalid Array::Type value");

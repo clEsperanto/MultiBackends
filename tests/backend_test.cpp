@@ -48,7 +48,7 @@ ocl_list_devices()
   std::cout << std::endl;
 
   std::cout << "Free memory" << std::endl;
-  backendManager.getBackend().freeMemory(device, cle::mType::Buffer, (void **)&data_ptr);
+  backendManager.getBackend().freeMemory(device, cle::mType::BUFFER, (void **)&data_ptr);
 }
 
 void
@@ -99,7 +99,7 @@ cuda_list_devices()
 
 
   std::cout << "Free memory" << std::endl;
-  backendManager.getBackend().freeMemory(device, cle::mType::Buffer, (void **)&data_ptr);
+  backendManager.getBackend().freeMemory(device, cle::mType::BUFFER, (void **)&data_ptr);
 }
 
 int

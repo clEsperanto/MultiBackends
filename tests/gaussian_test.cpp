@@ -52,9 +52,9 @@ main(int argc, char const * argv[]) -> int
   using T = float;
 
   cle::BackendManager::getInstance().setBackend(false);
-  assert(run_gaussian_blur<T>(cle::mType::Buffer) == 0);
-  assert(run_gaussian_blur<T>(cle::mType::Image) == 0);
+  assert(run_gaussian_blur<T>(cle::mType::BUFFER) == 0);
+  assert(run_gaussian_blur<T>(cle::mType::IMAGE) == 0);
 
   cle::BackendManager::getInstance().setBackend(true);
-  assert(run_gaussian_blur<T>(cle::mType::Buffer) == 0);
+  assert(run_gaussian_blur<T>(cle::mType::BUFFER) == 0);
 }
