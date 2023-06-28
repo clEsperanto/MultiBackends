@@ -415,15 +415,16 @@ public:
     return out;
   }
 
+  ~BackendManager() = default;
   BackendManager(const BackendManager &) = delete;
   auto
   operator=(const BackendManager &) -> BackendManager & = delete;
+
 
 private:
   std::shared_ptr<Backend> backend;
 
   BackendManager() = default;
-  ~BackendManager() = default;
   BackendManager(BackendManager &&) = default;
   auto
   operator=(BackendManager &&) -> BackendManager & = default;
