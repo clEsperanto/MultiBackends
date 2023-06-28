@@ -75,4 +75,5 @@ jobs:
                 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=61
                 cmake --build build --config Release -j 4 
 
+                  
             

@@ -1,3 +1,6 @@
+# Branch or Release tag to retrive the ocl/cu files
+set(CLESPERANTO_KERNEL_TAG clesperanto_kernels)
+
 include(FetchContent)
 set(FETCHCONTENT_BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -5,8 +8,7 @@ set(FETCHCONTENT_BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 FetchContent_Declare(kernels
     GIT_REPOSITORY https://github.com/clEsperanto/clij-opencl-kernels.git
     GIT_TAG        ${CLESPERANTO_KERNEL_TAG}
-    BUILD_ALWAYS OFF
-    CONFIGURE_COMMAND ""
+    BUILD_ALWAYS   OFF
 )
 if(NOT kernels_POPULATED)
     FetchContent_Populate(kernels)
