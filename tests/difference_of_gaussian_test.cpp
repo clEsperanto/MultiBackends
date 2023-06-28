@@ -39,21 +39,11 @@ run_gaussian_blur(const cle::mType & type) -> bool
   //           static_cast<T>(2.1539404392242431640625F),    static_cast<T>(1.30643117427825927734375F),
   //           static_cast<T>(0.2915041744709014892578125F) };
 
-  cle::Array gpu_input(w, h, d, cle::toType<T>(), type, input.data(), device);
-  cle::Array gpu_output(w, h, d, cle::toType<T>(), type, device);
+  auto gpu_input = cle::Array::create(w, h, d, cle::toType<T>(), type, input.data(), device);
+  auto gpu_output = cle::Array::create(w, h, d, cle::toType<T>(), type, device);
   cle::tier2::difference_of_gaussian_func(device, gpu_input, gpu_output, 1, 1, 1, 2, 2, 2);
 
-  gpu_output.read(output.data());
-
-  for (auto && i : output)
-  {
-    if (std::distance(output.data(), &i) % w == 0)
-    {
-      std::cout << std::endl;
-    }
-    std::cout << i << " ";
-  }
-  std::cout << std::endl;
+  gpu_output->read(output.data());
 
   return std::equal(output.begin(), output.end(), valid.begin()) ? 0 : 1;
 }
@@ -66,7 +56,7 @@ main(int argc, char const * argv[]) -> int
   cle::BackendManager::getInstance().setBackend(false);
   run_gaussian_blur<T>(cle::mType::Buffer);
   // run_gaussian_blur<T>(cle::mType::Image);
-  // cle::BackendManager::getInstance().setBackend(true);
-  // run_gaussian_blur<T>(cle::mType::Buffer);
+  cle::BackendManager::getInstance().setBackend(true);
+  run_gaussian_blur<T>(cle::mType::Buffer);
   // run_gaussian_blur<T>(cle::mType::Image);
 }

@@ -11,26 +11,26 @@ namespace cle::tier1
 auto
 execute_separable_func(const Device::Pointer & device,
                        const KernelInfo &      kernel,
-                       const Array &           src,
-                       const Array &           dst,
+                       const Array::Pointer &  src,
+                       const Array::Pointer &  dst,
                        const float &           sigma,
                        const int &             radius) -> void;
 auto
 gaussian_blur_func(const Device::Pointer & device,
-                   const Array &           src,
-                   const Array &           dst,
+                   const Array::Pointer &  src,
+                   const Array::Pointer &  dst,
                    const float &           sigma_x,
                    const float &           sigma_y,
                    const float &           sigma_z) -> void;
 
 auto
-absolute_func(const Device::Pointer & device, const Array & src, Array & dst) -> void;
+absolute_func(const Device::Pointer & device, const Array::Pointer & src, const Array::Pointer & dst) -> void;
 
 auto
 add_images_weighted_func(const Device::Pointer & device,
-                         const Array &           src0,
-                         const Array &           src1,
-                         const Array &           dst,
+                         const Array::Pointer &  src0,
+                         const Array::Pointer &  src1,
+                         const Array::Pointer &  dst,
                          const float &           factor0,
                          const float &           factor1) -> void;
 

@@ -19,16 +19,15 @@ run_array(cle::mType type1, cle::mType type2)
   std::vector<T>      valid(input.size(), 12);
   std::vector<T>      output(input.size(), -10);
 
-  cle::Array bufferA(w, h, d, cle::toType<T>(), type1, device);
-  cle::Array bufferB(w, h, d, cle::toType<T>(), type2, output.data(), device);
-  bufferA.write(input.data());
-  bufferA.fill(12);
-  bufferA.copy(bufferB);
-  cle::Array bufferC(bufferB);
+  auto bufferA = cle::Array::create(w, h, d, cle::toType<T>(), type1, device);
+  auto bufferB = cle::Array::create(w, h, d, cle::toType<T>(), type2, output.data(), device);
+  bufferA->write(input.data());
+  bufferA->fill(12);
+  bufferA->copy(bufferB);
+  auto bufferC = cle::Array::create(bufferB);
+  auto bufferD = bufferC;
 
-  cle::Array bufferD = bufferC;
-
-  bufferD.read(output.data());
+  bufferD->read(output.data());
 
   return std::equal(valid.begin(), valid.end(), output.begin()) ? 0 : 1;
 }
