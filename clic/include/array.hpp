@@ -15,7 +15,11 @@ class Array : public std::enable_shared_from_this<Array>
 {
 public:
   using Pointer = std::shared_ptr<Array>;
-
+  static auto
+  New() -> Array::Pointer
+  {
+    return std::shared_ptr<Array>(new Array());
+  }
   static auto
   create(const size_t &          width,
          const size_t &          height,
