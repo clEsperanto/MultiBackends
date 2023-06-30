@@ -80,8 +80,12 @@ public:
   c_get() const -> const void **;
 
   ~Array();
-  Array() = default;
   Array(const Array &) = default;
+
+private:
+  using MemoryPointer = std::shared_ptr<void *>;
+
+  Array() = default;
   Array(const size_t &          width,
         const size_t &          height,
         const size_t &          depth,
@@ -90,9 +94,6 @@ public:
         const Device::Pointer & device_ptr);
   auto
   operator=(const Array & arr) -> Array & = default;
-
-private:
-  using MemoryPointer = std::shared_ptr<void *>;
 
   mType           memType_ = mType::BUFFER;
   dType           dataType_ = dType::FLOAT;
