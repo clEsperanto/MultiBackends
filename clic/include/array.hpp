@@ -82,10 +82,6 @@ public:
   ~Array();
   Array() = default;
   Array(const Array &) = default;
-
-private:
-  using MemoryPointer = std::shared_ptr<void *>;
-
   Array(const size_t &          width,
         const size_t &          height,
         const size_t &          depth,
@@ -93,7 +89,10 @@ private:
         const mType &           mem_type,
         const Device::Pointer & device_ptr);
   auto
-  operator=(const Array & arr) -> Array & = delete;
+  operator=(const Array & arr) -> Array & = default;
+
+private:
+  using MemoryPointer = std::shared_ptr<void *>;
 
   mType           memType_ = mType::BUFFER;
   dType           dataType_ = dType::FLOAT;
