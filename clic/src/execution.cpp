@@ -245,8 +245,8 @@ auto
 execute(const Device::Pointer & device,
         const KernelInfo &      kernel_func,
         const ParameterList &   parameters,
-        const ConstantList &    constants,
-        const RangeArray &      global_range) -> void
+        const RangeArray &      global_range,
+        const ConstantList &    constants) -> void
 {
   // build program source
   std::string program_source;
