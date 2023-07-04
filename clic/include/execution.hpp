@@ -28,8 +28,8 @@ auto
 execute(const Device::Pointer & device,
         const KernelInfo &      kernel_func,
         const ParameterList &   parameters,
-        const ConstantList &    constants = {},
-        const RangeArray &      global_range = { 1, 1, 1 }) -> void;
+        const RangeArray &      global_range = { 1, 1, 1 },
+        const ConstantList &    constants = {}) -> void;
 
 auto
 loadSource(const std::string & source_path) -> std::string;

@@ -15,7 +15,11 @@ class Array : public std::enable_shared_from_this<Array>
 {
 public:
   using Pointer = std::shared_ptr<Array>;
-
+  static auto
+  New() -> Array::Pointer
+  {
+    return std::shared_ptr<Array>(new Array());
+  }
   static auto
   create(const size_t &          width,
          const size_t &          height,
@@ -76,23 +80,21 @@ public:
   c_get() const -> const void **;
 
   ~Array();
+  Array(const Array &) = default;
 
 private:
   using MemoryPointer = std::shared_ptr<void *>;
 
   Array() = default;
-  Array(const Array &) = default;
   Array(const size_t &          width,
         const size_t &          height,
         const size_t &          depth,
         const dType &           data_type,
         const mType &           mem_type,
         const Device::Pointer & device_ptr);
-  auto
-  operator=(const Array & arr) -> Array & = delete;
 
-  mType           memType_ = mType::Buffer;
-  dType           dataType_ = dType::Float;
+  mType           memType_ = mType::BUFFER;
+  dType           dataType_ = dType::FLOAT;
   size_t          width_ = 1;
   size_t          height_ = 1;
   size_t          depth_ = 1;

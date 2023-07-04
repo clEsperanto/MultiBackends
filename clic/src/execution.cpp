@@ -192,7 +192,7 @@ oclDefines(const ParameterList & parameter_list, const ConstantList & constant_l
     defines << "\n#define POS_" << param.first << "_INSTANCE(pos0,pos1,pos2,pos3) (" << pos_type << ")" << pos;
     defines << "\n";
 
-    if (arr->mtype() == mType::Buffer) // @StRigaud TODO: introduce cl_image / cudaArray
+    if (arr->mtype() == mType::BUFFER) // @StRigaud TODO: introduce cl_image / cudaArray
     {
       defines << "\n#define IMAGE_" << param.first << "_TYPE __global " << arr->dtype() << "*";
       defines << "\n#define READ_" << param.first << "_IMAGE(a,b,c) read_buffer" << ndim << "d" << arr->shortType()
@@ -245,8 +245,8 @@ auto
 execute(const Device::Pointer & device,
         const KernelInfo &      kernel_func,
         const ParameterList &   parameters,
-        const ConstantList &    constants,
-        const RangeArray &      global_range) -> void
+        const RangeArray &      global_range,
+        const ConstantList &    constants) -> void
 {
   // build program source
   std::string program_source;

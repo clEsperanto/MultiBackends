@@ -36,17 +36,17 @@ int
 main(int argc, char ** argv)
 {
   using T = float;
-  cle::BackendManager::getInstance().setBackend(false);
-  assert(run_array<T>(cle::mType::Buffer, cle::mType::Buffer) == 0);
-  assert(run_array<T>(cle::mType::Image, cle::mType::Image) == 0);
-  assert(run_array<T>(cle::mType::Buffer, cle::mType::Image) == 0);
-  assert(run_array<T>(cle::mType::Image, cle::mType::Buffer) == 0);
+  cle::BackendManager::getInstance().setBackend("opencl");
+  assert(run_array<T>(cle::mType::BUFFER, cle::mType::BUFFER) == 0);
+  assert(run_array<T>(cle::mType::IMAGE, cle::mType::IMAGE) == 0);
+  assert(run_array<T>(cle::mType::BUFFER, cle::mType::IMAGE) == 0);
+  assert(run_array<T>(cle::mType::IMAGE, cle::mType::BUFFER) == 0);
 
-  cle::BackendManager::getInstance().setBackend(true);
-  assert(run_array<T>(cle::mType::Buffer, cle::mType::Buffer) == 0);
-  assert(run_array<T>(cle::mType::Image, cle::mType::Image) == 0);
-  assert(run_array<T>(cle::mType::Buffer, cle::mType::Image) == 0);
-  assert(run_array<T>(cle::mType::Image, cle::mType::Buffer) == 0);
+  cle::BackendManager::getInstance().setBackend("cuda");
+  assert(run_array<T>(cle::mType::BUFFER, cle::mType::BUFFER) == 0);
+  assert(run_array<T>(cle::mType::IMAGE, cle::mType::IMAGE) == 0);
+  assert(run_array<T>(cle::mType::BUFFER, cle::mType::IMAGE) == 0);
+  assert(run_array<T>(cle::mType::IMAGE, cle::mType::BUFFER) == 0);
 
   return 0;
 }

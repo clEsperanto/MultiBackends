@@ -13,10 +13,9 @@ absolute_func(const Device::Pointer & device, const Array::Pointer & src, Array:
 {
   tier0::create_like(src, dst);
   const KernelInfo    kernel = { "absolute", kernel::absolute };
-  const ConstantList  constants = {};
   const ParameterList parameters = { { "src", src }, { "dst", dst } };
   const RangeArray    global_range = { dst->width(), dst->height(), dst->depth() };
-  execute(device, kernel, parameters, constants, global_range);
+  execute(device, kernel, parameters, global_range);
   return dst;
 }
 
@@ -30,12 +29,11 @@ add_images_weighted_func(const Device::Pointer & device,
 {
   tier0::create_like(src0, dst);
   const KernelInfo    kernel = { "add_images_weighted", kernel::add_images_weighted };
-  const ConstantList  constants = {};
   const ParameterList parameters = {
     { "src0", src0 }, { "src1", src1 }, { "dst", dst }, { "factor0", factor0 }, { "factor1", factor1 }
   };
   const RangeArray global_range = { dst->width(), dst->height(), dst->depth() };
-  execute(device, kernel, parameters, constants, global_range);
+  execute(device, kernel, parameters, global_range);
   return dst;
 }
 

@@ -62,8 +62,7 @@ execute_separable_func(const Device::Pointer &      device,
                        const std::array<float, 3> & sigma,
                        const std::array<int, 3> &   radius) -> void
 {
-  const ConstantList constants = {};
-  const RangeArray   global_range = { dst->width(), dst->height(), dst->depth() };
+  const RangeArray global_range = { dst->width(), dst->height(), dst->depth() };
 
   auto tmp1 = Array::create(dst);
   auto tmp2 = Array::create(dst);
@@ -73,7 +72,7 @@ execute_separable_func(const Device::Pointer &      device,
     const ParameterList parameters = {
       { "src", src }, { "dst", tmp1 }, { "dim", 0 }, { "N", radius[0] }, { "s", sigma[0] }
     };
-    execute(device, kernel, parameters, constants, global_range);
+    execute(device, kernel, parameters, global_range);
   }
   else
   {
@@ -84,7 +83,7 @@ execute_separable_func(const Device::Pointer &      device,
     const ParameterList parameters = {
       { "src", tmp1 }, { "dst", tmp2 }, { "dim", 1 }, { "N", radius[1] }, { "s", sigma[1] }
     };
-    execute(device, kernel, parameters, constants, global_range);
+    execute(device, kernel, parameters, global_range);
   }
   else
   {
@@ -95,7 +94,7 @@ execute_separable_func(const Device::Pointer &      device,
     const ParameterList parameters = {
       { "src", tmp2 }, { "dst", dst }, { "dim", 2 }, { "N", radius[2] }, { "s", sigma[2] }
     };
-    execute(device, kernel, parameters, constants, global_range);
+    execute(device, kernel, parameters, global_range);
   }
   else
   {
@@ -103,4 +102,4 @@ execute_separable_func(const Device::Pointer &      device,
   }
 }
 
-} // namespace cle
+} // namespace cle::tier0

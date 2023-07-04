@@ -119,25 +119,25 @@ CUDABackend::allocateMemory(const Device::Pointer & device,
   CUarray_format format;
   switch (dtype)
   {
-    case dType::Float:
+    case dType::FLOAT:
       format = CU_AD_FORMAT_FLOAT;
       break;
-    case dType::Int8:
+    case dType::INT8:
       format = CU_AD_FORMAT_SIGNED_INT8;
       break;
-    case dType::UInt8:
+    case dType::UINT8:
       format = CU_AD_FORMAT_UNSIGNED_INT8;
       break;
-    case dType::Int16:
+    case dType::INT16:
       format = CU_AD_FORMAT_SIGNED_INT16;
       break;
-    case dType::UInt16:
+    case dType::UINT16:
       format = CU_AD_FORMAT_UNSIGNED_INT16;
       break;
-    case dType::Int32:
+    case dType::INT32:
       format = CU_AD_FORMAT_SIGNED_INT32;
       break;
-    case dType::UInt32:
+    case dType::UINT32:
       format = CU_AD_FORMAT_UNSIGNED_INT32;
       break;
     default:
@@ -185,7 +185,7 @@ CUDABackend::freeMemory(const Device::Pointer & device, const mType & mtype, voi
   {
     throw std::runtime_error("Error (cuda): Failed to get context from device (" + std::to_string(err) + ").");
   }
-  if (mtype == mType::Image)
+  if (mtype == mType::IMAGE)
   {
     err = cuArrayDestroy(reinterpret_cast<CUarray>(*data_ptr));
   }
@@ -566,47 +566,47 @@ CUDABackend::setMemory(const Device::Pointer & device,
   const auto dev_ptr = reinterpret_cast<CUdeviceptr>(*data_ptr);
   switch (dtype)
   {
-    case dType::Float: {
+    case dType::FLOAT: {
       auto cval = static_cast<float>(value);
       err = cuMemsetD32(dev_ptr, *(reinterpret_cast<uint32_t *>(&cval)), count);
       break;
     }
-    case dType::Int64: {
+    case dType::INT64: {
       std::vector<int64_t> host_buffer(count, static_cast<int64_t>(value));
       writeMemory(device, data_ptr, size, host_buffer.data());
       break;
     }
-    case dType::UInt64: {
+    case dType::UINT64: {
       std::vector<uint64_t> host_buffer(count, static_cast<uint64_t>(value));
       writeMemory(device, data_ptr, size, host_buffer.data());
       break;
     }
-    case dType::Int32: {
+    case dType::INT32: {
       auto cval = static_cast<int32_t>(value);
       err = cuMemsetD32(dev_ptr, *(reinterpret_cast<uint32_t *>(&cval)), count);
       break;
     }
-    case dType::UInt32: {
+    case dType::UINT32: {
       auto cval = static_cast<uint32_t>(value);
       err = cuMemsetD32(dev_ptr, *(reinterpret_cast<uint32_t *>(&cval)), count);
       break;
     }
-    case dType::Int16: {
+    case dType::INT16: {
       auto cval = static_cast<int16_t>(value);
       err = cuMemsetD16(dev_ptr, *(reinterpret_cast<uint16_t *>(&cval)), count);
       break;
     }
-    case dType::UInt16: {
+    case dType::UINT16: {
       auto cval = static_cast<uint16_t>(value);
       err = cuMemsetD16(dev_ptr, *(reinterpret_cast<uint16_t *>(&cval)), count);
       break;
     }
-    case dType::Int8: {
+    case dType::INT8: {
       auto cval = static_cast<int8_t>(value);
       err = cuMemsetD8(dev_ptr, *(reinterpret_cast<uint8_t *>(&cval)), count);
       break;
     }
-    case dType::UInt8: {
+    case dType::UINT8: {
       auto cval = static_cast<uint8_t>(value);
       err = cuMemsetD8(dev_ptr, *(reinterpret_cast<uint8_t *>(&cval)), count);
       break;
@@ -643,43 +643,43 @@ CUDABackend::setMemory(const Device::Pointer & device,
 
   switch (dtype)
   {
-    case dType::Float: {
+    case dType::FLOAT: {
       using T = float;
       std::vector<T> host_buffer(width * height * depth, static_cast<T>(value));
       writeMemory(device, data_ptr, width, height, depth, toBytes(dtype), host_buffer.data());
       break;
     }
-    case dType::Int32: {
+    case dType::INT32: {
       using T = int32_t;
       std::vector<T> host_buffer(width * height * depth, static_cast<T>(value));
       writeMemory(device, data_ptr, width, height, depth, toBytes(dtype), host_buffer.data());
       break;
     }
-    case dType::UInt32: {
+    case dType::UINT32: {
       using T = uint32_t;
       std::vector<T> host_buffer(width * height * depth, static_cast<T>(value));
       writeMemory(device, data_ptr, width, height, depth, toBytes(dtype), host_buffer.data());
       break;
     }
-    case dType::Int16: {
+    case dType::INT16: {
       using T = int16_t;
       std::vector<T> host_buffer(width * height * depth, static_cast<T>(value));
       writeMemory(device, data_ptr, width, height, depth, toBytes(dtype), host_buffer.data());
       break;
     }
-    case dType::UInt16: {
+    case dType::UINT16: {
       using T = uint16_t;
       std::vector<T> host_buffer(width * height * depth, static_cast<T>(value));
       writeMemory(device, data_ptr, width, height, depth, toBytes(dtype), host_buffer.data());
       break;
     }
-    case dType::Int8: {
+    case dType::INT8: {
       using T = int8_t;
       std::vector<T> host_buffer(width * height * depth, static_cast<T>(value));
       writeMemory(device, data_ptr, width, height, depth, toBytes(dtype), host_buffer.data());
       break;
     }
-    case dType::UInt8: {
+    case dType::UINT8: {
       using T = uint8_t;
       std::vector<T> host_buffer(width * height * depth, static_cast<T>(value));
       writeMemory(device, data_ptr, width, height, depth, toBytes(dtype), host_buffer.data());
