@@ -92,8 +92,6 @@ private:
         const dType &           data_type,
         const mType &           mem_type,
         const Device::Pointer & device_ptr);
-  auto
-  operator=(const Array & arr) -> Array & = default;
 
   mType           memType_ = mType::BUFFER;
   dType           dataType_ = dType::FLOAT;
