@@ -32,11 +32,11 @@ main(int argc, char const * argv[]) -> int
 {
   using T = float;
 
-  cle::BackendManager::getInstance().setBackend(false);
+  cle::BackendManager::getInstance().setBackend("opencl");
   assert(run_absolute<T>(cle::mType::BUFFER) == 0);
   assert(run_absolute<T>(cle::mType::IMAGE) == 0);
 
-  cle::BackendManager::getInstance().setBackend(true);
+  cle::BackendManager::getInstance().setBackend("cuda");
   assert(run_absolute<T>(cle::mType::BUFFER) == 0);
   // assert(run_absolute<T>(cle::mType::IMAGE) == 0);
 }

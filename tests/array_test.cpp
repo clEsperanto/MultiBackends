@@ -36,13 +36,13 @@ int
 main(int argc, char ** argv)
 {
   using T = float;
-  cle::BackendManager::getInstance().setBackend(false);
+  cle::BackendManager::getInstance().setBackend("opencl");
   assert(run_array<T>(cle::mType::BUFFER, cle::mType::BUFFER) == 0);
   assert(run_array<T>(cle::mType::IMAGE, cle::mType::IMAGE) == 0);
   assert(run_array<T>(cle::mType::BUFFER, cle::mType::IMAGE) == 0);
   assert(run_array<T>(cle::mType::IMAGE, cle::mType::BUFFER) == 0);
 
-  cle::BackendManager::getInstance().setBackend(true);
+  cle::BackendManager::getInstance().setBackend("cuda");
   assert(run_array<T>(cle::mType::BUFFER, cle::mType::BUFFER) == 0);
   assert(run_array<T>(cle::mType::IMAGE, cle::mType::IMAGE) == 0);
   assert(run_array<T>(cle::mType::BUFFER, cle::mType::IMAGE) == 0);

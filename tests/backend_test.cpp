@@ -105,12 +105,12 @@ cuda_list_devices()
 int
 main(int argc, char ** argv)
 {
-  cle::BackendManager::getInstance().setBackend(false);
+  cle::BackendManager::getInstance().setBackend("opencl");
   std::cout << cle::BackendManager::getInstance().getBackend().getType() << std::endl;
 
   ocl_list_devices();
 
-  cle::BackendManager::getInstance().setBackend(true);
+  cle::BackendManager::getInstance().setBackend("cuda");
   std::cout << cle::BackendManager::getInstance().getBackend().getType() << std::endl;
 
   cuda_list_devices();

@@ -51,10 +51,10 @@ main(int argc, char const * argv[]) -> int
 {
   using T = float;
 
-  cle::BackendManager::getInstance().setBackend(false);
+  cle::BackendManager::getInstance().setBackend("opencl");
   run_gaussian_blur<T>(cle::mType::BUFFER);
   // run_gaussian_blur<T>(cle::mType::IMAGE);
-  cle::BackendManager::getInstance().setBackend(true);
+  cle::BackendManager::getInstance().setBackend("cuda");
   run_gaussian_blur<T>(cle::mType::BUFFER);
   // run_gaussian_blur<T>(cle::mType::IMAGE);
 }
