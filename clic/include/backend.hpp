@@ -402,8 +402,14 @@ public:
   static auto
   getInstance() -> BackendManager &;
 
+  [[nodiscard]] static auto
+  cudaEnabled() -> bool;
+
+  [[nodiscard]] static auto
+  openCLEnabled() -> bool;
+
   auto
-  setBackend(bool useCUDA = false) -> void;
+  setBackend(const std::string & backend = "opencl") -> void;
 
   [[nodiscard]] auto
   getBackend() const -> const Backend &;

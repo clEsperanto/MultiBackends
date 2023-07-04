@@ -476,10 +476,11 @@ OpenCLBackend::setMemory(const Device::Pointer & device,
   switch (dtype)
   {
     case dType::FLOAT: {
+      auto cval = static_cast<float>(value);
       err = clEnqueueFillBuffer(opencl_device->getCLCommandQueue(),
                                 *static_cast<cl_mem *>(*data_ptr),
-                                &value,
-                                sizeof(value),
+                                &cval,
+                                sizeof(cval),
                                 0,
                                 size,
                                 0,

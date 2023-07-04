@@ -11,15 +11,47 @@ BackendManager::getInstance() -> BackendManager &
 }
 
 auto
-BackendManager::setBackend(bool useCUDA) -> void
+BackendManager::cudaEnabled() -> bool
 {
-  if (useCUDA && USE_CUDA)
+#if USE_CUDA
+  int  deviceCount = 0;
+  auto error = cuDeviceGetCount(&deviceCount);
+  if (error != CUDA_SUCCESS)
+  {
+    return false;
+  }
+  return deviceCount > 0;
+#else
+  return false;
+#endif
+}
+
+auto
+BackendManager::openCLEnabled() -> bool
+{
+#if USE_OPENCL
+  cl_uint platformCount = 0;
+  clGetPlatformIDs(0, nullptr, &platformCount);
+  return platformCount > 0;
+#else
+  return false;
+#endif
+}
+
+auto
+BackendManager::setBackend(const std::string & backend) -> void
+{
+  if (cudaEnabled() && backend == "cuda")
   {
     this->backend = std::make_unique<CUDABackend>();
   }
-  else
+  else if (openCLEnabled())
   {
     this->backend = std::make_unique<OpenCLBackend>();
+  }
+  else
+  {
+    throw std::runtime_error("No backend available.");
   }
 }
 
