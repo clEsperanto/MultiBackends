@@ -276,7 +276,8 @@ public:
   [[nodiscard]] auto
   getPreamble() const -> std::string override;
   auto
-  toBlockDim(const std::array<size_t, 3> & global_size) const -> std::array<size_t, 3>;
+  calculateBlock(const Device::Pointer & device, const std::array<size_t, 3> & global_size) const
+    -> std::array<size_t, 3>;
 };
 
 class OpenCLBackend : public Backend
