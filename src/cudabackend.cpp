@@ -858,7 +858,7 @@ auto
 CUDABackend::calculateBlock(const Device::Pointer & device, const std::array<size_t, 3> & global_size) const
   -> std::array<size_t, 3>
 {
-
+#if USE_CUDA
   int  maxThreads;
   auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
   auto err = cudaDeviceGetAttribute(&maxThreads, cudaDevAttrMaxThreadsPerBlock, cuda_device->getCUDADeviceIndex());
@@ -868,7 +868,6 @@ CUDABackend::calculateBlock(const Device::Pointer & device, const std::array<siz
   }
   int maxThreadsZ;
   err = cudaDeviceGetAttribute(&maxThreadsZ, cudaDevAttrMaxBlockDimZ, cuda_device->getCUDADeviceIndex());
-  std::cout << maxThreadsZ << std::endl;
   if (err != CUDA_SUCCESS)
   {
     throw std::runtime_error("Error: Failed to get CUDA Maximum Block Z.");
@@ -1056,6 +1055,9 @@ CUDABackend::calculateBlock(const Device::Pointer & device, const std::array<siz
     }
   }
   return block_size;
+#else
+  throw std::runtime_error("Error: CUDA is not enabled");
+#endif
 }
 
 } // namespace cle
