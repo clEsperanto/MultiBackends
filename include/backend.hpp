@@ -278,6 +278,9 @@ public:
   auto
   calculateBlock(const Device::Pointer & device, const std::array<size_t, 3> & global_size) const
     -> std::array<size_t, 3>;
+  auto
+  calculateGrid(const std::array<size_t, 3> & global_size, const std::array<size_t, 3> & block_size) const
+    -> std::array<size_t, 3>;
 };
 
 class OpenCLBackend : public Backend

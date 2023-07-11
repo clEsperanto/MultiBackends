@@ -813,10 +813,12 @@ CUDABackend::executeKernel(const Device::Pointer &       device,
   std::vector<void *> argsValues(args.size());
   argsValues = args;
   std::array<size_t, 3> block_size = calculateBlock(device, global_size);
+  std::array<size_t, 3> grid_size = calculateGrid(global_size, block_size);
+
   err = cuLaunchKernel(cuFunction,
-                       global_size.data()[0],
-                       global_size.data()[1],
-                       global_size.data()[2],
+                       grid_size.data()[0],
+                       grid_size.data()[1],
+                       grid_size.data()[2],
                        block_size.data()[0],
                        block_size.data()[1],
                        block_size.data()[2],
@@ -841,6 +843,18 @@ CUDABackend::getPreamble() const -> std::string
 }
 
 auto
+CUDABackend::calculateGrid(const std::array<size_t, 3> & global_size, const std::array<size_t, 3> & block_size) const
+  -> std::array<size_t, 3>
+{
+
+  std::array<size_t, 3> grid_size = { (global_size.data()[0] + block_size.data()[0] - 1) / block_size.data()[0],
+                                      (global_size.data()[1] + block_size.data()[1] - 1) / block_size.data()[1],
+                                      (global_size.data()[2] + block_size.data()[2] - 1) / block_size.data()[2] };
+
+  return grid_size;
+}
+
+auto
 CUDABackend::calculateBlock(const Device::Pointer & device, const std::array<size_t, 3> & global_size) const
   -> std::array<size_t, 3>
 {
@@ -852,7 +866,7 @@ CUDABackend::calculateBlock(const Device::Pointer & device, const std::array<siz
   {
     throw std::runtime_error("Error: Failed to get CUDA Maximum Threads.");
   }
-  int  maxThreadsZ;
+  int maxThreadsZ;
   err = cudaDeviceGetAttribute(&maxThreadsZ, cudaDevAttrMaxBlockDimZ, cuda_device->getCUDADeviceIndex());
   std::cout << maxThreadsZ << std::endl;
   if (err != CUDA_SUCCESS)
@@ -1020,7 +1034,7 @@ CUDABackend::calculateBlock(const Device::Pointer & device, const std::array<siz
           block_size = { std::get<1>(combination[0]), std::get<0>(combination[0]), std::get<2>(combination[0]) };
         }
         // z is larger than x
-        else 
+        else
         {
           block_size = { std::get<2>(combination[0]), std::get<0>(combination[0]), std::get<1>(combination[0]) };
         }
