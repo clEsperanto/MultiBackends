@@ -1,6 +1,9 @@
 #include "backend.hpp"
 #include "cle_preamble_cu.h"
+#include <algorithm>
 #include <array>
+#include <tuple>
+#include <vector>
 
 namespace cle
 {
@@ -809,11 +812,13 @@ CUDABackend::executeKernel(const Device::Pointer &       device,
 
   std::vector<void *> argsValues(args.size());
   argsValues = args;
-  std::array<size_t, 3> block_size = toBlockDim(global_size);
+  std::array<size_t, 3> block_size = calculateBlock(device, global_size);
+  std::array<size_t, 3> grid_size = calculateGrid(global_size, block_size);
+
   err = cuLaunchKernel(cuFunction,
-                       global_size.data()[0],
-                       global_size.data()[1],
-                       global_size.data()[2],
+                       grid_size.data()[0],
+                       grid_size.data()[1],
+                       grid_size.data()[2],
                        block_size.data()[0],
                        block_size.data()[1],
                        block_size.data()[2],
@@ -838,18 +843,221 @@ CUDABackend::getPreamble() const -> std::string
 }
 
 auto
-CUDABackend::toBlockDim(const std::array<size_t, 3> & global_size) const -> std::array<size_t, 3>
+CUDABackend::calculateGrid(const std::array<size_t, 3> & global_size, const std::array<size_t, 3> & block_size) const
+  -> std::array<size_t, 3>
 {
-  // In general, we add the gridDim.x (gridDim.y & gridDim.z) to the problem size, subtract one and divide by the
-  // gridDim.x (gridDim.y & gridDim.z). However, since we're taking the global_size, which represents the gridDim which,
-  // in itself, is the shape of the array that represents the problem size, we get the following formulas:
-  std::array<size_t, 3> block_size = { (global_size.data()[0] + global_size.data()[0] - 1) / global_size.data()[0],
-                                       (global_size.data()[1] + global_size.data()[1] - 1) / global_size.data()[1],
-                                       (global_size.data()[2] + global_size.data()[2] - 1) / global_size.data()[2] };
 
-  // One can notice that the blockDim (block_size) will always be set to 1.
+  std::array<size_t, 3> grid_size = { (global_size.data()[0] + block_size.data()[0] - 1) / block_size.data()[0],
+                                      (global_size.data()[1] + block_size.data()[1] - 1) / block_size.data()[1],
+                                      (global_size.data()[2] + block_size.data()[2] - 1) / block_size.data()[2] };
 
+  return grid_size;
+}
+
+auto
+CUDABackend::calculateBlock(const Device::Pointer & device, const std::array<size_t, 3> & global_size) const
+  -> std::array<size_t, 3>
+{
+#if USE_CUDA
+  int  maxThreads;
+  auto cuda_device = std::dynamic_pointer_cast<const CUDADevice>(device);
+  auto err = cudaDeviceGetAttribute(&maxThreads, cudaDevAttrMaxThreadsPerBlock, cuda_device->getCUDADeviceIndex());
+  if (err != CUDA_SUCCESS)
+  {
+    throw std::runtime_error("Error: Failed to get CUDA Maximum Threads.");
+  }
+  int maxThreadsZ;
+  err = cudaDeviceGetAttribute(&maxThreadsZ, cudaDevAttrMaxBlockDimZ, cuda_device->getCUDADeviceIndex());
+  if (err != CUDA_SUCCESS)
+  {
+    throw std::runtime_error("Error: Failed to get CUDA Maximum Block Z.");
+  }
+
+  // Most GPU's use 1024, we want to use a block between 128 and 512
+  size_t                                          blockSize = maxThreads / 2;
+  std::array<size_t, 3>                           block_size;
+  bool                                            availableCombination = false;
+  std::vector<std::tuple<size_t, size_t, size_t>> combination;
+  // 1st case: 1D dimension
+  if (((global_size.data()[0] != 1) && (global_size.data()[1] == 1) && (global_size.data()[2] == 1)) ||
+      ((global_size.data()[0] == 1) && (global_size.data()[1] != 1) && (global_size.data()[2] == 1)) ||
+      ((global_size.data()[0] == 1) && (global_size.data()[1] == 1) && (global_size.data()[2] != 1)))
+  {
+    if (global_size.data()[0] != 1)
+    {
+      block_size = { blockSize, 1, 1 };
+    }
+    else if (global_size.data()[1] != 1)
+    {
+      block_size = { 1, blockSize, 1 };
+    }
+    else
+    {
+      block_size = { 1, 1, blockSize <= maxThreadsZ ? blockSize : maxThreadsZ };
+    }
+  }
+  // 2nd case: 2D dimension
+  else if (((global_size.data()[0] != 1) && (global_size.data()[1] != 1) && (global_size.data()[2] == 1)) ||
+           ((global_size.data()[0] == 1) && (global_size.data()[1] != 1) && (global_size.data()[2] != 1)) ||
+           ((global_size.data()[0] != 1) && (global_size.data()[1] == 1) && (global_size.data()[2] != 1)))
+  {
+    for (int x = 2; x <= blockSize; x += 2)
+    {
+      for (int y = 2; y <= blockSize; y += 2)
+      {
+        int prod = x * y;
+        if ((prod % 32 == 0) && (prod == blockSize) && (prod != 0) && (x > y))
+        {
+          if (!availableCombination)
+          {
+            availableCombination = true;
+            combination.emplace_back(x, y, 1);
+            break;
+          }
+        }
+      }
+    }
+    // z == 1
+    if (global_size.data()[2] == 1)
+    {
+      // x > y
+      if (global_size.data()[0] > global_size.data()[1])
+      {
+
+        block_size = { std::get<0>(combination[0]), std::get<1>(combination[0]), std::get<2>(combination[0]) };
+      }
+      // x < y
+      else if (global_size.data()[0] < global_size.data()[1])
+      {
+        block_size = { std::get<1>(combination[0]), std::get<0>(combination[0]), std::get<2>(combination[0]) };
+      }
+      // x equals y
+      else
+      {
+        block_size = { 16, 16, 1 };
+      }
+    }
+    // y == 1
+    else if (global_size.data()[1] == 1)
+    {
+      // x > z
+      if (global_size.data()[0] > global_size.data()[2])
+      {
+        block_size = { std::get<0>(combination[0]), std::get<2>(combination[0]), std::get<1>(combination[0]) };
+      }
+      // x < z
+      else if (global_size.data()[0] < global_size.data()[2])
+      {
+        block_size = { std::get<1>(combination[0]),
+                       std::get<2>(combination[0]),
+                       std::get<0>(combination[0]) <= maxThreadsZ ? std::get<0>(combination[0]) : maxThreadsZ };
+      }
+      // x equals z
+      else
+      {
+        block_size = { 16, 1, 16 };
+      }
+    }
+    // x == 1
+    else if (global_size.data()[0] == 1)
+    {
+      // y > z
+      if (global_size.data()[1] > global_size.data()[2])
+      {
+        block_size = { std::get<2>(combination[0]), std::get<0>(combination[0]), std::get<1>(combination[0]) };
+      }
+      // y < z
+      else if (global_size.data()[1] < global_size.data()[2])
+      {
+        block_size = { std::get<2>(combination[0]),
+                       std::get<1>(combination[0]),
+                       std::get<0>(combination[0]) <= maxThreadsZ ? std::get<0>(combination[0]) : maxThreadsZ };
+      }
+      // y equals z
+      else
+      {
+        block_size = { 1, 16, 16 };
+      }
+    }
+  }
+  // 3rd case: 3D dimension
+  else if ((global_size.data()[0] != 1) && (global_size.data()[1] != 1) && (global_size.data()[2] != 1))
+  {
+    // x, y and z are equal
+    if ((global_size.data()[0] == global_size.data()[1]) && (global_size.data()[1] == global_size.data()[2]))
+    {
+      block_size = { 8, 8, 8 };
+    }
+    // x, y and z are NOT equal
+    else
+    {
+      for (int x = 4; x <= blockSize; x += 2)
+      {
+        for (int y = 4; y <= blockSize; y += 2)
+        {
+          for (int z = 4; z <= blockSize; z += 2)
+          {
+            int prod = x * y * z;
+            if ((prod % 32 == 0) && (prod == blockSize) && (prod != 0) && (x > y) && (y > z))
+            {
+              if (!availableCombination)
+              {
+                availableCombination = true;
+                combination.emplace_back(x, y, z);
+                break;
+              }
+            }
+          }
+        }
+      }
+      // x is the largest
+      if (global_size.data()[0] > global_size.data()[1] && global_size.data()[0] > global_size.data()[2])
+      {
+        // y is larger than z
+        if (global_size.data()[1] > global_size.data()[2])
+        {
+          block_size = { std::get<0>(combination[0]), std::get<1>(combination[0]), std::get<2>(combination[0]) };
+        }
+        // z larger than y
+        else
+        {
+          block_size = { std::get<0>(combination[0]), std::get<2>(combination[0]), std::get<1>(combination[0]) };
+        }
+      }
+      // y is the largest
+      else if (global_size.data()[1] > global_size.data()[0] && global_size.data()[1] > global_size.data()[2])
+      {
+        // x is larger than z
+        if (global_size.data()[0] > global_size.data()[2])
+        {
+          block_size = { std::get<1>(combination[0]), std::get<0>(combination[0]), std::get<2>(combination[0]) };
+        }
+        // z is larger than x
+        else
+        {
+          block_size = { std::get<2>(combination[0]), std::get<0>(combination[0]), std::get<1>(combination[0]) };
+        }
+      }
+      // z is the largest
+      else if (global_size.data()[2] > global_size.data()[0] && global_size.data()[2] > global_size.data()[1])
+      {
+        // x is larger than y
+        if (global_size.data()[0] > global_size.data()[1])
+        {
+          block_size = { std::get<1>(combination[0]), std::get<2>(combination[0]), std::get<0>(combination[0]) };
+        }
+        // y is larger than x
+        else
+        {
+          block_size = { std::get<2>(combination[0]), std::get<1>(combination[0]), std::get<0>(combination[0]) };
+        }
+      }
+    }
+  }
   return block_size;
+#else
+  throw std::runtime_error("Error: CUDA is not enabled");
+#endif
 }
 
 } // namespace cle
